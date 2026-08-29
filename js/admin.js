@@ -57,7 +57,7 @@ const ADMIN_EMAILS = [
   "028riu@gmail.com",
   "tu0ngtun2gsahur8@gmail.com",
   "linh085760@gmail.com",
-  "hoang066984@stu.vinschool.edu.vn"
+  "phuong026443@stu.vinschool.edu.vn"
 ];
 
 
