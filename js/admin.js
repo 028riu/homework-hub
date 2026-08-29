@@ -51,7 +51,9 @@ const ADMIN_EMAILS = [
     "028riu@gmail.com",
 
     // THAY EMAIL NÀY BẰNG GMAIL ADMIN THỨ 2
-    "gmail2@gmail.com"
+    "tu0ngtun2gsahur8@gmail.com",
+    "linh085760@gmail.com",
+    "phuong026443@stu.vinschool.edu.vn"
 ];
 
 
