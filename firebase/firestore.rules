@@ -13,6 +13,8 @@ service cloud.firestore {
         && (
           request.auth.token.email == "028riu@gmail.com"
           || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
+          || request.auth.token.email == "linh085760@gmail.com"
+          || request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
         );
     }
 
@@ -23,15 +25,15 @@ service cloud.firestore {
 
     match /users/{userId} {
 
-      // Admin xem tất cả.
-      // Người dùng chỉ xem hồ sơ của chính mình.
+      // Admin xem tất cả người dùng.
+      // Người dùng thường chỉ xem chính mình.
       allow read: if isAdmin()
         || (
           request.auth != null
           && request.auth.uid == userId
         );
 
-      // Admin tạo được người dùng.
+      // Admin có thể tạo hồ sơ người dùng.
       // Người dùng có thể tạo hồ sơ của chính mình.
       allow create: if isAdmin()
         || (
@@ -39,8 +41,8 @@ service cloud.firestore {
           && request.auth.uid == userId
         );
 
-      // Admin sửa tất cả.
-      // Người dùng chỉ sửa hồ sơ của chính mình.
+      // Admin có thể sửa tất cả.
+      // Người dùng chỉ được sửa hồ sơ của chính mình.
       allow update: if isAdmin()
         || (
           request.auth != null
@@ -58,7 +60,7 @@ service cloud.firestore {
 
     match /subjects/{subjectId} {
 
-      // Ai cũng được xem.
+      // Ai cũng được xem môn học.
       allow read: if true;
 
       // Chỉ Admin được tạo / sửa / xóa.
@@ -72,7 +74,7 @@ service cloud.firestore {
 
     match /homework/{homeworkId} {
 
-      // Ai cũng được xem.
+      // Ai cũng được xem bài tập.
       allow read: if true;
 
       // Chỉ Admin được tạo / sửa / xóa.
@@ -92,7 +94,7 @@ service cloud.firestore {
 
 
     // =====================================================
-    // KHÓA MỌI COLLECTION KHÁC
+    // KHÓA TẤT CẢ COLLECTION KHÁC
     // =====================================================
 
     match /{document=**} {
