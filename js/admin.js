@@ -55,8 +55,7 @@ const $ = (id) => document.getElementById(id);
 
 const ADMIN_EMAILS = [
   "028riu@gmail.com",
-  "hoanng066984@stu.vinschoo.edu.vn",
-  ""
+  "tu0ngtun2gsahur8@gmail.com",
 ];
 
 
