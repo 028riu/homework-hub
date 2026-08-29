@@ -2,21 +2,102 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // =====================================================
+    // DANH SÁCH ADMIN
+    // =====================================================
+
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.email == "028riu@gmail.com";
+        && request.auth.token.email != null
+        && (
+          request.auth.token.email == "028riu@gmail.com"
+          || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
+        );
     }
 
-    // Everyone can read homework and subject tabs.
-    // Only the admin account can create, edit, or delete data.
-    match /subjects/{id} {
+
+    // =====================================================
+    // NGƯỜI DÙNG
+    // =====================================================
+
+    match /users/{userId} {
+
+      // Người dùng đã đăng nhập có thể xem hồ sơ của chính mình.
+      // Admin có thể xem tất cả.
+      allow read: if isAdmin()
+        || (
+          request.auth != null
+          && request.auth.uid == userId
+        );
+
+      // Admin được tạo hồ sơ người dùng.
+      // Người dùng được tạo hồ sơ của chính mình.
+      allow create: if isAdmin()
+        || (
+          request.auth != null
+          && request.auth.uid == userId
+        );
+
+      // Admin được sửa tất cả người dùng.
+      // Người dùng chỉ được sửa hồ sơ của chính mình.
+      allow update: if isAdmin()
+        || (
+          request.auth != null
+          && request.auth.uid == userId
+        );
+
+      // Chỉ Admin được xóa người dùng.
+      allow delete: if isAdmin();
+    }
+
+
+    // =====================================================
+    // MÔN HỌC / TAB
+    // =====================================================
+
+    match /subjects/{subjectId} {
+
+      // Ai cũng được xem môn học.
       allow read: if true;
+
+      // Chỉ Admin được tạo / sửa / xóa.
       allow create, update, delete: if isAdmin();
     }
 
-    match /homework/{id} {
+
+    // =====================================================
+    // BÀI TẬP
+    // =====================================================
+
+    match /homework/{homeworkId} {
+
+      // Ai cũng được xem bài tập.
       allow read: if true;
+
+      // Chỉ Admin được tạo / sửa / xóa.
       allow create, update, delete: if isAdmin();
+    }
+
+
+    // =====================================================
+    // CÀI ĐẶT HỆ THỐNG
+    // =====================================================
+
+    match /settings/{settingId} {
+
+      // Admin được xem và sửa toàn bộ settings.
+      allow read, write: if isAdmin();
+    }
+
+
+    // =====================================================
+    // FALLBACK
+    // =====================================================
+
+    // Mọi collection/document khác mặc định bị khóa.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
