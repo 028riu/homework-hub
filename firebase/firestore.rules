@@ -23,24 +23,24 @@ service cloud.firestore {
 
     match /users/{userId} {
 
-      // Người dùng đã đăng nhập có thể xem hồ sơ của chính mình.
-      // Admin có thể xem tất cả.
+      // Admin xem tất cả.
+      // Người dùng chỉ xem hồ sơ của chính mình.
       allow read: if isAdmin()
         || (
           request.auth != null
           && request.auth.uid == userId
         );
 
-      // Admin được tạo hồ sơ người dùng.
-      // Người dùng được tạo hồ sơ của chính mình.
+      // Admin tạo được người dùng.
+      // Người dùng có thể tạo hồ sơ của chính mình.
       allow create: if isAdmin()
         || (
           request.auth != null
           && request.auth.uid == userId
         );
 
-      // Admin được sửa tất cả người dùng.
-      // Người dùng chỉ được sửa hồ sơ của chính mình.
+      // Admin sửa tất cả.
+      // Người dùng chỉ sửa hồ sơ của chính mình.
       allow update: if isAdmin()
         || (
           request.auth != null
@@ -58,7 +58,7 @@ service cloud.firestore {
 
     match /subjects/{subjectId} {
 
-      // Ai cũng được xem môn học.
+      // Ai cũng được xem.
       allow read: if true;
 
       // Chỉ Admin được tạo / sửa / xóa.
@@ -72,7 +72,7 @@ service cloud.firestore {
 
     match /homework/{homeworkId} {
 
-      // Ai cũng được xem bài tập.
+      // Ai cũng được xem.
       allow read: if true;
 
       // Chỉ Admin được tạo / sửa / xóa.
@@ -81,21 +81,20 @@ service cloud.firestore {
 
 
     // =====================================================
-    // CÀI ĐẶT HỆ THỐNG
+    // CÀI ĐẶT THÔNG BÁO / HỆ THỐNG
     // =====================================================
 
     match /settings/{settingId} {
 
-      // Admin được xem và sửa toàn bộ settings.
+      // Chỉ Admin được xem và chỉnh sửa.
       allow read, write: if isAdmin();
     }
 
 
     // =====================================================
-    // FALLBACK
+    // KHÓA MỌI COLLECTION KHÁC
     // =====================================================
 
-    // Mọi collection/document khác mặc định bị khóa.
     match /{document=**} {
       allow read, write: if false;
     }
