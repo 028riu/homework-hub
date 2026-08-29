@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a16"><title>Homework Hub — Admin</title><link rel="stylesheet" href="../css/style.css"></head>
+<body><div class="bg"></div>
+<main class="admin-wrap">
+<section id="loginView" class="auth-card">
+  <div class="hero-icon">🔐</div><p class="eyebrow">HOMEWORK ADMIN</p><h1>Khu vực quản trị</h1>
+  <p class="muted">Đăng nhập bằng tài khoản Google đã được cấp quyền.</p>
+  <button id="googleLoginBtn" class="google-btn"><span>G</span> Tiếp tục với Google</button>
+  <p id="loginError" class="error"></p>
+  <div class="security-note">🔒 Người xem không cần đăng nhập. Chỉ tài khoản Admin được phép thay đổi dữ liệu.</div>
+  <a href="../" class="back">← Xem trang bài tập</a>
+</section>
+<section id="dashboard" class="hidden">
+<header class="admin-head"><div><p class="eyebrow">HOMEWORK ADMIN</p><h1>Quản lý</h1><p class="muted" id="adminUser"></p></div><button id="logoutBtn" class="ghost">Đăng xuất</button></header>
+<div class="stats"><div><b id="statHomework">0</b><span>Bài tập</span></div><div><b id="statTabs">0</b><span>Môn học</span></div><div><b id="statPinned">0</b><span>Đã ghim</span></div></div>
+<div class="admin-grid">
+<section class="panel"><div class="panel-title"><h2>📝 Bài tập</h2><button id="newHomework" class="primary small">+ Tạo bài</button></div><div id="adminHomework"></div></section>
+<section class="panel"><div class="panel-title"><h2>📂 Môn học / Tab</h2><button id="newTab" class="primary small">+ Tạo tab</button></div><div id="adminTabs"></div></section>
+</div></section></main>
+<dialog id="homeworkDialog"><form method="dialog" id="homeworkForm" class="modal"><div class="panel-title"><h2 id="hwDialogTitle">Tạo bài tập</h2><button value="cancel" class="icon-btn">×</button></div><input type="hidden" id="hwId">
+<label>Môn học<select id="hwTab" required></select></label><label>Tiêu đề<input id="hwTitle" required maxlength="120"></label>
+<label>Nội dung<textarea id="hwContent" required rows="7"></textarea></label><label>Hạn nộp<input id="hwDue" type="datetime-local"></label>
+<div class="checks"><label><input id="hwPinned" type="checkbox"> 📌 Ghim bài</label><label><input id="hwImportant" type="checkbox"> ⭐ Quan trọng</label></div>
+<button class="primary" value="submit">Lưu bài tập</button><p id="hwError" class="error"></p></form></dialog>
+<dialog id="tabDialog"><form method="dialog" id="tabForm" class="modal"><div class="panel-title"><h2 id="tabDialogTitle">Tạo tab</h2><button value="cancel" class="icon-btn">×</button></div>
+<input type="hidden" id="tabId"><label>Tên môn<input id="tabName" required maxlength="40" placeholder="Ví dụ: Toán"></label><label>Biểu tượng<input id="tabIcon" maxlength="4" placeholder="📐"></label>
+<button class="primary" value="submit">Lưu tab</button><p id="tabError" class="error"></p></form></dialog>
+<script type="module" src="../js/admin.js"></script></body></html>

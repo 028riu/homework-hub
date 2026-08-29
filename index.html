@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a16"><title>Homework Hub — Bài tập về nhà</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="bg"></div>
+<header class="topbar">
+  <a class="brand" href="./"><span>📚</span><div><b>Homework Hub</b><small>Bài tập về nhà</small></div></a>
+  <div class="top-actions"><span id="userArea" class="user-area"><button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button></span><button id="themeBtn" class="icon-button" aria-label="Đổi giao diện">☼</button></div>
+</header>
+<main class="container">
+  <section class="hero">
+    <div class="hero-icon">📚</div>
+    <div class="hero-copy">
+      <p class="eyebrow">HOMEWORK CENTER</p>
+      <h1>Bài tập về nhà</h1>
+      <p class="muted" id="today"></p>
+      <p class="muted">Mọi môn học, mọi bài tập — ở một nơi.</p>
+    </div>
+    <div class="hero-side">
+      <div class="hero-count"><strong id="totalCount">0</strong><span>BÀI TẬP</span></div>
+      <div class="streak" id="streakWidget" tabindex="0" role="button" aria-label="Chuỗi học tập">
+        <div class="fire-pet" id="firePet" aria-hidden="true"><span class="pet-body">🔥</span><span class="pet-eye left"></span><span class="pet-eye right"></span><span class="pet-mouth">⌣</span><span class="pet-arm left"></span><span class="pet-arm right"></span><span class="pet-spark s1">✦</span><span class="pet-spark s2">•</span></div>
+        <div><b id="streakCount">0 ngày</b><small id="streakLabel">chuỗi học tập</small></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="updateNotice" class="notice hidden" role="status">
+    <div class="notice-icon">⚠️</div>
+    <div><b id="noticeTitle">Chưa có bài mới hôm nay</b><p id="noticeText"></p></div>
+    <button id="noticeClose" class="icon-button">×</button>
+  </section>
+
+  <div class="toolbar">
+    <div id="tabs" class="tabs"><button class="tab active" data-tab="all">✨ Tất cả</button></div>
+    <label class="search">🔎 <input id="search" placeholder="Tìm bài tập..." autocomplete="off"></label>
+  </div>
+  <div class="quick-row"><span id="status" class="status">Đang tải bài tập...</span><button id="clearSearch" class="ghost small hidden">Xóa tìm kiếm</button></div>
+  <section id="homeworkList" class="grid"></section>
+  <div id="empty" class="empty hidden">📭 Chưa có bài tập phù hợp.</div>
+</main>
+<footer>Homework Hub · Cập nhật theo thời gian thực</footer>
+<script type="module" src="js/viewer.js"></script>
+</body>
+</html>
