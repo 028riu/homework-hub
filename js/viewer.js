@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, collection, doc, onSnapshot, query, orderBy, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -49,10 +49,44 @@ function renderUser(user){
    $("streakCount").textContent="Đăng nhập để dùng";
  }
 }
-onAuthStateChanged(auth,user=>{
+async function syncUserProfile(user) {
+  if (!user?.uid) return;
+
+  const today = dayKey(new Date());
+  const streakData = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("hh_streak_v2") || '{"last":"","count":0}');
+    } catch {
+      return { last: today, count: 1 };
+    }
+  })();
+
+  // Ghi/cập nhật hồ sơ người dùng vào Firestore.
+  // Dùng merge để không ghi đè các trường admin hoặc dữ liệu cũ.
+  try {
+    await setDoc(doc(db, "users", user.uid), {
+      uid: user.uid,
+      displayName: user.displayName || "",
+      email: user.email || "",
+      photoURL: user.photoURL || "",
+      provider: "google",
+      lastLoginAt: serverTimestamp(),
+      lastVisitAt: serverTimestamp(),
+      lastVisitDate: today,
+      streak: Math.max(1, Number(streakData.count) || 1),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.error("Không thể đồng bộ hồ sơ người dùng:", error);
+  }
+}
+
+onAuthStateChanged(auth, async user=>{
  renderUser(user);
- if(user){ $("streakCount").textContent=JSON.parse(localStorage.getItem("hh_streak_v2")||'{"count":0}').count+" ngày"; }
- else $("streakCount").textContent="—";
+ if(user){
+   $("streakCount").textContent=JSON.parse(localStorage.getItem("hh_streak_v2")||'{"count":0}').count+" ngày";
+   await syncUserProfile(user);
+ } else $("streakCount").textContent="—";
 });
 updateStreak();
 

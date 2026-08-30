@@ -229,6 +229,10 @@ onAuthStateChanged(auth, (user) => {
   setHidden("loginView", true);
   setHidden("dashboard", false);
 
+  // Đảm bảo tài khoản admin cũng có profile trong Firestore để
+  // xuất hiện trong mục "Quản lý người dùng".
+  syncAdminProfile(user);
+
   const adminUser = $("adminUser");
   if (adminUser) {
     adminUser.textContent = `${user.displayName || "Admin"} · ${user.email || ""}`;
@@ -237,6 +241,25 @@ onAuthStateChanged(auth, (user) => {
   ensureManagementPanel();
   start();
 });
+
+async function syncAdminProfile(user) {
+  if (!user?.uid) return;
+  try {
+    await setDoc(doc(db, "users", user.uid), {
+      uid: user.uid,
+      displayName: user.displayName || "",
+      email: user.email || "",
+      photoURL: user.photoURL || "",
+      provider: "google",
+      lastLoginAt: serverTimestamp(),
+      lastVisitAt: serverTimestamp(),
+      lastVisitDate: todayKey(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.error("Không thể đồng bộ profile admin:", error);
+  }
+}
 
 // ============================================================
 // LISTENERS
