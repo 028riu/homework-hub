@@ -1,8 +1,6 @@
-// ============================================================
-// FIREBASE IMPORTS
-// ============================================================
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 
 import {
     getAuth,
@@ -18,13 +16,16 @@ import {
     doc,
     setDoc,
     deleteDoc,
+    getDoc,
     onSnapshot,
     query,
     orderBy,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-import { firebaseConfig } from "./firebase-config.js";
+import {
+    firebaseConfig
+} from "./firebase-config.js";
 
 
 // ============================================================
@@ -43,19 +44,19 @@ const $ = (id) => document.getElementById(id);
 
 
 // ============================================================
-// ADMIN EMAILS
+// ADMIN
 // ============================================================
 
 const ADMIN_EMAILS = [
     "028riu@gmail.com",
-    "tu0ngtun2gsahur8@gmail.com",
-    "linh085760@gmail.com",
-    "phuong026443@stu.vinschool.edu.vn"
+
+    // THAY EMAIL NÀY BẰNG GMAIL ADMIN THỨ 2
+    "gmail2@gmail.com"
 ];
 
 
 // ============================================================
-// DATA
+// STATE
 // ============================================================
 
 let subjects = [];
@@ -64,7 +65,10 @@ let homeworks = [];
 
 let users = [];
 
-let siteSettings = {};
+let siteSettings = {
+    oldHomeworkNoticeEnabled: true,
+    noHomeworkNoticeEnabled: true
+};
 
 let started = false;
 
@@ -78,19 +82,86 @@ let unsubscribeSettings = null;
 
 
 // ============================================================
-// ADMIN CHECK
+// HELPERS
 // ============================================================
 
 function isAdminEmail(email) {
 
-    if (!email) {
-        return false;
+    if (!email) return false;
+
+    return ADMIN_EMAILS.some(
+        admin =>
+            admin.toLowerCase() === email.toLowerCase()
+    );
+}
+
+
+function esc(value = "") {
+
+    return String(value)
+        .replace(
+            /[&<>"']/g,
+            character => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            })[character]
+        );
+}
+
+
+function formatDate(value) {
+
+    if (!value) return "Chưa có";
+
+    try {
+
+        if (
+            typeof value === "object" &&
+            value.seconds
+        ) {
+
+            return new Date(
+                value.seconds * 1000
+            ).toLocaleString("vi-VN");
+
+        }
+
+        const date = new Date(value);
+
+        if (!Number.isNaN(date.getTime())) {
+
+            return date.toLocaleString("vi-VN");
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
     }
 
-    return ADMIN_EMAILS.includes(
-        email.toLowerCase()
-    );
+    return String(value);
+}
 
+
+function todayKey() {
+
+    const now = new Date();
+
+    const y = now.getFullYear();
+
+    const m = String(
+        now.getMonth() + 1
+    ).padStart(2, "0");
+
+    const d = String(
+        now.getDate()
+    ).padStart(2, "0");
+
+    return `${y}-${m}-${d}`;
 }
 
 
@@ -103,23 +174,23 @@ function setLoginError(message = "") {
     const el = $("loginError");
 
     if (el) {
+
         el.textContent = message;
+
     }
 
 }
 
 
 // ============================================================
-// HIDDEN
+// VISIBILITY
 // ============================================================
 
 function setHidden(id, hidden) {
 
     const el = $(id);
 
-    if (!el) {
-        return;
-    }
+    if (!el) return;
 
     el.classList.toggle(
         "hidden",
@@ -133,7 +204,9 @@ function setHidden(id, hidden) {
 // GOOGLE LOGIN
 // ============================================================
 
-const googleLoginBtn = $("googleLoginBtn");
+const googleLoginBtn =
+    $("googleLoginBtn");
+
 
 if (googleLoginBtn) {
 
@@ -183,7 +256,9 @@ if (googleLoginBtn) {
 // LOGOUT
 // ============================================================
 
-const logoutBtn = $("logoutBtn");
+const logoutBtn =
+    $("logoutBtn");
+
 
 if (logoutBtn) {
 
@@ -216,50 +291,57 @@ if (logoutBtn) {
 
 onAuthStateChanged(
     auth,
-    (user) => {
+    user => {
+
+        const loginView =
+            $("loginView");
+
+        const dashboard =
+            $("dashboard");
+
+
+        // ----------------------------------------------------
+        // CHƯA ĐĂNG NHẬP
+        // ----------------------------------------------------
 
         if (!user) {
 
-            setHidden(
-                "loginView",
-                false
-            );
+            if (loginView)
+                loginView.classList.remove(
+                    "hidden"
+                );
 
-            setHidden(
-                "dashboard",
-                true
-            );
+            if (dashboard)
+                dashboard.classList.add(
+                    "hidden"
+                );
 
             started = false;
 
             stopListeners();
 
             return;
-
         }
 
 
-        const email =
-            (
-                user.email || ""
-            ).toLowerCase();
+        // ----------------------------------------------------
+        // KHÔNG PHẢI ADMIN
+        // ----------------------------------------------------
 
+        if (
+            !user.email ||
+            !isAdminEmail(user.email)
+        ) {
 
-        // ====================================================
-        // CHECK ADMIN
-        // ====================================================
+            if (loginView)
+                loginView.classList.remove(
+                    "hidden"
+                );
 
-        if (!isAdminEmail(email)) {
-
-            setHidden(
-                "loginView",
-                false
-            );
-
-            setHidden(
-                "dashboard",
-                true
-            );
+            if (dashboard)
+                dashboard.classList.add(
+                    "hidden"
+                );
 
             setLoginError(
                 `Tài khoản ${
@@ -267,44 +349,44 @@ onAuthStateChanged(
                 } không có quyền quản trị.`
             );
 
-            signOut(auth)
-                .catch(
-                    (error) =>
-                        console.error(
-                            "Admin sign-out error:",
-                            error
-                        )
-                );
+            signOut(auth).catch(
+                error =>
+                    console.error(
+                        "Admin sign-out error:",
+                        error
+                    )
+            );
 
             return;
-
         }
 
 
-        // ====================================================
-        // ADMIN OK
-        // ====================================================
+        // ----------------------------------------------------
+        // ADMIN HỢP LỆ
+        // ----------------------------------------------------
 
-        setLoginError("");
+        if (loginView)
+            loginView.classList.add(
+                "hidden"
+            );
 
-        setHidden(
-            "loginView",
-            true
-        );
-
-        setHidden(
-            "dashboard",
-            false
-        );
+        if (dashboard)
+            dashboard.classList.remove(
+                "hidden"
+            );
 
 
         const adminUser =
             $("adminUser");
 
+
         if (adminUser) {
 
             adminUser.textContent =
-                `${user.displayName || "Admin"} · ${user.email}`;
+                `${
+                    user.displayName ||
+                    "Admin"
+                } · ${user.email}`;
 
         }
 
@@ -321,21 +403,17 @@ onAuthStateChanged(
 
 function stopListeners() {
 
-    if (unsubscribeSubjects) {
+    if (unsubscribeSubjects)
         unsubscribeSubjects();
-    }
 
-    if (unsubscribeHomework) {
+    if (unsubscribeHomework)
         unsubscribeHomework();
-    }
 
-    if (unsubscribeUsers) {
+    if (unsubscribeUsers)
         unsubscribeUsers();
-    }
 
-    if (unsubscribeSettings) {
+    if (unsubscribeSettings)
         unsubscribeSettings();
-    }
 
 
     unsubscribeSubjects = null;
@@ -350,14 +428,12 @@ function stopListeners() {
 
 
 // ============================================================
-// START
+// START FIRESTORE
 // ============================================================
 
 function start() {
 
-    if (started) {
-        return;
-    }
+    if (started) return;
 
     started = true;
 
@@ -366,16 +442,17 @@ function start() {
     // SUBJECTS
     // ========================================================
 
-    const subjectsQuery = query(
-        collection(
-            db,
-            "subjects"
-        ),
-        orderBy(
-            "order",
-            "asc"
-        )
-    );
+    const subjectsQuery =
+        query(
+            collection(
+                db,
+                "subjects"
+            ),
+            orderBy(
+                "order",
+                "asc"
+            )
+        );
 
 
     unsubscribeSubjects =
@@ -383,11 +460,11 @@ function start() {
 
             subjectsQuery,
 
-            (snapshot) => {
+            snapshot => {
 
                 subjects =
                     snapshot.docs.map(
-                        (item) => ({
+                        item => ({
                             id: item.id,
                             ...item.data()
                         })
@@ -404,10 +481,10 @@ function start() {
 
             },
 
-            (error) => {
+            error => {
 
                 console.error(
-                    "Subjects Firestore error:",
+                    "Subjects error:",
                     error
                 );
 
@@ -420,16 +497,17 @@ function start() {
     // HOMEWORK
     // ========================================================
 
-    const homeworkQuery = query(
-        collection(
-            db,
-            "homework"
-        ),
-        orderBy(
-            "createdAt",
-            "desc"
-        )
-    );
+    const homeworkQuery =
+        query(
+            collection(
+                db,
+                "homework"
+            ),
+            orderBy(
+                "createdAt",
+                "desc"
+            )
+        );
 
 
     unsubscribeHomework =
@@ -437,11 +515,11 @@ function start() {
 
             homeworkQuery,
 
-            (snapshot) => {
+            snapshot => {
 
                 homeworks =
                     snapshot.docs.map(
-                        (item) => ({
+                        item => ({
                             id: item.id,
                             ...item.data()
                         })
@@ -454,10 +532,10 @@ function start() {
 
             },
 
-            (error) => {
+            error => {
 
                 console.error(
-                    "Homework Firestore error:",
+                    "Homework error:",
                     error
                 );
 
@@ -470,23 +548,19 @@ function start() {
     // USERS
     // ========================================================
 
-    const usersQuery =
-        collection(
-            db,
-            "users"
-        );
-
-
     unsubscribeUsers =
         onSnapshot(
 
-            usersQuery,
+            collection(
+                db,
+                "users"
+            ),
 
-            (snapshot) => {
+            snapshot => {
 
                 users =
                     snapshot.docs.map(
-                        (item) => ({
+                        item => ({
                             id: item.id,
                             ...item.data()
                         })
@@ -495,14 +569,14 @@ function start() {
 
                 renderUsers();
 
-                updateUserStats();
+                updateStats();
 
             },
 
-            (error) => {
+            error => {
 
                 console.error(
-                    "Users Firestore error:",
+                    "Users error:",
                     error
                 );
 
@@ -512,10 +586,12 @@ function start() {
                 if (container) {
 
                     container.innerHTML =
-                        `<p class="error">
-                            Không thể tải người dùng:
+                        `
+                        <p class="error">
+                            Không thể tải danh sách người dùng:
                             ${esc(error.message)}
-                        </p>`;
+                        </p>
+                        `;
 
                 }
 
@@ -525,60 +601,39 @@ function start() {
 
 
     // ========================================================
-    // SETTINGS
+    // SITE SETTINGS
     // ========================================================
-
-    const settingsRef =
-        doc(
-            db,
-            "settings",
-            "site"
-        );
-
 
     unsubscribeSettings =
         onSnapshot(
 
-            settingsRef,
+            doc(
+                db,
+                "settings",
+                "site"
+            ),
 
-            (snapshot) => {
+            snapshot => {
 
                 if (snapshot.exists()) {
 
-                    siteSettings =
-                        snapshot.data();
-
-                } else {
-
-                    siteSettings = {};
+                    siteSettings = {
+                        ...siteSettings,
+                        ...snapshot.data()
+                    };
 
                 }
-
 
                 renderSiteSettings();
 
             },
 
-            (error) => {
+            error => {
 
                 console.error(
-                    "Settings Firestore error:",
+                    "Settings error:",
                     error
                 );
-
-
-                const container =
-                    $("adminSettings");
-
-                if (container) {
-
-                    container.innerHTML =
-                        `<p class="error">
-                            Không thể tải cài đặt:
-                            ${esc(error.message)}
-                        </p>`;
-
-                }
 
             }
 
@@ -588,70 +643,436 @@ function start() {
 
 
 // ============================================================
-// RENDER SUBJECTS
+// CREATE ADMIN MANAGEMENT UI
 // ============================================================
 
-function renderSubjects() {
+function createManagementUI() {
+
+    const dashboard =
+        $("dashboard");
+
+    if (!dashboard) return;
+
+    if (
+        document.getElementById(
+            "advancedAdminPanel"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const panel =
+        document.createElement(
+            "section"
+        );
+
+
+    panel.id =
+        "advancedAdminPanel";
+
+
+    panel.innerHTML = `
+
+        <div class="admin-section">
+
+            <h2>👥 Quản lý người dùng</h2>
+
+            <div class="admin-stats">
+
+                <div class="admin-stat">
+                    <b id="userCount">0</b>
+                    <span>Người dùng</span>
+                </div>
+
+                <div class="admin-stat">
+                    <b id="activeTodayCount">0</b>
+                    <span>Đã truy cập hôm nay</span>
+                </div>
+
+                <div class="admin-stat">
+                    <b id="totalStreak">0</b>
+                    <span>Tổng streak</span>
+                </div>
+
+            </div>
+
+            <div
+                id="adminUsers"
+                class="admin-list"
+            >
+                <p class="muted">
+                    Đang tải người dùng...
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="admin-section">
+
+            <h2>🔔 Cài đặt thông báo</h2>
+
+            <div
+                id="siteSettings"
+                class="admin-settings"
+            >
+                Đang tải...
+            </div>
+
+        </div>
+
+    `;
+
+
+    dashboard.appendChild(panel);
+
+}
+
+
+// ============================================================
+// SETTINGS UI
+// ============================================================
+
+function renderSiteSettings() {
 
     const container =
-        $("adminTabs");
+        $("siteSettings");
 
-    if (!container) {
-        return;
+    if (!container) return;
+
+
+    container.innerHTML = `
+
+        <div class="admin-setting-row">
+
+            <div>
+
+                <b>
+                    Thông báo bài tập không có cập nhật
+                </b>
+
+                <small>
+                    Khi sang ngày mới nhưng không có
+                    bài tập mới.
+                </small>
+
+            </div>
+
+            <label class="switch">
+
+                <input
+                    type="checkbox"
+                    id="noHomeworkNoticeToggle"
+                    ${
+                        siteSettings.noHomeworkNoticeEnabled
+                            ? "checked"
+                            : ""
+                    }
+                >
+
+                <span></span>
+
+            </label>
+
+        </div>
+
+
+        <div class="admin-setting-row">
+
+            <div>
+
+                <b>
+                    Thông báo bài tập cũ chưa cập nhật
+                </b>
+
+                <small>
+                    Bật/tắt thông báo riêng cho trường hợp
+                    danh sách bài tập vẫn giống ngày trước.
+                </small>
+
+            </div>
+
+            <label class="switch">
+
+                <input
+                    type="checkbox"
+                    id="oldHomeworkNoticeToggle"
+                    ${
+                        siteSettings.oldHomeworkNoticeEnabled
+                            ? "checked"
+                            : ""
+                    }
+                >
+
+                <span></span>
+
+            </label>
+
+        </div>
+
+    `;
+
+
+    const noHomeworkToggle =
+        $("noHomeworkNoticeToggle");
+
+
+    const oldHomeworkToggle =
+        $("oldHomeworkNoticeToggle");
+
+
+    if (noHomeworkToggle) {
+
+        noHomeworkToggle.addEventListener(
+            "change",
+            async () => {
+
+                await saveSiteSettings({
+
+                    noHomeworkNoticeEnabled:
+                        noHomeworkToggle.checked
+
+                });
+
+            }
+        );
+
     }
 
 
-    if (!subjects.length) {
+    if (oldHomeworkToggle) {
 
-        container.innerHTML =
-            `<p class="muted">
-                Chưa có môn học.
-            </p>`;
+        oldHomeworkToggle.addEventListener(
+            "change",
+            async () => {
+
+                await saveSiteSettings({
+
+                    oldHomeworkNoticeEnabled:
+                        oldHomeworkToggle.checked
+
+                });
+
+            }
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// SAVE SITE SETTINGS
+// ============================================================
+
+async function saveSiteSettings(
+    changes
+) {
+
+    try {
+
+        await setDoc(
+
+            doc(
+                db,
+                "settings",
+                "site"
+            ),
+
+            {
+                ...changes,
+                updatedAt:
+                    serverTimestamp()
+            },
+
+            {
+                merge: true
+            }
+
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Save site settings error:",
+            error
+        );
+
+        alert(
+            "Không thể lưu cài đặt: " +
+            error.message
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// USERS
+// ============================================================
+
+function renderUsers() {
+
+    const container =
+        $("adminUsers");
+
+    if (!container) return;
+
+
+    if (!users.length) {
+
+        container.innerHTML = `
+
+            <p class="muted">
+                Chưa có người dùng nào được ghi nhận.
+            </p>
+
+        `;
 
         return;
 
     }
+
+
+    const today =
+        todayKey();
+
+
+    const sortedUsers =
+        [...users].sort(
+            (a, b) => {
+
+                const aDate =
+                    a.lastVisitDate ||
+                    a.lastLoginDate ||
+                    "";
+
+                const bDate =
+                    b.lastVisitDate ||
+                    b.lastLoginDate ||
+                    "";
+
+                return String(bDate)
+                    .localeCompare(
+                        String(aDate)
+                    );
+
+            }
+        );
 
 
     container.innerHTML =
-        subjects.map(
-            (subject) => {
+        sortedUsers.map(
+            user => {
+
+                const streak =
+                    Number(
+                        user.streak ??
+                        user.currentStreak ??
+                        0
+                    );
+
+
+                const longest =
+                    Number(
+                        user.longestStreak ??
+                        user.maxStreak ??
+                        0
+                    );
+
+
+                const lastVisit =
+                    user.lastVisitDate ||
+                    user.lastLoginDate ||
+                    "";
+
+
+                const onlineToday =
+                    lastVisit === today;
+
+
+                const name =
+                    user.displayName ||
+                    user.username ||
+                    user.name ||
+                    "Người dùng";
+
+
+                const email =
+                    user.email ||
+                    "Không có email";
+
 
                 return `
-                    <div class="admin-item">
 
-                        <b>
-                            ${esc(
-                                subject.icon ||
-                                "📚"
-                            )}
+                    <div
+                        class="admin-item user-admin-item"
+                        data-user-id="${esc(user.id)}"
+                    >
 
-                            ${esc(
-                                subject.name ||
-                                "Môn học"
-                            )}
-                        </b>
+                        <div>
+
+                            <b>
+                                ${esc(name)}
+                            </b>
+
+                            <small>
+                                ${esc(email)}
+                            </small>
+
+                            <small>
+
+                                🔥 Streak:
+                                <strong>
+                                    ${streak}
+                                </strong>
+
+                                · Cao nhất:
+                                <strong>
+                                    ${longest}
+                                </strong>
+
+                            </small>
+
+                            <small>
+
+                                🕒 Truy cập:
+                                ${esc(
+                                    formatDate(
+                                        user.lastVisitAt ||
+                                        user.lastLoginAt ||
+                                        lastVisit
+                                    )
+                                )}
+
+                                ${
+                                    onlineToday
+                                        ? " · 🟢 Hôm nay"
+                                        : ""
+                                }
+
+                            </small>
+
+                        </div>
+
 
                         <div class="actions">
 
                             <button
                                 type="button"
-                                onclick="editSubject('${esc(subject.id)}')"
+                                data-user-edit="${esc(user.id)}"
                             >
                                 Sửa
-                            </button>
-
-                            <button
-                                type="button"
-                                class="danger"
-                                onclick="removeSubject('${esc(subject.id)}')"
-                            >
-                                Xóa
                             </button>
 
                         </div>
 
                     </div>
+
                 `;
 
             }
@@ -661,7 +1082,565 @@ function renderSubjects() {
 
 
 // ============================================================
-// RENDER HOMEWORK
+// USER CLICK
+// ============================================================
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const button =
+            event.target.closest(
+                "[data-user-edit]"
+            );
+
+        if (!button) return;
+
+
+        const id =
+            button.dataset.userEdit;
+
+
+        openUserEditor(id);
+
+    }
+);
+
+
+// ============================================================
+// USER EDITOR
+// ============================================================
+
+function openUserEditor(id) {
+
+    const user =
+        users.find(
+            item => item.id === id
+        );
+
+    if (!user) return;
+
+
+    const oldModal =
+        document.getElementById(
+            "userEditorModal"
+        );
+
+
+    if (oldModal)
+        oldModal.remove();
+
+
+    const streak =
+        Number(
+            user.streak ??
+            user.currentStreak ??
+            0
+        );
+
+
+    const longestStreak =
+        Number(
+            user.longestStreak ??
+            user.maxStreak ??
+            0
+        );
+
+
+    const username =
+        user.username ||
+        "";
+
+
+    const displayName =
+        user.displayName ||
+        user.name ||
+        "";
+
+
+    const email =
+        user.email ||
+        "";
+
+
+    const modal =
+        document.createElement(
+            "div"
+        );
+
+
+    modal.id =
+        "userEditorModal";
+
+
+    modal.innerHTML = `
+
+        <div class="admin-modal-backdrop">
+
+            <div class="admin-modal">
+
+                <div class="admin-modal-header">
+
+                    <h2>
+                        ✏️ Sửa người dùng
+                    </h2>
+
+                    <button
+                        type="button"
+                        id="closeUserEditor"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <div class="admin-form">
+
+                    <label>
+
+                        UID
+
+                        <input
+                            id="editUserUid"
+                            value="${esc(user.id)}"
+                            readonly
+                        >
+
+                    </label>
+
+
+                    <label>
+
+                        Email
+
+                        <input
+                            id="editUserEmail"
+                            type="email"
+                            value="${esc(email)}"
+                        >
+
+                    </label>
+
+
+                    <label>
+
+                        Tên tài khoản
+
+                        <input
+                            id="editUserUsername"
+                            value="${esc(username)}"
+                        >
+
+                    </label>
+
+
+                    <label>
+
+                        Tên hiển thị
+
+                        <input
+                            id="editUserDisplayName"
+                            value="${esc(displayName)}"
+                        >
+
+                    </label>
+
+
+                    <label>
+
+                        🔥 Streak hiện tại
+
+                        <input
+                            id="editUserStreak"
+                            type="number"
+                            min="0"
+                            value="${streak}"
+                        >
+
+                    </label>
+
+
+                    <label>
+
+                        🏆 Streak cao nhất
+
+                        <input
+                            id="editUserLongestStreak"
+                            type="number"
+                            min="0"
+                            value="${longestStreak}"
+                        >
+
+                    </label>
+
+
+                    <label>
+
+                        📅 Ngày truy cập cuối
+
+                        <input
+                            id="editUserLastVisit"
+                            value="${esc(
+                                user.lastVisitDate ||
+                                ""
+                            )}"
+                            placeholder="YYYY-MM-DD"
+                        >
+
+                    </label>
+
+
+                    <div class="actions">
+
+                        <button
+                            type="button"
+                            id="saveUserChanges"
+                        >
+                            💾 Lưu thay đổi
+                        </button>
+
+                        <button
+                            type="button"
+                            class="danger"
+                            id="deleteUserProfile"
+                        >
+                            🗑️ Xóa profile
+                        </button>
+
+                    </div>
+
+
+                    <p
+                        id="userEditorError"
+                        class="error"
+                    ></p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        modal
+    );
+
+
+    // --------------------------------------------------------
+    // CLOSE
+    // --------------------------------------------------------
+
+    $("closeUserEditor")
+        ?.addEventListener(
+            "click",
+            () => modal.remove()
+        );
+
+
+    modal
+        .querySelector(
+            ".admin-modal-backdrop"
+        )
+        ?.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target.classList.contains(
+                        "admin-modal-backdrop"
+                    )
+                ) {
+
+                    modal.remove();
+
+                }
+
+            }
+        );
+
+
+    // --------------------------------------------------------
+    // SAVE
+    // --------------------------------------------------------
+
+    $("saveUserChanges")
+        ?.addEventListener(
+            "click",
+            async () => {
+
+                const errorEl =
+                    $("userEditorError");
+
+
+                const newUsername =
+                    $("editUserUsername")
+                        .value
+                        .trim();
+
+
+                const newDisplayName =
+                    $("editUserDisplayName")
+                        .value
+                        .trim();
+
+
+                const newEmail =
+                    $("editUserEmail")
+                        .value
+                        .trim();
+
+
+                const newStreak =
+                    Math.max(
+                        0,
+                        Number(
+                            $("editUserStreak")
+                                .value
+                        ) || 0
+                    );
+
+
+                const newLongest =
+                    Math.max(
+                        0,
+                        Number(
+                            $("editUserLongestStreak")
+                                .value
+                        ) || 0
+                    );
+
+
+                const newLastVisit =
+                    $("editUserLastVisit")
+                        .value
+                        .trim();
+
+
+                try {
+
+                    await setDoc(
+
+                        doc(
+                            db,
+                            "users",
+                            id
+                        ),
+
+                        {
+
+                            username:
+                                newUsername,
+
+                            displayName:
+                                newDisplayName,
+
+                            email:
+                                newEmail,
+
+                            streak:
+                                newStreak,
+
+                            currentStreak:
+                                newStreak,
+
+                            longestStreak:
+                                Math.max(
+                                    newLongest,
+                                    newStreak
+                                ),
+
+                            lastVisitDate:
+                                newLastVisit,
+
+                            updatedAt:
+                                serverTimestamp()
+
+                        },
+
+                        {
+                            merge: true
+                        }
+
+                    );
+
+
+                    modal.remove();
+
+
+                } catch (error) {
+
+                    console.error(
+                        "Save user error:",
+                        error
+                    );
+
+
+                    if (errorEl) {
+
+                        errorEl.textContent =
+                            "Không thể lưu: " +
+                            error.message;
+
+                    }
+
+                }
+
+            }
+        );
+
+
+    // --------------------------------------------------------
+    // DELETE
+    // --------------------------------------------------------
+
+    $("deleteUserProfile")
+        ?.addEventListener(
+            "click",
+            async () => {
+
+                const confirmed =
+                    confirm(
+                        "Bạn có chắc muốn xóa profile Firestore của người này?\n\n" +
+                        "Tài khoản Google Authentication sẽ KHÔNG bị xóa."
+                    );
+
+
+                if (!confirmed)
+                    return;
+
+
+                try {
+
+                    await deleteDoc(
+
+                        doc(
+                            db,
+                            "users",
+                            id
+                        )
+
+                    );
+
+
+                    modal.remove();
+
+
+                } catch (error) {
+
+                    console.error(
+                        "Delete user error:",
+                        error
+                    );
+
+                    alert(
+                        "Không thể xóa: " +
+                        error.message
+                    );
+
+                }
+
+            }
+        );
+
+}
+
+
+// ============================================================
+// CREATE MANAGEMENT PANEL
+// ============================================================
+
+function ensureManagementPanel() {
+
+    setTimeout(
+        createManagementUI,
+        100
+    );
+
+}
+
+
+// ============================================================
+// SUBJECTS
+// ============================================================
+
+function renderSubjects() {
+
+    const container =
+        $("adminTabs");
+
+    if (!container) return;
+
+
+    if (!subjects.length) {
+
+        container.innerHTML = `
+
+            <p class="muted">
+                Chưa có môn học.
+            </p>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        subjects.map(
+            subject => `
+
+                <div class="admin-item">
+
+                    <b>
+                        ${esc(
+                            subject.icon ||
+                            "📚"
+                        )}
+
+                        ${esc(
+                            subject.name ||
+                            "Môn học"
+                        )}
+                    </b>
+
+
+                    <div class="actions">
+
+                        <button
+                            type="button"
+                            data-action="edit-subject"
+                            data-id="${esc(subject.id)}"
+                        >
+                            Sửa
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="danger"
+                            data-action="delete-subject"
+                            data-id="${esc(subject.id)}"
+                        >
+                            Xóa
+                        </button>
+
+                    </div>
+
+                </div>
+
+            `
+        ).join("");
+
+}
+
+
+// ============================================================
+// HOMEWORK
 // ============================================================
 
 function renderHomework() {
@@ -669,17 +1648,18 @@ function renderHomework() {
     const container =
         $("adminHomework");
 
-    if (!container) {
-        return;
-    }
+    if (!container) return;
 
 
     if (!homeworks.length) {
 
-        container.innerHTML =
-            `<p class="muted">
+        container.innerHTML = `
+
+            <p class="muted">
                 Chưa có bài tập.
-            </p>`;
+            </p>
+
+        `;
 
         return;
 
@@ -688,11 +1668,11 @@ function renderHomework() {
 
     container.innerHTML =
         homeworks.map(
-            (homework) => {
+            homework => {
 
                 const subject =
                     subjects.find(
-                        (item) =>
+                        item =>
                             item.id ===
                             homework.subjectId
                     );
@@ -702,7 +1682,9 @@ function renderHomework() {
                     "Không đặt hạn";
 
 
-                if (homework.dueDate) {
+                if (
+                    homework.dueDate
+                ) {
 
                     const due =
                         new Date(
@@ -727,6 +1709,7 @@ function renderHomework() {
 
 
                 return `
+
                     <div class="admin-item">
 
                         <b>
@@ -776,15 +1759,18 @@ function renderHomework() {
 
                             <button
                                 type="button"
-                                onclick="editHomework('${esc(homework.id)}')"
+                                data-action="edit-homework"
+                                data-id="${esc(homework.id)}"
                             >
                                 Sửa
                             </button>
 
+
                             <button
                                 type="button"
                                 class="danger"
-                                onclick="removeHomework('${esc(homework.id)}')"
+                                data-action="delete-homework"
+                                data-id="${esc(homework.id)}"
                             >
                                 Xóa
                             </button>
@@ -792,6 +1778,7 @@ function renderHomework() {
                         </div>
 
                     </div>
+
                 `;
 
             }
@@ -811,17 +1798,17 @@ function fillSubjectSelect(
     const select =
         $("hwTab");
 
-    if (!select) {
-        return;
-    }
+    if (!select) return;
 
 
     if (!subjects.length) {
 
         select.innerHTML =
-            `<option value="">
+            `
+            <option value="">
                 Chưa có môn học
-            </option>`;
+            </option>
+            `;
 
         return;
 
@@ -830,32 +1817,32 @@ function fillSubjectSelect(
 
     select.innerHTML =
         subjects.map(
-            (subject) => {
+            subject => `
 
-                return `
-                    <option value="${esc(subject.id)}">
+                <option
+                    value="${esc(subject.id)}"
+                >
 
-                        ${esc(
-                            subject.icon ||
-                            "📚"
-                        )}
+                    ${esc(
+                        subject.icon ||
+                        "📚"
+                    )}
 
-                        ${esc(
-                            subject.name ||
-                            "Môn học"
-                        )}
+                    ${esc(
+                        subject.name ||
+                        "Môn học"
+                    )}
 
-                    </option>
-                `;
+                </option>
 
-            }
+            `
         ).join("");
 
 
     if (
         selectedId &&
         subjects.some(
-            (subject) =>
+            subject =>
                 subject.id ===
                 selectedId
         )
@@ -870,7 +1857,7 @@ function fillSubjectSelect(
 
 
 // ============================================================
-// GENERAL STATS
+// STATS
 // ============================================================
 
 function updateStats() {
@@ -888,9 +1875,7 @@ function updateStats() {
     if (statHomework) {
 
         statHomework.textContent =
-            String(
-                homeworks.length
-            );
+            homeworks.length;
 
     }
 
@@ -898,9 +1883,7 @@ function updateStats() {
     if (statTabs) {
 
         statTabs.textContent =
-            String(
-                subjects.length
-            );
+            subjects.length;
 
     }
 
@@ -908,11 +1891,65 @@ function updateStats() {
     if (statPinned) {
 
         statPinned.textContent =
-            String(
-                homeworks.filter(
-                    (item) =>
-                        item.pinned
-                ).length
+            homeworks.filter(
+                homework =>
+                    homework.pinned
+            ).length;
+
+    }
+
+
+    const userCount =
+        $("userCount");
+
+    const activeTodayCount =
+        $("activeTodayCount");
+
+    const totalStreak =
+        $("totalStreak");
+
+
+    if (userCount) {
+
+        userCount.textContent =
+            users.length;
+
+    }
+
+
+    const today =
+        todayKey();
+
+
+    if (activeTodayCount) {
+
+        activeTodayCount.textContent =
+            users.filter(
+                user =>
+                    (
+                        user.lastVisitDate ||
+                        user.lastLoginDate
+                    ) === today
+            ).length;
+
+    }
+
+
+    if (totalStreak) {
+
+        totalStreak.textContent =
+            users.reduce(
+                (
+                    total,
+                    user
+                ) =>
+                    total +
+                    Number(
+                        user.streak ??
+                        user.currentStreak ??
+                        0
+                    ),
+                0
             );
 
     }
@@ -921,11 +1958,12 @@ function updateStats() {
 
 
 // ============================================================
-// CREATE HOMEWORK
+// NEW HOMEWORK
 // ============================================================
 
 const newHomework =
     $("newHomework");
+
 
 if (newHomework) {
 
@@ -944,26 +1982,28 @@ if (newHomework) {
             }
 
 
-            const form =
-                $("homeworkForm");
-
-            if (form) {
-                form.reset();
-            }
+            $("homeworkForm")
+                ?.reset();
 
 
-            $("hwDialogTitle").textContent =
+            $("hwDialogTitle")
+                .textContent =
                 "Tạo bài tập";
 
-            $("hwId").value = "";
 
-            $("hwError").textContent = "";
+            $("hwId")
+                .value = "";
+
+
+            $("hwError")
+                .textContent = "";
+
 
             fillSubjectSelect();
 
 
             $("homeworkDialog")
-                .showModal();
+                ?.showModal();
 
         }
     );
@@ -978,25 +2018,32 @@ if (newHomework) {
 const homeworkForm =
     $("homeworkForm");
 
+
 if (homeworkForm) {
 
     homeworkForm.addEventListener(
         "submit",
-        async (event) => {
+        async event => {
 
             event.preventDefault();
 
 
             const id =
-                $("hwId").value.trim();
+                $("hwId")
+                    .value
+                    .trim();
+
 
             const subjectId =
-                $("hwTab").value;
+                $("hwTab")
+                    .value;
+
 
             const title =
                 $("hwTitle")
                     .value
                     .trim();
+
 
             const content =
                 $("hwContent")
@@ -1006,7 +2053,8 @@ if (homeworkForm) {
 
             if (!subjectId) {
 
-                $("hwError").textContent =
+                $("hwError")
+                    .textContent =
                     "Vui lòng chọn môn học.";
 
                 return;
@@ -1016,7 +2064,8 @@ if (homeworkForm) {
 
             if (!title) {
 
-                $("hwError").textContent =
+                $("hwError")
+                    .textContent =
                     "Vui lòng nhập tiêu đề.";
 
                 return;
@@ -1026,7 +2075,8 @@ if (homeworkForm) {
 
             if (!content) {
 
-                $("hwError").textContent =
+                $("hwError")
+                    .textContent =
                     "Vui lòng nhập nội dung.";
 
                 return;
@@ -1043,14 +2093,17 @@ if (homeworkForm) {
                 content,
 
                 dueDate:
-                    $("hwDue").value ||
+                    $("hwDue")
+                        .value ||
                     null,
 
                 pinned:
-                    $("hwPinned").checked,
+                    $("hwPinned")
+                        .checked,
 
                 important:
-                    $("hwImportant").checked,
+                    $("hwImportant")
+                        .checked,
 
                 updatedAt:
                     serverTimestamp()
@@ -1062,7 +2115,7 @@ if (homeworkForm) {
 
                 const oldHomework =
                     homeworks.find(
-                        (item) =>
+                        item =>
                             item.id === id
                     );
 
@@ -1100,10 +2153,12 @@ if (homeworkForm) {
 
 
                 $("homeworkDialog")
-                    .close();
+                    ?.close();
 
-                $("hwError").textContent =
-                    "";
+
+                $("hwError")
+                    .textContent = "";
+
 
             } catch (error) {
 
@@ -1113,7 +2168,8 @@ if (homeworkForm) {
                 );
 
 
-                $("hwError").textContent =
+                $("hwError")
+                    .textContent =
                     "Không thể lưu: " +
                     error.message;
 
@@ -1126,11 +2182,12 @@ if (homeworkForm) {
 
 
 // ============================================================
-// CREATE SUBJECT
+// NEW SUBJECT
 // ============================================================
 
 const newTab =
     $("newTab");
+
 
 if (newTab) {
 
@@ -1138,22 +2195,25 @@ if (newTab) {
         "click",
         () => {
 
+            $("tabForm")
+                ?.reset();
+
+
             $("tabDialogTitle")
                 .textContent =
                 "Tạo môn học";
 
 
-            $("tabForm").reset();
+            $("tabId")
+                .value = "";
 
-            $("tabId").value =
-                "";
 
-            $("tabError").textContent =
-                "";
+            $("tabError")
+                .textContent = "";
 
 
             $("tabDialog")
-                .showModal();
+                ?.showModal();
 
         }
     );
@@ -1168,11 +2228,12 @@ if (newTab) {
 const tabForm =
     $("tabForm");
 
+
 if (tabForm) {
 
     tabForm.addEventListener(
         "submit",
-        async (event) => {
+        async event => {
 
             event.preventDefault();
 
@@ -1209,23 +2270,25 @@ if (tabForm) {
 
             const oldSubject =
                 subjects.find(
-                    (subject) =>
-                        subject.id === id
+                    item =>
+                        item.id === id
                 );
 
 
-            const order =
+            const subjectOrder =
                 id
+
                     ? (
                         oldSubject?.order ||
                         0
                     )
+
                     : (
                         subjects.length
                             ? Math.max(
                                 ...subjects.map(
-                                    (subject) =>
-                                        subject.order ||
+                                    item =>
+                                        item.order ||
                                         0
                                 )
                             ) + 1
@@ -1239,7 +2302,8 @@ if (tabForm) {
 
                 icon,
 
-                order,
+                order:
+                    subjectOrder,
 
                 updatedAt:
                     serverTimestamp()
@@ -1268,12 +2332,12 @@ if (tabForm) {
 
 
                 $("tabDialog")
-                    .close();
+                    ?.close();
 
 
                 $("tabError")
-                    .textContent =
-                    "";
+                    .textContent = "";
+
 
             } catch (error) {
 
@@ -1297,784 +2361,182 @@ if (tabForm) {
 
 
 // ============================================================
-// EDIT HOMEWORK
+// DYNAMIC ADMIN BUTTONS
 // ============================================================
 
-window.editHomework =
-    (id) => {
+document.addEventListener(
+    "click",
+    event => {
 
-        const homework =
-            homeworks.find(
-                (item) =>
-                    item.id === id
+        const button =
+            event.target.closest(
+                "button[data-action]"
             );
 
 
-        if (!homework) {
-            return;
+        if (!button) return;
+
+
+        const id =
+            button.dataset.id;
+
+
+        const action =
+            button.dataset.action;
+
+
+        if (
+            action ===
+            "edit-homework"
+        ) {
+
+            editHomework(id);
+
         }
 
 
-        $("hwDialogTitle")
-            .textContent =
-            "Sửa bài tập";
+        if (
+            action ===
+            "delete-homework"
+        ) {
+
+            removeHomework(id);
+
+        }
 
 
-        $("hwId").value =
-            homework.id;
+        if (
+            action ===
+            "edit-subject"
+        ) {
+
+            editSubject(id);
+
+        }
 
 
-        fillSubjectSelect(
-            homework.subjectId ||
-            ""
+        if (
+            action ===
+            "delete-subject"
+        ) {
+
+            removeSubject(id);
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// EDIT HOMEWORK
+// ============================================================
+
+function editHomework(id) {
+
+    const homework =
+        homeworks.find(
+            item =>
+                item.id === id
         );
 
 
-        $("hwTitle").value =
-            homework.title ||
-            "";
+    if (!homework) return;
 
 
-        $("hwContent").value =
-            homework.content ||
-            "";
+    $("hwDialogTitle")
+        .textContent =
+        "Sửa bài tập";
 
 
-        $("hwDue").value =
-            homework.dueDate ||
-            "";
+    $("hwId")
+        .value =
+        homework.id;
 
 
-        $("hwPinned").checked =
-            !!homework.pinned;
+    fillSubjectSelect(
+        homework.subjectId ||
+        ""
+    );
 
 
-        $("hwImportant").checked =
-            !!homework.important;
+    $("hwTitle")
+        .value =
+        homework.title ||
+        "";
 
 
-        $("hwError").textContent =
-            "";
+    $("hwContent")
+        .value =
+        homework.content ||
+        "";
 
 
-        $("homeworkDialog")
-            .showModal();
+    $("hwDue")
+        .value =
+        homework.dueDate ||
+        "";
 
-    };
+
+    $("hwPinned")
+        .checked =
+        !!homework.pinned;
+
+
+    $("hwImportant")
+        .checked =
+        !!homework.important;
+
+
+    $("hwError")
+        .textContent = "";
+
+
+    $("homeworkDialog")
+        ?.showModal();
+
+}
 
 
 // ============================================================
 // DELETE HOMEWORK
 // ============================================================
 
-window.removeHomework =
-    async (id) => {
+async function removeHomework(id) {
 
-        if (
-            !confirm(
-                "Bạn có chắc muốn xóa bài tập này?"
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        try {
-
-            await deleteDoc(
-                doc(
-                    db,
-                    "homework",
-                    id
-                )
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Delete homework error:",
-                error
-            );
-
-
-            alert(
-                "Không thể xóa: " +
-                error.message
-            );
-
-        }
-
-    };
-
-
-// ============================================================
-// EDIT SUBJECT
-// ============================================================
-
-window.editSubject =
-    (id) => {
-
-        const subject =
-            subjects.find(
-                (item) =>
-                    item.id === id
-            );
-
-
-        if (!subject) {
-            return;
-        }
-
-
-        $("tabId").value =
-            id;
-
-
-        $("tabName").value =
-            subject.name ||
-            "";
-
-
-        $("tabIcon").value =
-            subject.icon ||
-            "";
-
-
-        $("tabDialogTitle")
-            .textContent =
-            "Sửa môn học";
-
-
-        $("tabError")
-            .textContent =
-            "";
-
-
-        $("tabDialog")
-            .showModal();
-
-    };
-
-
-// ============================================================
-// DELETE SUBJECT
-// ============================================================
-
-window.removeSubject =
-    async (id) => {
-
-        const hasHomework =
-            homeworks.some(
-                (homework) =>
-                    homework.subjectId ===
-                    id
-            );
-
-
-        if (hasHomework) {
-
-            alert(
-                "Môn này đang có bài tập.\n\n" +
-                "Hãy chuyển hoặc xóa các bài tập " +
-                "thuộc môn này trước."
-            );
-
-            return;
-
-        }
-
-
-        if (
-            !confirm(
-                "Bạn có chắc muốn xóa môn này?"
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        try {
-
-            await deleteDoc(
-                doc(
-                    db,
-                    "subjects",
-                    id
-                )
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Delete subject error:",
-                error
-            );
-
-
-            alert(
-                "Không thể xóa: " +
-                error.message
-            );
-
-        }
-
-    };
-
-
-// ============================================================
-// USERS
-// ============================================================
-
-function renderUsers() {
-
-    const container =
-        $("adminUsers");
-
-    if (!container) {
-        return;
-    }
-
-
-    if (!users.length) {
-
-        container.innerHTML =
-            `<p class="muted">
-                Chưa có người dùng.
-            </p>`;
+    if (
+        !confirm(
+            "Bạn có chắc muốn xóa bài tập này?"
+        )
+    ) {
 
         return;
 
     }
 
-
-    container.innerHTML =
-        users.map(
-            (user) => {
-
-                const email =
-                    user.email ||
-                    "Không có email";
-
-
-                const name =
-                    user.displayName ||
-                    user.name ||
-                    email;
-
-
-                const streak =
-                    Number(
-                        user.streak ||
-                        0
-                    );
-
-
-                const highest =
-                    Number(
-                        user.highestStreak ||
-                        user.maxStreak ||
-                        0
-                    );
-
-
-                let lastAccess =
-                    "Chưa có";
-
-
-                if (
-                    user.lastAccess
-                ) {
-
-                    try {
-
-                        const date =
-                            user.lastAccess
-                                .toDate
-                                ? user.lastAccess.toDate()
-                                : new Date(
-                                    user.lastAccess
-                                );
-
-
-                        if (
-                            !Number.isNaN(
-                                date.getTime()
-                            )
-                        ) {
-
-                            lastAccess =
-                                date.toLocaleString(
-                                    "vi-VN"
-                                );
-
-                        }
-
-                    } catch {
-
-                        lastAccess =
-                            "Không xác định";
-
-                    }
-
-                }
-
-
-                return `
-                    <div class="admin-item">
-
-                        <b>
-                            ${esc(name)}
-                        </b>
-
-                        <small>
-                            ${esc(email)}
-                        </small>
-
-                        <small>
-                            🔥 Streak:
-                            <strong>
-                                ${streak}
-                            </strong>
-
-                            · Cao nhất:
-                            <strong>
-                                ${highest}
-                            </strong>
-                        </small>
-
-                        <small>
-                            🕒 Truy cập:
-                            ${esc(lastAccess)}
-                        </small>
-
-                        <div class="actions">
-
-                            <button
-                                type="button"
-                                onclick="editUser('${esc(user.id)}')"
-                            >
-                                Sửa
-                            </button>
-
-                        </div>
-
-                    </div>
-                `;
-
-            }
-        ).join("");
-
-}
-
-
-// ============================================================
-// USER STATS
-// ============================================================
-
-function updateUserStats() {
-
-    const statUsers =
-        $("statUsers");
-
-    const statVisited =
-        $("statVisitedToday");
-
-    const statStreak =
-        $("statTotalStreak");
-
-
-    if (statUsers) {
-
-        statUsers.textContent =
-            String(
-                users.length
-            );
-
-    }
-
-
-    const today =
-        new Date();
-
-
-    const todayString =
-        today.toLocaleDateString(
-            "en-CA"
-        );
-
-
-    const visitedToday =
-        users.filter(
-            (user) => {
-
-                if (
-                    !user.lastAccess
-                ) {
-                    return false;
-                }
-
-
-                try {
-
-                    const date =
-                        user.lastAccess
-                            .toDate
-                            ? user.lastAccess.toDate()
-                            : new Date(
-                                user.lastAccess
-                            );
-
-
-                    return (
-                        date.toLocaleDateString(
-                            "en-CA"
-                        ) ===
-                        todayString
-                    );
-
-                } catch {
-
-                    return false;
-
-                }
-
-            }
-        ).length;
-
-
-    const totalStreak =
-        users.reduce(
-            (total, user) =>
-                total +
-                Number(
-                    user.streak ||
-                    0
-                ),
-            0
-        );
-
-
-    if (statVisited) {
-
-        statVisited.textContent =
-            String(
-                visitedToday
-            );
-
-    }
-
-
-    if (statStreak) {
-
-        statStreak.textContent =
-            String(
-                totalStreak
-            );
-
-    }
-
-}
-
-
-// ============================================================
-// EDIT USER
-// ============================================================
-
-window.editUser =
-    async (id) => {
-
-        const user =
-            users.find(
-                (item) =>
-                    item.id === id
-            );
-
-
-        if (!user) {
-            return;
-        }
-
-
-        const name =
-            prompt(
-                "Tên hiển thị:",
-                user.displayName ||
-                user.name ||
-                ""
-            );
-
-
-        if (name === null) {
-            return;
-        }
-
-
-        const streakInput =
-            prompt(
-                "Streak hiện tại:",
-                String(
-                    user.streak ||
-                    0
-                )
-            );
-
-
-        if (
-            streakInput === null
-        ) {
-            return;
-        }
-
-
-        const highestInput =
-            prompt(
-                "Streak cao nhất:",
-                String(
-                    user.highestStreak ||
-                    user.maxStreak ||
-                    0
-                )
-            );
-
-
-        if (
-            highestInput === null
-        ) {
-            return;
-        }
-
-
-        const streak =
-            Math.max(
-                0,
-                Number(
-                    streakInput
-                ) || 0
-            );
-
-
-        const highestStreak =
-            Math.max(
-                streak,
-                Number(
-                    highestInput
-                ) || 0
-            );
-
-
-        try {
-
-            await setDoc(
-
-                doc(
-                    db,
-                    "users",
-                    id
-                ),
-
-                {
-
-                    displayName:
-                        name.trim(),
-
-                    streak,
-
-                    highestStreak,
-
-                    updatedAt:
-                        serverTimestamp()
-
-                },
-
-                {
-                    merge: true
-                }
-
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "Edit user error:",
-                error
-            );
-
-
-            alert(
-                "Không thể sửa người dùng: " +
-                error.message
-            );
-
-        }
-
-    };
-
-
-// ============================================================
-// SITE SETTINGS
-// ============================================================
-
-function renderSiteSettings() {
-
-    const container =
-        $("adminSettings");
-
-
-    if (!container) {
-        return;
-    }
-
-
-    const enabled =
-        siteSettings
-            .oldHomeworkNoticeEnabled !==
-        false;
-
-
-    container.innerHTML = `
-
-        <div class="admin-item">
-
-            <b>
-                🔔 Thông báo bài tập
-            </b>
-
-            <label>
-
-                <input
-                    type="checkbox"
-                    id="oldHomeworkToggle"
-                    ${enabled ? "checked" : ""}
-                >
-
-                Bật thông báo khi không có bài tập mới
-
-            </label>
-
-            <small>
-                Khi bật, người dùng sẽ được thông báo
-                rằng hôm nay không có bài tập mới.
-            </small>
-
-        </div>
-
-    `;
-
-
-    const toggle =
-        $("oldHomeworkToggle");
-
-
-    if (toggle) {
-
-        toggle.addEventListener(
-            "change",
-            async () => {
-
-                await saveSiteSettings({
-
-                    oldHomeworkNoticeEnabled:
-                        toggle.checked
-
-                });
-
-            }
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// SAVE SITE SETTINGS
-// ============================================================
-
-async function saveSiteSettings(
-    changes
-) {
 
     try {
 
-        const currentUser =
-            auth.currentUser;
-
-
-        // ================================================
-        // CHECK LOGIN
-        // ================================================
-
-        if (!currentUser) {
-
-            throw new Error(
-                "Bạn chưa đăng nhập."
-            );
-
-        }
-
-
-        // ================================================
-        // CHECK ADMIN
-        // ================================================
-
-        if (
-            !isAdminEmail(
-                currentUser.email
-            )
-        ) {
-
-            throw new Error(
-                "Tài khoản hiện tại không có quyền Admin."
-            );
-
-        }
-
-
-        // ================================================
-        // SAVE
-        // ================================================
-
-        await setDoc(
+        await deleteDoc(
 
             doc(
                 db,
-                "settings",
-                "site"
-            ),
-
-            {
-
-                ...changes,
-
-                updatedAt:
-                    serverTimestamp()
-
-            },
-
-            {
-
-                merge: true
-
-            }
+                "homework",
+                id
+            )
 
         );
-
 
     } catch (error) {
 
         console.error(
-            "Save site settings error:",
+            "Delete homework error:",
             error
         );
 
 
         alert(
-            "Không thể lưu cài đặt: " +
+            "Không thể xóa: " +
             error.message
         );
 
@@ -2084,44 +2546,122 @@ async function saveSiteSettings(
 
 
 // ============================================================
-// HTML ESCAPE
+// EDIT SUBJECT
 // ============================================================
 
-function esc(
-    value = ""
-) {
+function editSubject(id) {
 
-    return String(
-        value
-    ).replace(
-        /[&<>"']/g,
-        (character) => {
-
-            const entities = {
-
-                "&":
-                    "&amp;",
-
-                "<":
-                    "&lt;",
-
-                ">":
-                    "&gt;",
-
-                '"':
-                    "&quot;",
-
-                "'":
-                    "&#39;"
-
-            };
+    const subject =
+        subjects.find(
+            item =>
+                item.id === id
+        );
 
 
-            return entities[
-                character
-            ];
+    if (!subject) return;
 
-        }
-    );
+
+    $("tabId")
+        .value =
+        id;
+
+
+    $("tabName")
+        .value =
+        subject.name ||
+        "";
+
+
+    $("tabIcon")
+        .value =
+        subject.icon ||
+        "";
+
+
+    $("tabDialogTitle")
+        .textContent =
+        "Sửa môn học";
+
+
+    $("tabError")
+        .textContent = "";
+
+
+    $("tabDialog")
+        ?.showModal();
 
 }
+
+
+// ============================================================
+// DELETE SUBJECT
+// ============================================================
+
+async function removeSubject(id) {
+
+    const hasHomework =
+        homeworks.some(
+            homework =>
+                homework.subjectId === id
+        );
+
+
+    if (hasHomework) {
+
+        alert(
+            "Môn này đang có bài tập.\n\n" +
+            "Hãy chuyển hoặc xóa các bài tập " +
+            "thuộc môn này trước."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !confirm(
+            "Bạn có chắc muốn xóa môn này?"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        await deleteDoc(
+
+            doc(
+                db,
+                "subjects",
+                id
+            )
+
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Delete subject error:",
+            error
+        );
+
+
+        alert(
+            "Không thể xóa: " +
+            error.message
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// INIT ADVANCED PANEL
+// ============================================================
+
+ensureManagementPanel();
