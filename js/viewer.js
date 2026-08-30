@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, collection, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -57,23 +57,51 @@ onAuthStateChanged(auth,user=>{
 updateStreak();
 
 
+let siteSettings={
+  noHomeworkNoticeEnabled:true,
+  oldHomeworkNoticeEnabled:true,
+  noHomeworkNoticeTitle:"📚 Hôm nay không có bài tập mới",
+  noHomeworkNoticeMessage:"Hôm nay chưa có bài tập mới được cập nhật.",
+  oldHomeworkNoticeTitle:"📢 Bài tập chưa có cập nhật",
+  oldHomeworkNoticeMessage:"Danh sách bài tập hôm nay vẫn giống ngày trước."
+};
+
 function showUpdateNotice(){
-  if(!homework.length)return;
-  const latest=homework.reduce((m,h)=>{const d=h.createdAt?.toDate?h.createdAt.toDate():(h.createdAt?new Date(h.createdAt):null);return d&&(!m||d>m)?d:m},null);
-  if(!latest)return;
-  const todayKey=dayKey(now), latestKey=dayKey(latest);
-  if(latestKey===todayKey)return;
+  const todayKey=dayKey(new Date());
   const dismissed=localStorage.getItem("hh_notice_dismissed");
   if(dismissed===todayKey)return;
-  const diff=Math.max(1,Math.round((new Date(todayKey+"T12:00:00+07:00")-new Date(latestKey+"T12:00:00+07:00"))/DAY));
-  $("noticeTitle").textContent="Chưa có bài mới hôm nay";
-  $("noticeText").textContent=diff===1?`Bài gần nhất được đăng hôm qua (${latest.toLocaleDateString("vi-VN")}).`:`Bài gần nhất được đăng ${diff} ngày trước (${latest.toLocaleDateString("vi-VN")}).`;
+
+  const latest=homework.reduce((m,h)=>{
+    const d=h.createdAt?.toDate?h.createdAt.toDate():(h.createdAt?new Date(h.createdAt):null);
+    return d&&(!m||d>m)?d:m;
+  },null);
+
+  let title="",text="";
+  if(!homework.length){
+    if(siteSettings.noHomeworkNoticeEnabled===false)return;
+    title=siteSettings.noHomeworkNoticeTitle;
+    text=siteSettings.noHomeworkNoticeMessage;
+  }else{
+    if(!latest)return;
+    const latestKey=dayKey(latest);
+    if(latestKey===todayKey)return;
+    if(siteSettings.oldHomeworkNoticeEnabled===false)return;
+    const diff=Math.max(1,Math.round((new Date(todayKey+"T12:00:00+07:00")-new Date(latestKey+"T12:00:00+07:00"))/DAY));
+    title=siteSettings.oldHomeworkNoticeTitle;
+    text=siteSettings.oldHomeworkNoticeMessage.replaceAll("{days}",String(diff)).replaceAll("{date}",latest.toLocaleDateString("vi-VN"));
+  }
+  $("noticeTitle").textContent=title;
+  $("noticeText").textContent=text;
   $("updateNotice").classList.remove("hidden");
 }
 $("noticeClose").onclick=()=>{localStorage.setItem("hh_notice_dismissed",dayKey());$("updateNotice").classList.add("hidden")};
 
 onSnapshot(query(collection(db,"subjects")),s=>{tabs=s.docs.map(d=>({id:d.id,...d.data()}));renderTabs();render()});
 onSnapshot(query(collection(db,"homework"),orderBy("createdAt","desc")),s=>{homework=s.docs.map(d=>({id:d.id,...d.data()}));render();showUpdateNotice()});
+onSnapshot(doc(db,"settings","site"),s=>{
+  if(s.exists())siteSettings={...siteSettings,...s.data()};
+  showUpdateNotice();
+});
 
 function renderTabs(){
  $("tabs").innerHTML=`<button class="tab ${active==="all"?"active":""}" data-tab="all">✨ Tất cả</button>`+
