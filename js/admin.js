@@ -2,9 +2,7 @@
 // FIREBASE IMPORTS
 // ============================================================
 
-import {
-    initializeApp
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 
 import {
     getAuth,
@@ -26,9 +24,7 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-import {
-    firebaseConfig
-} from "./firebase-config.js";
+import { firebaseConfig } from "./firebase-config.js";
 
 
 // ============================================================
@@ -92,8 +88,9 @@ function isAdminEmail(email) {
     }
 
     return ADMIN_EMAILS.includes(
-        String(email).toLowerCase().trim()
+        email.toLowerCase()
     );
+
 }
 
 
@@ -108,6 +105,7 @@ function setLoginError(message = "") {
     if (el) {
         el.textContent = message;
     }
+
 }
 
 
@@ -127,30 +125,7 @@ function setHidden(id, hidden) {
         "hidden",
         hidden
     );
-}
 
-
-// ============================================================
-// HTML ESCAPE
-// ============================================================
-
-function esc(value = "") {
-
-    return String(value).replace(
-        /[&<>"']/g,
-        (character) => {
-
-            const entities = {
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#39;"
-            };
-
-            return entities[character];
-        }
-    );
 }
 
 
@@ -188,17 +163,19 @@ if (googleLoginBtn) {
                     "Không thể đăng nhập: " +
                     (
                         error.code ||
-                        error.message ||
-                        "Lỗi không xác định"
+                        error.message
                     )
                 );
 
             } finally {
 
                 googleLoginBtn.disabled = false;
+
             }
+
         }
     );
+
 }
 
 
@@ -224,9 +201,12 @@ if (logoutBtn) {
                     "Logout Error:",
                     error
                 );
+
             }
+
         }
     );
+
 }
 
 
@@ -255,17 +235,19 @@ onAuthStateChanged(
             stopListeners();
 
             return;
+
         }
 
 
-        const email = (
-            user.email || ""
-        ).toLowerCase().trim();
+        const email =
+            (
+                user.email || ""
+            ).toLowerCase();
 
 
-        // ----------------------------------------------------
+        // ====================================================
         // CHECK ADMIN
-        // ----------------------------------------------------
+        // ====================================================
 
         if (!isAdminEmail(email)) {
 
@@ -285,23 +267,23 @@ onAuthStateChanged(
                 } không có quyền quản trị.`
             );
 
-            signOut(auth).catch(
-                (error) => {
-
-                    console.error(
-                        "Admin sign-out error:",
-                        error
-                    );
-                }
-            );
+            signOut(auth)
+                .catch(
+                    (error) =>
+                        console.error(
+                            "Admin sign-out error:",
+                            error
+                        )
+                );
 
             return;
+
         }
 
 
-        // ----------------------------------------------------
+        // ====================================================
         // ADMIN OK
-        // ----------------------------------------------------
+        // ====================================================
 
         setLoginError("");
 
@@ -316,16 +298,19 @@ onAuthStateChanged(
         );
 
 
-        const adminUser = $("adminUser");
+        const adminUser =
+            $("adminUser");
 
         if (adminUser) {
 
             adminUser.textContent =
                 `${user.displayName || "Admin"} · ${user.email}`;
+
         }
 
 
         start();
+
     }
 );
 
@@ -360,6 +345,7 @@ function stopListeners() {
     unsubscribeUsers = null;
 
     unsubscribeSettings = null;
+
 }
 
 
@@ -394,7 +380,9 @@ function start() {
 
     unsubscribeSubjects =
         onSnapshot(
+
             subjectsQuery,
+
             (snapshot) => {
 
                 subjects =
@@ -413,14 +401,18 @@ function start() {
                 renderHomework();
 
                 updateStats();
+
             },
+
             (error) => {
 
                 console.error(
                     "Subjects Firestore error:",
                     error
                 );
+
             }
+
         );
 
 
@@ -442,7 +434,9 @@ function start() {
 
     unsubscribeHomework =
         onSnapshot(
+
             homeworkQuery,
+
             (snapshot) => {
 
                 homeworks =
@@ -457,14 +451,18 @@ function start() {
                 renderHomework();
 
                 updateStats();
+
             },
+
             (error) => {
 
                 console.error(
                     "Homework Firestore error:",
                     error
                 );
+
             }
+
         );
 
 
@@ -481,7 +479,9 @@ function start() {
 
     unsubscribeUsers =
         onSnapshot(
+
             usersQuery,
+
             (snapshot) => {
 
                 users =
@@ -496,7 +496,9 @@ function start() {
                 renderUsers();
 
                 updateUserStats();
+
             },
+
             (error) => {
 
                 console.error(
@@ -514,8 +516,11 @@ function start() {
                             Không thể tải người dùng:
                             ${esc(error.message)}
                         </p>`;
+
                 }
+
             }
+
         );
 
 
@@ -533,7 +538,9 @@ function start() {
 
     unsubscribeSettings =
         onSnapshot(
+
             settingsRef,
+
             (snapshot) => {
 
                 if (snapshot.exists()) {
@@ -544,17 +551,21 @@ function start() {
                 } else {
 
                     siteSettings = {};
+
                 }
 
 
                 renderSiteSettings();
+
             },
+
             (error) => {
 
                 console.error(
                     "Settings Firestore error:",
                     error
                 );
+
 
                 const container =
                     $("adminSettings");
@@ -566,9 +577,13 @@ function start() {
                             Không thể tải cài đặt:
                             ${esc(error.message)}
                         </p>`;
+
                 }
+
             }
+
         );
+
 }
 
 
@@ -594,6 +609,7 @@ function renderSubjects() {
             </p>`;
 
         return;
+
     }
 
 
@@ -637,8 +653,10 @@ function renderSubjects() {
 
                     </div>
                 `;
+
             }
         ).join("");
+
 }
 
 
@@ -664,6 +682,7 @@ function renderHomework() {
             </p>`;
 
         return;
+
     }
 
 
@@ -701,7 +720,9 @@ function renderHomework() {
                             due.toLocaleString(
                                 "vi-VN"
                             );
+
                     }
+
                 }
 
 
@@ -772,8 +793,10 @@ function renderHomework() {
 
                     </div>
                 `;
+
             }
         ).join("");
+
 }
 
 
@@ -801,6 +824,7 @@ function fillSubjectSelect(
             </option>`;
 
         return;
+
     }
 
 
@@ -810,16 +834,20 @@ function fillSubjectSelect(
 
                 return `
                     <option value="${esc(subject.id)}">
+
                         ${esc(
                             subject.icon ||
                             "📚"
                         )}
+
                         ${esc(
                             subject.name ||
                             "Môn học"
                         )}
+
                     </option>
                 `;
+
             }
         ).join("");
 
@@ -835,7 +863,9 @@ function fillSubjectSelect(
 
         select.value =
             selectedId;
+
     }
+
 }
 
 
@@ -861,6 +891,7 @@ function updateStats() {
             String(
                 homeworks.length
             );
+
     }
 
 
@@ -870,6 +901,7 @@ function updateStats() {
             String(
                 subjects.length
             );
+
     }
 
 
@@ -882,7 +914,9 @@ function updateStats() {
                         item.pinned
                 ).length
             );
+
     }
+
 }
 
 
@@ -892,7 +926,6 @@ function updateStats() {
 
 const newHomework =
     $("newHomework");
-
 
 if (newHomework) {
 
@@ -907,6 +940,7 @@ if (newHomework) {
                 );
 
                 return;
+
             }
 
 
@@ -918,48 +952,22 @@ if (newHomework) {
             }
 
 
-            const title =
-                $("hwDialogTitle");
+            $("hwDialogTitle").textContent =
+                "Tạo bài tập";
 
-            if (title) {
+            $("hwId").value = "";
 
-                title.textContent =
-                    "Tạo bài tập";
-            }
-
-
-            const id =
-                $("hwId");
-
-            if (id) {
-                id.value = "";
-            }
-
-
-            const error =
-                $("hwError");
-
-            if (error) {
-                error.textContent = "";
-            }
-
+            $("hwError").textContent = "";
 
             fillSubjectSelect();
 
 
-            const dialog =
-                $("homeworkDialog");
+            $("homeworkDialog")
+                .showModal();
 
-            if (
-                dialog &&
-                typeof dialog.showModal ===
-                    "function"
-            ) {
-
-                dialog.showModal();
-            }
         }
     );
+
 }
 
 
@@ -969,7 +977,6 @@ if (newHomework) {
 
 const homeworkForm =
     $("homeworkForm");
-
 
 if (homeworkForm) {
 
@@ -983,16 +990,13 @@ if (homeworkForm) {
             const id =
                 $("hwId").value.trim();
 
-
             const subjectId =
                 $("hwTab").value;
-
 
             const title =
                 $("hwTitle")
                     .value
                     .trim();
-
 
             const content =
                 $("hwContent")
@@ -1006,6 +1010,7 @@ if (homeworkForm) {
                     "Vui lòng chọn môn học.";
 
                 return;
+
             }
 
 
@@ -1015,6 +1020,7 @@ if (homeworkForm) {
                     "Vui lòng nhập tiêu đề.";
 
                 return;
+
             }
 
 
@@ -1024,6 +1030,7 @@ if (homeworkForm) {
                     "Vui lòng nhập nội dung.";
 
                 return;
+
             }
 
 
@@ -1047,6 +1054,7 @@ if (homeworkForm) {
 
                 updatedAt:
                     serverTimestamp()
+
             };
 
 
@@ -1067,6 +1075,7 @@ if (homeworkForm) {
 
                 data.createdAt =
                     serverTimestamp();
+
             }
 
 
@@ -1078,27 +1087,20 @@ if (homeworkForm) {
 
 
                 await setDoc(
+
                     doc(
                         db,
                         "homework",
                         documentId
                     ),
+
                     data
+
                 );
 
 
-                const dialog =
-                    $("homeworkDialog");
-
-                if (
-                    dialog &&
-                    typeof dialog.close ===
-                        "function"
-                ) {
-
-                    dialog.close();
-                }
-
+                $("homeworkDialog")
+                    .close();
 
                 $("hwError").textContent =
                     "";
@@ -1114,9 +1116,12 @@ if (homeworkForm) {
                 $("hwError").textContent =
                     "Không thể lưu: " +
                     error.message;
+
             }
+
         }
     );
+
 }
 
 
@@ -1127,60 +1132,32 @@ if (homeworkForm) {
 const newTab =
     $("newTab");
 
-
 if (newTab) {
 
     newTab.addEventListener(
         "click",
         () => {
 
-            const title =
-                $("tabDialogTitle");
-
-            if (title) {
-
-                title.textContent =
-                    "Tạo môn học";
-            }
+            $("tabDialogTitle")
+                .textContent =
+                "Tạo môn học";
 
 
-            const form =
-                $("tabForm");
+            $("tabForm").reset();
 
-            if (form) {
-                form.reset();
-            }
+            $("tabId").value =
+                "";
 
-
-            const id =
-                $("tabId");
-
-            if (id) {
-                id.value = "";
-            }
+            $("tabError").textContent =
+                "";
 
 
-            const error =
-                $("tabError");
+            $("tabDialog")
+                .showModal();
 
-            if (error) {
-                error.textContent = "";
-            }
-
-
-            const dialog =
-                $("tabDialog");
-
-            if (
-                dialog &&
-                typeof dialog.showModal ===
-                    "function"
-            ) {
-
-                dialog.showModal();
-            }
         }
     );
+
 }
 
 
@@ -1190,7 +1167,6 @@ if (newTab) {
 
 const tabForm =
     $("tabForm");
-
 
 if (tabForm) {
 
@@ -1227,6 +1203,7 @@ if (tabForm) {
                     "Vui lòng nhập tên môn học.";
 
                 return;
+
             }
 
 
@@ -1266,6 +1243,7 @@ if (tabForm) {
 
                 updatedAt:
                     serverTimestamp()
+
             };
 
 
@@ -1277,26 +1255,20 @@ if (tabForm) {
 
 
                 await setDoc(
+
                     doc(
                         db,
                         "subjects",
                         documentId
                     ),
+
                     data
+
                 );
 
 
-                const dialog =
-                    $("tabDialog");
-
-                if (
-                    dialog &&
-                    typeof dialog.close ===
-                        "function"
-                ) {
-
-                    dialog.close();
-                }
+                $("tabDialog")
+                    .close();
 
 
                 $("tabError")
@@ -1315,9 +1287,12 @@ if (tabForm) {
                     .textContent =
                     "Không thể lưu: " +
                     error.message;
+
             }
+
         }
     );
+
 }
 
 
@@ -1382,17 +1357,9 @@ window.editHomework =
             "";
 
 
-        const dialog =
-            $("homeworkDialog");
+        $("homeworkDialog")
+            .showModal();
 
-        if (
-            dialog &&
-            typeof dialog.showModal ===
-                "function"
-        ) {
-
-            dialog.showModal();
-        }
     };
 
 
@@ -1410,6 +1377,7 @@ window.removeHomework =
         ) {
 
             return;
+
         }
 
 
@@ -1435,7 +1403,9 @@ window.removeHomework =
                 "Không thể xóa: " +
                 error.message
             );
+
         }
+
     };
 
 
@@ -1482,17 +1452,9 @@ window.editSubject =
             "";
 
 
-        const dialog =
-            $("tabDialog");
+        $("tabDialog")
+            .showModal();
 
-        if (
-            dialog &&
-            typeof dialog.showModal ===
-                "function"
-        ) {
-
-            dialog.showModal();
-        }
     };
 
 
@@ -1520,6 +1482,7 @@ window.removeSubject =
             );
 
             return;
+
         }
 
 
@@ -1530,6 +1493,7 @@ window.removeSubject =
         ) {
 
             return;
+
         }
 
 
@@ -1555,7 +1519,9 @@ window.removeSubject =
                 "Không thể xóa: " +
                 error.message
             );
+
         }
+
     };
 
 
@@ -1567,7 +1533,6 @@ function renderUsers() {
 
     const container =
         $("adminUsers");
-
 
     if (!container) {
         return;
@@ -1582,6 +1547,7 @@ function renderUsers() {
             </p>`;
 
         return;
+
     }
 
 
@@ -1644,13 +1610,16 @@ function renderUsers() {
                                 date.toLocaleString(
                                     "vi-VN"
                                 );
+
                         }
 
                     } catch {
 
                         lastAccess =
                             "Không xác định";
+
                     }
+
                 }
 
 
@@ -1666,19 +1635,15 @@ function renderUsers() {
                         </small>
 
                         <small>
-
                             🔥 Streak:
-
                             <strong>
                                 ${streak}
                             </strong>
 
                             · Cao nhất:
-
                             <strong>
                                 ${highest}
                             </strong>
-
                         </small>
 
                         <small>
@@ -1699,8 +1664,10 @@ function renderUsers() {
 
                     </div>
                 `;
+
             }
         ).join("");
+
 }
 
 
@@ -1726,6 +1693,7 @@ function updateUserStats() {
             String(
                 users.length
             );
+
     }
 
 
@@ -1746,7 +1714,6 @@ function updateUserStats() {
                 if (
                     !user.lastAccess
                 ) {
-
                     return false;
                 }
 
@@ -1772,7 +1739,9 @@ function updateUserStats() {
                 } catch {
 
                     return false;
+
                 }
+
             }
         ).length;
 
@@ -1795,6 +1764,7 @@ function updateUserStats() {
             String(
                 visitedToday
             );
+
     }
 
 
@@ -1804,7 +1774,9 @@ function updateUserStats() {
             String(
                 totalStreak
             );
+
     }
+
 }
 
 
@@ -1854,7 +1826,6 @@ window.editUser =
         if (
             streakInput === null
         ) {
-
             return;
         }
 
@@ -1873,7 +1844,6 @@ window.editUser =
         if (
             highestInput === null
         ) {
-
             return;
         }
 
@@ -1899,11 +1869,13 @@ window.editUser =
         try {
 
             await setDoc(
+
                 doc(
                     db,
                     "users",
                     id
                 ),
+
                 {
 
                     displayName:
@@ -1917,10 +1889,13 @@ window.editUser =
                         serverTimestamp()
 
                 },
+
                 {
                     merge: true
                 }
+
             );
+
 
         } catch (error) {
 
@@ -1934,7 +1909,9 @@ window.editUser =
                 "Không thể sửa người dùng: " +
                 error.message
             );
+
         }
+
     };
 
 
@@ -2000,12 +1977,17 @@ function renderSiteSettings() {
             async () => {
 
                 await saveSiteSettings({
+
                     oldHomeworkNoticeEnabled:
                         toggle.checked
+
                 });
+
             }
         );
+
     }
+
 }
 
 
@@ -2023,21 +2005,22 @@ async function saveSiteSettings(
             auth.currentUser;
 
 
-        // ----------------------------------------------------
+        // ================================================
         // CHECK LOGIN
-        // ----------------------------------------------------
+        // ================================================
 
         if (!currentUser) {
 
             throw new Error(
                 "Bạn chưa đăng nhập."
             );
+
         }
 
 
-        // ----------------------------------------------------
+        // ================================================
         // CHECK ADMIN
-        // ----------------------------------------------------
+        // ================================================
 
         if (
             !isAdminEmail(
@@ -2048,28 +2031,39 @@ async function saveSiteSettings(
             throw new Error(
                 "Tài khoản hiện tại không có quyền Admin."
             );
+
         }
 
 
-        // ----------------------------------------------------
+        // ================================================
         // SAVE
-        // ----------------------------------------------------
+        // ================================================
 
         await setDoc(
+
             doc(
                 db,
                 "settings",
                 "site"
             ),
+
             {
+
                 ...changes,
+
                 updatedAt:
                     serverTimestamp()
+
             },
+
             {
+
                 merge: true
+
             }
+
         );
+
 
     } catch (error) {
 
@@ -2083,5 +2077,51 @@ async function saveSiteSettings(
             "Không thể lưu cài đặt: " +
             error.message
         );
+
     }
+
+}
+
+
+// ============================================================
+// HTML ESCAPE
+// ============================================================
+
+function esc(
+    value = ""
+) {
+
+    return String(
+        value
+    ).replace(
+        /[&<>"']/g,
+        (character) => {
+
+            const entities = {
+
+                "&":
+                    "&amp;",
+
+                "<":
+                    "&lt;",
+
+                ">":
+                    "&gt;",
+
+                '"':
+                    "&quot;",
+
+                "'":
+                    "&#39;"
+
+            };
+
+
+            return entities[
+                character
+            ];
+
+        }
+    );
+
 }
