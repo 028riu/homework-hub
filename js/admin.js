@@ -1,28 +1,2087 @@
-import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import {getFirestore,collection,doc,setDoc,deleteDoc,onSnapshot,query,orderBy,serverTimestamp,runTransaction} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import {firebaseConfig} from "./firebase-config.js";
-const app=initializeApp(firebaseConfig),db=getFirestore(app),auth=getAuth(app),provider=new GoogleAuthProvider(),$=id=>document.getElementById(id);const ADMINS=["028riu@gmail.com","tu0ngtun2gsahur8@gmail.com","linh085760@gmail.com","phuong026443@stu.vinschool.edu.vn"].map(x=>x.toLowerCase());const DAY=86400000,TZ="Asia/Ho_Chi_Minh";let users=[],homeworks=[],subjects=[],progressDocs=[],settings={};let unsub=[];let selected=new Set(),month=new Date();let sort="activity";
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;const isAdmin=e=>e&&ADMINS.includes(String(e).toLowerCase());const dateKey=v=>{if(!v)return"";const d=v?.toDate?v.toDate():v?.seconds?new Date(v.seconds*1000):new Date(v);return Number.isNaN(d.getTime())?"":new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(d)};const fmt=v=>{if(!v)return"Chưa có";const d=v?.toDate?v.toDate():v?.seconds?new Date(v.seconds*1000):new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleString("vi-VN")};
-function setHidden(id,x){$(id)?.classList.toggle("hidden",x)}function err(t){if($("loginError"))$("loginError").textContent=t}function close(id){const d=$(id);if(d?.open)d.close()}function open(id){const d=$(id);if(d?.showModal)d.showModal()}
-$("googleLoginBtn").onclick=async()=>{err("");try{await signInWithPopup(auth,provider)}catch(e){err(`Không thể đăng nhập: ${e.code||e.message}`)}};$("logoutBtn").onclick=()=>signOut(auth);
-onAuthStateChanged(auth,user=>{if(!user){setHidden("loginView",false);setHidden("dashboard",true);stop();return}if(!isAdmin(user.email)){err(`Tài khoản ${user.email||"này"} không có quyền quản trị.`);signOut(auth);return}setHidden("loginView",true);setHidden("dashboard",false);$("adminUser").textContent=`${user.displayName||"Admin"} · ${user.email}`;start()});function stop(){unsub.forEach(f=>f&&f());unsub=[]}
-function start(){if(unsub.length)return;unsub.push(onSnapshot(query(collection(db,"users")),s=>{users=s.docs.map(d=>({id:d.id,...d.data()}));renderUsers();renderOverview();renderStats()}));unsub.push(onSnapshot(query(collection(db,"subjects"),orderBy("order","asc")),s=>{subjects=s.docs.map(d=>({id:d.id,...d.data()}));renderSubjects();fillSubjectSelect();renderCalendar()}));unsub.push(onSnapshot(query(collection(db,"homework"),orderBy("createdAt","desc")),s=>{homeworks=s.docs.map(d=>({id:d.id,...d.data()}));renderHomework();renderOverview();renderStats();renderCalendar()}));unsub.push(onSnapshot(collection(db,"settings"),s=>{settings={};s.docs.forEach(d=>settings[d.id]=d.data());renderSettings()}));}
-function renderStats(){const active=users.filter(u=>dateKey(u.lastVisitAt||u.lastVisitDate||u.lastLoginAt)===new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(new Date())).length;const xp=users.reduce((a,u)=>a+num(u.totalXP),0),points=users.reduce((a,u)=>a+num(u.points),0),completed=users.reduce((a,u)=>a+num(u.completedHomeworkCount),0);$("statUsers").textContent=users.length;$("statHomework").textContent=homeworks.length;$("statActive").textContent=active;$("statXP").textContent=xp.toLocaleString("vi-VN");$("statPoints").textContent=points.toLocaleString("vi-VN");$("statCompleted").textContent=completed.toLocaleString("vi-VN")}
-function renderOverview(){const total=users.length,avg=total?users.reduce((a,u)=>a+num(u.currentStreak??u.streak),0)/total:0,best=users.length?Math.max(...users.map(u=>num(u.longestStreak??u.streak))):0;$("overviewCards").innerHTML=[["👥","Users",total],["🔥","Streak TB",avg.toFixed(1)],["🏆","Streak cao nhất",best],["📚","Môn học",subjects.length],["📝","Bài tập",homeworks.length],["💎","Points",users.reduce((a,u)=>a+num(u.points),0).toLocaleString("vi-VN")]].map(x=>`<div class="overview-card"><span>${x[0]}</span><b>${x[2]}</b><small>${x[1]}</small></div>`).join("");const ranked=[...users].sort((a,b)=>num(b.currentStreak??b.streak)-num(a.currentStreak??a.streak)).slice(0,8);$("topUsers").innerHTML=ranked.length?ranked.map((u,i)=>`<div class="rank-row"><b>#${i+1}</b><span>${esc(u.displayName||u.name||u.email||u.id)}</span><small>🔥 ${num(u.currentStreak??u.streak)} · ⭐ ${num(u.totalXP)}</small></div>`).join(""):"<p class='muted'>Chưa có người dùng.</p>";$("recentHomework").innerHTML=homeworks.slice(0,6).map(h=>`<div class="admin-item"><b>${h.pinned?'📌 ':''}${h.important?'⭐ ':''}${esc(h.title)}</b><small>${esc(subjects.find(s=>s.id===h.subjectId)?.name||'Môn chưa rõ')} · ${fmt(h.createdAt)}</small></div>`).join("")||"<p class='muted'>Chưa có bài.</p>"}
-function renderUsers(){const c=$("adminUsers");if(!c)return;let list=[...users];const q=($("userSearch")?.value||"").trim().toLowerCase();if(q)list=list.filter(u=>[u.id,u.email,u.displayName,u.name,u.username].some(v=>String(v||"").toLowerCase().includes(q)));list.sort((a,b)=>sort==='streak'?num(b.currentStreak??b.streak)-num(a.currentStreak??a.streak):sort==='xp'?num(b.totalXP)-num(a.totalXP):sort==='points'?num(b.points)-num(a.points):String(b.lastVisitDate||b.lastLoginAt||'').localeCompare(String(a.lastVisitDate||a.lastLoginAt||''));c.innerHTML=list.map(u=>{const st=num(u.currentStreak??u.streak),long=num(u.longestStreak??u.streak),xp=num(u.totalXP),points=num(u.points),name=u.displayName||u.name||u.email||u.id;return `<div class="admin-item user-admin-item"><div class="user-main"><span class="avatar">${esc((name[0]||'U').toUpperCase())}</span><div><b>${esc(name)}</b><small>${esc(u.email||'Không có email')}</small><small>🔥 ${st} · 🏆 ${long} · ⭐ ${xp} XP · 💎 ${points} · 📅 ${esc(u.lastVisitDate||dateKey(u.lastVisitAt)||'Chưa có')}</small></div></div><div class="actions"><button data-user-edit="${esc(u.id)}">✏️ Sửa</button></div></div>`}).join("")||`<p class="muted">${users.length?'Không tìm thấy người dùng.':'Chưa có người dùng nào. Người dùng chỉ xuất hiện sau khi đăng nhập Google ở trang chủ.'}</p>`}
-$("userSearch").oninput=renderUsers;$("userSort").onchange=e=>{sort=e.target.value;renderUsers()};$("refreshUsers").onclick=renderUsers;document.addEventListener("click",e=>{const b=e.target.closest("[data-user-edit]");if(b)editUser(b.dataset.userEdit)});
-function editUser(id){const u=users.find(x=>x.id===id);if(!u)return;document.querySelector("#userEditorModal")?.remove();const m=document.createElement("div");m.id="userEditorModal";m.innerHTML=`<div class="admin-modal-backdrop"><div class="admin-modal"><div class="admin-modal-header"><div><p class="eyebrow">USER CONTROL</p><h2>👤 ${esc(u.displayName||u.email||u.id)}</h2></div><button class="icon-btn" id="closeUserEditor">×</button></div><div class="admin-form"><label>Email profile<input id="euEmail" value="${esc(u.email||'')}"></label><label>Username<input id="euUsername" value="${esc(u.username||'')}"></label><label>Tên hiển thị<input id="euName" value="${esc(u.displayName||u.name||'')}"></label><div class="form-2"><label>🔥 Streak<input id="euStreak" type="number" min="0" value="${num(u.currentStreak??u.streak)}"></label><label>🏆 Streak cao nhất<input id="euLongest" type="number" min="0" value="${num(u.longestStreak??u.streak)}"></label><label>⭐ Total XP<input id="euXP" type="number" min="0" value="${num(u.totalXP)}"></label><label>💎 Points<input id="euPoints" type="number" min="0" value="${num(u.points)}"></label></div><label>📅 Last visit<input id="euDate" placeholder="YYYY-MM-DD" value="${esc(u.lastVisitDate||'')}"></label><h3>🐾 Pet</h3><div class="form-2"><label>Skin<input id="euSkin" value="${esc(u.pet?.skin||'default')}"></label><label>Pet type<input id="euPet" value="${esc(u.pet?.type||'flamey')}"></label></div><label>🎁 Unlock items (phân cách bằng dấu phẩy)<input id="euItems" value="${esc((u.unlockedItems||[]).join(', '))}"></label><div class="reward-buttons"><button data-reward="100xp">+100 XP</button><button data-reward="500xp">+500 XP</button><button data-reward="500p">+500 Points</button><button data-reward="reset">Reset Streak</button></div><div class="actions"><button class="primary" id="saveUser">💾 Lưu toàn bộ</button><button class="danger" id="deleteUser">🗑 Xóa profile</button></div><p id="ueError" class="error"></p></div></div></div>`;document.body.appendChild(m);$("closeUserEditor").onclick=()=>m.remove();m.querySelector('.admin-modal-backdrop').onclick=e=>{if(e.target.classList.contains('admin-modal-backdrop'))m.remove()};m.querySelectorAll('[data-reward]').forEach(b=>b.onclick=async()=>{const r=b.dataset.reward;try{await rewardUser(id,r);if(r==='reset')$("euStreak").value=0;else if(r==='100xp')$("euXP").value=num($("euXP").value)+100;else if(r==='500xp')$("euXP").value=num($("euXP").value)+500;else $("euPoints").value=num($("euPoints").value)+500}catch(e){$("ueError").textContent=e.message}});$("saveUser").onclick=async()=>{try{const streak=Math.max(0,Math.floor(num($("euStreak").value))),longest=Math.max(streak,Math.floor(num($("euLongest").value))),xp=Math.max(0,Math.floor(num($("euXP").value))),points=Math.max(0,Math.floor(num($("euPoints").value)));await setDoc(doc(db,"users",id),{email:$("euEmail").value.trim(),username:$("euUsername").value.trim(),displayName:$("euName").value.trim(),name:$("euName").value.trim(),streak,currentStreak:streak,longestStreak:longest,highestStreak:longest,maxStreak:longest,totalXP:xp,points,level:Math.max(1,Math.floor(Math.sqrt(xp/100))+1),lastVisitDate:$("euDate").value.trim(),pet:{...(u.pet||{}),type:$("euPet").value.trim()||'flamey',skin:$("euSkin").value.trim()||'default'},unlockedItems:$("euItems").value.split(',').map(x=>x.trim()).filter(Boolean),updatedAt:serverTimestamp()},{merge:true});m.remove();showToast('Đã lưu người dùng.')}catch(e){$("ueError").textContent=`Không thể lưu: ${e.message}`}};$("deleteUser").onclick=async()=>{if(!confirm('Xóa profile Firestore? Authentication Google không bị xóa.'))return;try{await deleteDoc(doc(db,'users',id));m.remove()}catch(e){$("ueError").textContent=e.message}}}
-async function rewardUser(id,r){const ref=doc(db,'users',id);await runTransaction(db,async tx=>{const s=await tx.get(ref),d=s.exists()?s.data():{};let xp=num(d.totalXP),points=num(d.points),streak=num(d.currentStreak??d.streak);if(r==='100xp')xp+=100;if(r==='500xp')xp+=500;if(r==='500p')points+=500;if(r==='reset')streak=0;tx.set(ref,{totalXP:xp,points,currentStreak:streak,streak,level:Math.max(1,Math.floor(Math.sqrt(xp/100))+1),updatedAt:serverTimestamp()},{merge:true})})}
-function renderSubjects(){const c=$("adminTabs");c.innerHTML=subjects.map(s=>`<div class="admin-item"><b>${esc(s.icon||'📚')} ${esc(s.name)}</b><small>Order: ${num(s.order)}</small><div class="actions"><button data-action="edit-subject" data-id="${s.id}">Sửa</button><button class="danger" data-action="delete-subject" data-id="${s.id}">Xóa</button></div></div>`).join('')||'<p class="muted">Chưa có môn.</p>'}function fillSubjectSelect(id=''){const s=$("hwTab");s.innerHTML=subjects.map(x=>`<option value="${esc(x.id)}">${esc(x.icon||'📚')} ${esc(x.name)}</option>`).join('')||'<option value="">Chưa có môn</option>';if(id)s.value=id}
-function renderHomework(){const c=$("adminHomework");c.innerHTML=homeworks.map(h=>`<div class="admin-item hw-admin-row"><label class="select-check"><input type="checkbox" data-hw-select="${esc(h.id)}" ${selected.has(h.id)?'checked':''}></label><div><b>${h.pinned?'📌 ':''}${h.important?'⭐ ':''}${esc(h.title)}</b><small>${esc(subjects.find(s=>s.id===h.subjectId)?.name||'Chưa phân loại')} · ${esc(h.dueDate||'Không đặt hạn')}</small><small>${esc(h.content||'').slice(0,180)}</small></div><div class="actions"><button data-action="edit-homework" data-id="${esc(h.id)}">Sửa</button><button class="danger" data-action="delete-homework" data-id="${esc(h.id)}">Xóa</button></div></div>`).join('')||'<p class="muted">Chưa có bài.</p>';document.querySelectorAll('[data-hw-select]').forEach(x=>x.onchange=()=>x.checked?selected.add(x.dataset.hwSelect):selected.delete(x.dataset.hwSelect))}
-$("newHomework").onclick=()=>{if(!subjects.length)return alert('Hãy tạo môn trước.');$("homeworkForm").reset();$("hwId").value='';fillSubjectSelect();open('homeworkDialog')};$("newTab").onclick=()=>{$("tabForm").reset();$("tabId").value='';open('tabDialog')};
-$("homeworkForm").onsubmit=async e=>{e.preventDefault();const id=$("hwId").value.trim(),old=homeworks.find(h=>h.id===id),data={subjectId:$("hwTab").value,title:$("hwTitle").value.trim(),content:$("hwContent").value.trim(),dueDate:$("hwDue").value||null,pinned:$("hwPinned").checked,important:$("hwImportant").checked,createdAt:old?.createdAt||serverTimestamp(),updatedAt:serverTimestamp()};try{await setDoc(doc(db,'homework',id||crypto.randomUUID()),data);close('homeworkDialog')}catch(x){$("hwError").textContent=x.message}};
-$("tabForm").onsubmit=async e=>{e.preventDefault();const id=$("tabId").value.trim(),old=subjects.find(s=>s.id===id),order=old?num(old.order):subjects.length+1;try{await setDoc(doc(db,'subjects',id||crypto.randomUUID()),{name:$("tabName").value.trim(),icon:$("tabIcon").value.trim()||'📚',order,updatedAt:serverTimestamp()});close('tabDialog')}catch(x){$("tabError").textContent=x.message}};
-document.addEventListener('click',async e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id;try{if(b.dataset.action==='edit-homework'){const h=homeworks.find(x=>x.id===id);$("hwId").value=id;$("hwTitle").value=h.title||'';$("hwContent").value=h.content||'';$("hwDue").value=h.dueDate||'';$("hwPinned").checked=!!h.pinned;$("hwImportant").checked=!!h.important;fillSubjectSelect(h.subjectId);open('homeworkDialog')}if(b.dataset.action==='delete-homework'&&confirm('Xóa bài này?'))await deleteDoc(doc(db,'homework',id));if(b.dataset.action==='edit-subject'){const s=subjects.find(x=>x.id===id);$("tabId").value=id;$("tabName").value=s.name||'';$("tabIcon").value=s.icon||'';open('tabDialog')}if(b.dataset.action==='delete-subject'){if(homeworks.some(h=>h.subjectId===id))return alert('Môn đang có bài tập.');if(confirm('Xóa môn?'))await deleteDoc(doc(db,'subjects',id))}}catch(x){alert(x.message)}});
-document.querySelectorAll('[data-bulk]').forEach(b=>b.onclick=async()=>{const act=b.dataset.bulk;if(!selected.size)return alert('Hãy chọn ít nhất một bài.');if(act==='delete'&&!confirm(`Xóa ${selected.size} bài?`))return;for(const id of selected){if(act==='delete')await deleteDoc(doc(db,'homework',id));else await setDoc(doc(db,'homework',id),{pinned:act==='pin',updatedAt:serverTimestamp()},{merge:true})}selected.clear();renderHomework()});
-function renderCalendar(){const y=month.getFullYear(),m=month.getMonth();$("calendarTitle").textContent=`Tháng ${m+1}/${y}`;const first=new Date(y,m,1),days=new Date(y,m+1,0).getDate(),offset=(first.getDay()+6)%7;let html=['T2','T3','T4','T5','T6','T7','CN'].map(x=>`<div class="cal-head">${x}</div>`).join('');for(let i=0;i<offset;i++)html+='<div class="cal-day empty-day"></div>';for(let d=1;d<=days;d++){const key=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,hs=homeworks.filter(h=>dateKey(h.createdAt)===key||String(h.dueDate||'').startsWith(key));html+=`<button class="cal-day ${hs.length?'has-homework':''}" data-date="${key}"><b>${d}</b>${hs.length?`<span>${hs.length} bài</span>`:''}</button>`}$("calendar").innerHTML=html;document.querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>{const hs=homeworks.filter(h=>dateKey(h.createdAt)===b.dataset.date||String(h.dueDate||'').startsWith(b.dataset.date));$("calendarDetails").innerHTML=`<b>${b.dataset.date}</b>${hs.length?hs.map(h=>`<div class="admin-item"><b>${esc(h.title)}</b><small>${esc(subjects.find(s=>s.id===h.subjectId)?.name||'')}</small></div>`).join(''):'<p>Không có bài tập.</p>'}`})}
-$("prevMonth").onclick=()=>{month.setMonth(month.getMonth()-1);renderCalendar()};$("nextMonth").onclick=()=>{month.setMonth(month.getMonth()+1);renderCalendar()};
-function renderSettings(){const s=settings.site||{};$("adminSettings").innerHTML=`<label class="setting-card"><span><b>🔔 Thông báo không có bài mới</b><small>Bật cảnh báo khi hôm nay chưa có bài mới.</small></span><input id="setNo" type="checkbox" ${s.noHomeworkNoticeEnabled!==false?'checked':''}></label><label class="setting-card"><span><b>📢 Thông báo bài cũ</b><small>Bật cảnh báo khi danh sách chưa cập nhật.</small></span><input id="setOld" type="checkbox" ${s.oldHomeworkNoticeEnabled!==false?'checked':''}></label><label class="setting-card"><span><b>🎁 XP hoàn thành bài</b><small>Số XP mặc định hiển thị trên card.</small></span><input id="setXP" type="number" min="0" value="${num(s.xpPerHomework,30)}"></label><label class="setting-card"><span><b>💎 Points hoàn thành bài</b><small>Số Points mặc định.</small></span><input id="setPoints" type="number" min="0" value="${num(s.pointsPerHomework,20)}"></label><label>Tiêu đề thông báo<textarea id="setTitle" rows="2">${esc(s.noHomeworkNoticeTitle||'📚 Hôm nay không có bài tập mới')}</textarea></label><label>Nội dung thông báo<textarea id="setMsg" rows="3">${esc(s.noHomeworkNoticeMessage||'Hôm nay chưa có bài tập mới được cập nhật.')}</textarea></label>`}$("saveAllSettings").onclick=async()=>{try{await setDoc(doc(db,'settings','site'),{noHomeworkNoticeEnabled:$("setNo").checked,oldHomeworkNoticeEnabled:$("setOld").checked,xpPerHomework:num($("setXP").value,30),pointsPerHomework:num($("setPoints").value,20),noHomeworkNoticeTitle:$("setTitle").value.trim(),noHomeworkNoticeMessage:$("setMsg").value.trim(),updatedAt:serverTimestamp()},{merge:true});showToast('Đã lưu cài đặt')}catch(e){alert(e.message)}};
-document.querySelectorAll('.admin-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.admin-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.admin-page').forEach(p=>p.classList.toggle('hidden',p.dataset.page!==b.dataset.adminTab));if(b.dataset.adminTab==='calendar')renderCalendar()});
-function showToast(t){const x=document.createElement('div');x.className='toast';x.textContent=t;document.body.appendChild(x);requestAnimationFrame(()=>x.classList.add('show'));setTimeout(()=>x.remove(),2300)}window.HomeworkAdmin={get state(){return{users,homeworks,subjects,settings}},editUser,rewardUser};
+// ============================================================
+// FIREBASE IMPORTS
+// ============================================================
+
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+import {
+    getAuth,
+    onAuthStateChanged,
+    signInWithPopup,
+    GoogleAuthProvider,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+import {
+    getFirestore,
+    collection,
+    doc,
+    setDoc,
+    deleteDoc,
+    onSnapshot,
+    query,
+    orderBy,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+import {
+    firebaseConfig
+} from "./firebase-config.js";
+
+
+// ============================================================
+// FIREBASE
+// ============================================================
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+const db = getFirestore(app);
+
+const provider = new GoogleAuthProvider();
+
+const $ = (id) => document.getElementById(id);
+
+
+// ============================================================
+// ADMIN EMAILS
+// ============================================================
+
+const ADMIN_EMAILS = [
+    "028riu@gmail.com",
+    "tu0ngtun2gsahur8@gmail.com",
+    "linh085760@gmail.com",
+    "phuong026443@stu.vinschool.edu.vn"
+];
+
+
+// ============================================================
+// DATA
+// ============================================================
+
+let subjects = [];
+
+let homeworks = [];
+
+let users = [];
+
+let siteSettings = {};
+
+let started = false;
+
+let unsubscribeSubjects = null;
+
+let unsubscribeHomework = null;
+
+let unsubscribeUsers = null;
+
+let unsubscribeSettings = null;
+
+
+// ============================================================
+// ADMIN CHECK
+// ============================================================
+
+function isAdminEmail(email) {
+
+    if (!email) {
+        return false;
+    }
+
+    return ADMIN_EMAILS.includes(
+        String(email).toLowerCase().trim()
+    );
+}
+
+
+// ============================================================
+// LOGIN ERROR
+// ============================================================
+
+function setLoginError(message = "") {
+
+    const el = $("loginError");
+
+    if (el) {
+        el.textContent = message;
+    }
+}
+
+
+// ============================================================
+// HIDDEN
+// ============================================================
+
+function setHidden(id, hidden) {
+
+    const el = $(id);
+
+    if (!el) {
+        return;
+    }
+
+    el.classList.toggle(
+        "hidden",
+        hidden
+    );
+}
+
+
+// ============================================================
+// HTML ESCAPE
+// ============================================================
+
+function esc(value = "") {
+
+    return String(value).replace(
+        /[&<>"']/g,
+        (character) => {
+
+            const entities = {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            };
+
+            return entities[character];
+        }
+    );
+}
+
+
+// ============================================================
+// GOOGLE LOGIN
+// ============================================================
+
+const googleLoginBtn = $("googleLoginBtn");
+
+if (googleLoginBtn) {
+
+    googleLoginBtn.addEventListener(
+        "click",
+        async () => {
+
+            setLoginError("");
+
+            googleLoginBtn.disabled = true;
+
+            try {
+
+                await signInWithPopup(
+                    auth,
+                    provider
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Google Login Error:",
+                    error
+                );
+
+                setLoginError(
+                    "Không thể đăng nhập: " +
+                    (
+                        error.code ||
+                        error.message ||
+                        "Lỗi không xác định"
+                    )
+                );
+
+            } finally {
+
+                googleLoginBtn.disabled = false;
+            }
+        }
+    );
+}
+
+
+// ============================================================
+// LOGOUT
+// ============================================================
+
+const logoutBtn = $("logoutBtn");
+
+if (logoutBtn) {
+
+    logoutBtn.addEventListener(
+        "click",
+        async () => {
+
+            try {
+
+                await signOut(auth);
+
+            } catch (error) {
+
+                console.error(
+                    "Logout Error:",
+                    error
+                );
+            }
+        }
+    );
+}
+
+
+// ============================================================
+// AUTH STATE
+// ============================================================
+
+onAuthStateChanged(
+    auth,
+    (user) => {
+
+        if (!user) {
+
+            setHidden(
+                "loginView",
+                false
+            );
+
+            setHidden(
+                "dashboard",
+                true
+            );
+
+            started = false;
+
+            stopListeners();
+
+            return;
+        }
+
+
+        const email = (
+            user.email || ""
+        ).toLowerCase().trim();
+
+
+        // ----------------------------------------------------
+        // CHECK ADMIN
+        // ----------------------------------------------------
+
+        if (!isAdminEmail(email)) {
+
+            setHidden(
+                "loginView",
+                false
+            );
+
+            setHidden(
+                "dashboard",
+                true
+            );
+
+            setLoginError(
+                `Tài khoản ${
+                    user.email || "này"
+                } không có quyền quản trị.`
+            );
+
+            signOut(auth).catch(
+                (error) => {
+
+                    console.error(
+                        "Admin sign-out error:",
+                        error
+                    );
+                }
+            );
+
+            return;
+        }
+
+
+        // ----------------------------------------------------
+        // ADMIN OK
+        // ----------------------------------------------------
+
+        setLoginError("");
+
+        setHidden(
+            "loginView",
+            true
+        );
+
+        setHidden(
+            "dashboard",
+            false
+        );
+
+
+        const adminUser = $("adminUser");
+
+        if (adminUser) {
+
+            adminUser.textContent =
+                `${user.displayName || "Admin"} · ${user.email}`;
+        }
+
+
+        start();
+    }
+);
+
+
+// ============================================================
+// STOP LISTENERS
+// ============================================================
+
+function stopListeners() {
+
+    if (unsubscribeSubjects) {
+        unsubscribeSubjects();
+    }
+
+    if (unsubscribeHomework) {
+        unsubscribeHomework();
+    }
+
+    if (unsubscribeUsers) {
+        unsubscribeUsers();
+    }
+
+    if (unsubscribeSettings) {
+        unsubscribeSettings();
+    }
+
+
+    unsubscribeSubjects = null;
+
+    unsubscribeHomework = null;
+
+    unsubscribeUsers = null;
+
+    unsubscribeSettings = null;
+}
+
+
+// ============================================================
+// START
+// ============================================================
+
+function start() {
+
+    if (started) {
+        return;
+    }
+
+    started = true;
+
+
+    // ========================================================
+    // SUBJECTS
+    // ========================================================
+
+    const subjectsQuery = query(
+        collection(
+            db,
+            "subjects"
+        ),
+        orderBy(
+            "order",
+            "asc"
+        )
+    );
+
+
+    unsubscribeSubjects =
+        onSnapshot(
+            subjectsQuery,
+            (snapshot) => {
+
+                subjects =
+                    snapshot.docs.map(
+                        (item) => ({
+                            id: item.id,
+                            ...item.data()
+                        })
+                    );
+
+
+                renderSubjects();
+
+                fillSubjectSelect();
+
+                renderHomework();
+
+                updateStats();
+            },
+            (error) => {
+
+                console.error(
+                    "Subjects Firestore error:",
+                    error
+                );
+            }
+        );
+
+
+    // ========================================================
+    // HOMEWORK
+    // ========================================================
+
+    const homeworkQuery = query(
+        collection(
+            db,
+            "homework"
+        ),
+        orderBy(
+            "createdAt",
+            "desc"
+        )
+    );
+
+
+    unsubscribeHomework =
+        onSnapshot(
+            homeworkQuery,
+            (snapshot) => {
+
+                homeworks =
+                    snapshot.docs.map(
+                        (item) => ({
+                            id: item.id,
+                            ...item.data()
+                        })
+                    );
+
+
+                renderHomework();
+
+                updateStats();
+            },
+            (error) => {
+
+                console.error(
+                    "Homework Firestore error:",
+                    error
+                );
+            }
+        );
+
+
+    // ========================================================
+    // USERS
+    // ========================================================
+
+    const usersQuery =
+        collection(
+            db,
+            "users"
+        );
+
+
+    unsubscribeUsers =
+        onSnapshot(
+            usersQuery,
+            (snapshot) => {
+
+                users =
+                    snapshot.docs.map(
+                        (item) => ({
+                            id: item.id,
+                            ...item.data()
+                        })
+                    );
+
+
+                renderUsers();
+
+                updateUserStats();
+            },
+            (error) => {
+
+                console.error(
+                    "Users Firestore error:",
+                    error
+                );
+
+                const container =
+                    $("adminUsers");
+
+                if (container) {
+
+                    container.innerHTML =
+                        `<p class="error">
+                            Không thể tải người dùng:
+                            ${esc(error.message)}
+                        </p>`;
+                }
+            }
+        );
+
+
+    // ========================================================
+    // SETTINGS
+    // ========================================================
+
+    const settingsRef =
+        doc(
+            db,
+            "settings",
+            "site"
+        );
+
+
+    unsubscribeSettings =
+        onSnapshot(
+            settingsRef,
+            (snapshot) => {
+
+                if (snapshot.exists()) {
+
+                    siteSettings =
+                        snapshot.data();
+
+                } else {
+
+                    siteSettings = {};
+                }
+
+
+                renderSiteSettings();
+            },
+            (error) => {
+
+                console.error(
+                    "Settings Firestore error:",
+                    error
+                );
+
+                const container =
+                    $("adminSettings");
+
+                if (container) {
+
+                    container.innerHTML =
+                        `<p class="error">
+                            Không thể tải cài đặt:
+                            ${esc(error.message)}
+                        </p>`;
+                }
+            }
+        );
+}
+
+
+// ============================================================
+// RENDER SUBJECTS
+// ============================================================
+
+function renderSubjects() {
+
+    const container =
+        $("adminTabs");
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!subjects.length) {
+
+        container.innerHTML =
+            `<p class="muted">
+                Chưa có môn học.
+            </p>`;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        subjects.map(
+            (subject) => {
+
+                return `
+                    <div class="admin-item">
+
+                        <b>
+                            ${esc(
+                                subject.icon ||
+                                "📚"
+                            )}
+
+                            ${esc(
+                                subject.name ||
+                                "Môn học"
+                            )}
+                        </b>
+
+                        <div class="actions">
+
+                            <button
+                                type="button"
+                                onclick="editSubject('${esc(subject.id)}')"
+                            >
+                                Sửa
+                            </button>
+
+                            <button
+                                type="button"
+                                class="danger"
+                                onclick="removeSubject('${esc(subject.id)}')"
+                            >
+                                Xóa
+                            </button>
+
+                        </div>
+
+                    </div>
+                `;
+            }
+        ).join("");
+}
+
+
+// ============================================================
+// RENDER HOMEWORK
+// ============================================================
+
+function renderHomework() {
+
+    const container =
+        $("adminHomework");
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!homeworks.length) {
+
+        container.innerHTML =
+            `<p class="muted">
+                Chưa có bài tập.
+            </p>`;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        homeworks.map(
+            (homework) => {
+
+                const subject =
+                    subjects.find(
+                        (item) =>
+                            item.id ===
+                            homework.subjectId
+                    );
+
+
+                let dueText =
+                    "Không đặt hạn";
+
+
+                if (homework.dueDate) {
+
+                    const due =
+                        new Date(
+                            homework.dueDate
+                        );
+
+
+                    if (
+                        !Number.isNaN(
+                            due.getTime()
+                        )
+                    ) {
+
+                        dueText =
+                            due.toLocaleString(
+                                "vi-VN"
+                            );
+                    }
+                }
+
+
+                return `
+                    <div class="admin-item">
+
+                        <b>
+
+                            ${
+                                homework.pinned
+                                    ? "📌 "
+                                    : ""
+                            }
+
+                            ${
+                                homework.important
+                                    ? "⭐ "
+                                    : ""
+                            }
+
+                            ${esc(
+                                homework.title ||
+                                "Bài tập"
+                            )}
+
+                        </b>
+
+
+                        <small>
+
+                            ${esc(
+                                subject?.icon ||
+                                "📚"
+                            )}
+
+                            ${esc(
+                                subject?.name ||
+                                "Chưa phân loại"
+                            )}
+
+                            ·
+
+                            ${esc(
+                                dueText
+                            )}
+
+                        </small>
+
+
+                        <div class="actions">
+
+                            <button
+                                type="button"
+                                onclick="editHomework('${esc(homework.id)}')"
+                            >
+                                Sửa
+                            </button>
+
+                            <button
+                                type="button"
+                                class="danger"
+                                onclick="removeHomework('${esc(homework.id)}')"
+                            >
+                                Xóa
+                            </button>
+
+                        </div>
+
+                    </div>
+                `;
+            }
+        ).join("");
+}
+
+
+// ============================================================
+// SUBJECT SELECT
+// ============================================================
+
+function fillSubjectSelect(
+    selectedId = ""
+) {
+
+    const select =
+        $("hwTab");
+
+    if (!select) {
+        return;
+    }
+
+
+    if (!subjects.length) {
+
+        select.innerHTML =
+            `<option value="">
+                Chưa có môn học
+            </option>`;
+
+        return;
+    }
+
+
+    select.innerHTML =
+        subjects.map(
+            (subject) => {
+
+                return `
+                    <option value="${esc(subject.id)}">
+                        ${esc(
+                            subject.icon ||
+                            "📚"
+                        )}
+                        ${esc(
+                            subject.name ||
+                            "Môn học"
+                        )}
+                    </option>
+                `;
+            }
+        ).join("");
+
+
+    if (
+        selectedId &&
+        subjects.some(
+            (subject) =>
+                subject.id ===
+                selectedId
+        )
+    ) {
+
+        select.value =
+            selectedId;
+    }
+}
+
+
+// ============================================================
+// GENERAL STATS
+// ============================================================
+
+function updateStats() {
+
+    const statHomework =
+        $("statHomework");
+
+    const statTabs =
+        $("statTabs");
+
+    const statPinned =
+        $("statPinned");
+
+
+    if (statHomework) {
+
+        statHomework.textContent =
+            String(
+                homeworks.length
+            );
+    }
+
+
+    if (statTabs) {
+
+        statTabs.textContent =
+            String(
+                subjects.length
+            );
+    }
+
+
+    if (statPinned) {
+
+        statPinned.textContent =
+            String(
+                homeworks.filter(
+                    (item) =>
+                        item.pinned
+                ).length
+            );
+    }
+}
+
+
+// ============================================================
+// CREATE HOMEWORK
+// ============================================================
+
+const newHomework =
+    $("newHomework");
+
+
+if (newHomework) {
+
+    newHomework.addEventListener(
+        "click",
+        () => {
+
+            if (!subjects.length) {
+
+                alert(
+                    "Hãy tạo ít nhất 1 môn học trước."
+                );
+
+                return;
+            }
+
+
+            const form =
+                $("homeworkForm");
+
+            if (form) {
+                form.reset();
+            }
+
+
+            const title =
+                $("hwDialogTitle");
+
+            if (title) {
+
+                title.textContent =
+                    "Tạo bài tập";
+            }
+
+
+            const id =
+                $("hwId");
+
+            if (id) {
+                id.value = "";
+            }
+
+
+            const error =
+                $("hwError");
+
+            if (error) {
+                error.textContent = "";
+            }
+
+
+            fillSubjectSelect();
+
+
+            const dialog =
+                $("homeworkDialog");
+
+            if (
+                dialog &&
+                typeof dialog.showModal ===
+                    "function"
+            ) {
+
+                dialog.showModal();
+            }
+        }
+    );
+}
+
+
+// ============================================================
+// SAVE HOMEWORK
+// ============================================================
+
+const homeworkForm =
+    $("homeworkForm");
+
+
+if (homeworkForm) {
+
+    homeworkForm.addEventListener(
+        "submit",
+        async (event) => {
+
+            event.preventDefault();
+
+
+            const id =
+                $("hwId").value.trim();
+
+
+            const subjectId =
+                $("hwTab").value;
+
+
+            const title =
+                $("hwTitle")
+                    .value
+                    .trim();
+
+
+            const content =
+                $("hwContent")
+                    .value
+                    .trim();
+
+
+            if (!subjectId) {
+
+                $("hwError").textContent =
+                    "Vui lòng chọn môn học.";
+
+                return;
+            }
+
+
+            if (!title) {
+
+                $("hwError").textContent =
+                    "Vui lòng nhập tiêu đề.";
+
+                return;
+            }
+
+
+            if (!content) {
+
+                $("hwError").textContent =
+                    "Vui lòng nhập nội dung.";
+
+                return;
+            }
+
+
+            const data = {
+
+                subjectId,
+
+                title,
+
+                content,
+
+                dueDate:
+                    $("hwDue").value ||
+                    null,
+
+                pinned:
+                    $("hwPinned").checked,
+
+                important:
+                    $("hwImportant").checked,
+
+                updatedAt:
+                    serverTimestamp()
+            };
+
+
+            if (id) {
+
+                const oldHomework =
+                    homeworks.find(
+                        (item) =>
+                            item.id === id
+                    );
+
+
+                data.createdAt =
+                    oldHomework?.createdAt ||
+                    serverTimestamp();
+
+            } else {
+
+                data.createdAt =
+                    serverTimestamp();
+            }
+
+
+            try {
+
+                const documentId =
+                    id ||
+                    crypto.randomUUID();
+
+
+                await setDoc(
+                    doc(
+                        db,
+                        "homework",
+                        documentId
+                    ),
+                    data
+                );
+
+
+                const dialog =
+                    $("homeworkDialog");
+
+                if (
+                    dialog &&
+                    typeof dialog.close ===
+                        "function"
+                ) {
+
+                    dialog.close();
+                }
+
+
+                $("hwError").textContent =
+                    "";
+
+            } catch (error) {
+
+                console.error(
+                    "Save homework error:",
+                    error
+                );
+
+
+                $("hwError").textContent =
+                    "Không thể lưu: " +
+                    error.message;
+            }
+        }
+    );
+}
+
+
+// ============================================================
+// CREATE SUBJECT
+// ============================================================
+
+const newTab =
+    $("newTab");
+
+
+if (newTab) {
+
+    newTab.addEventListener(
+        "click",
+        () => {
+
+            const title =
+                $("tabDialogTitle");
+
+            if (title) {
+
+                title.textContent =
+                    "Tạo môn học";
+            }
+
+
+            const form =
+                $("tabForm");
+
+            if (form) {
+                form.reset();
+            }
+
+
+            const id =
+                $("tabId");
+
+            if (id) {
+                id.value = "";
+            }
+
+
+            const error =
+                $("tabError");
+
+            if (error) {
+                error.textContent = "";
+            }
+
+
+            const dialog =
+                $("tabDialog");
+
+            if (
+                dialog &&
+                typeof dialog.showModal ===
+                    "function"
+            ) {
+
+                dialog.showModal();
+            }
+        }
+    );
+}
+
+
+// ============================================================
+// SAVE SUBJECT
+// ============================================================
+
+const tabForm =
+    $("tabForm");
+
+
+if (tabForm) {
+
+    tabForm.addEventListener(
+        "submit",
+        async (event) => {
+
+            event.preventDefault();
+
+
+            const id =
+                $("tabId")
+                    .value
+                    .trim();
+
+
+            const name =
+                $("tabName")
+                    .value
+                    .trim();
+
+
+            const icon =
+                $("tabIcon")
+                    .value
+                    .trim() ||
+                "📚";
+
+
+            if (!name) {
+
+                $("tabError")
+                    .textContent =
+                    "Vui lòng nhập tên môn học.";
+
+                return;
+            }
+
+
+            const oldSubject =
+                subjects.find(
+                    (subject) =>
+                        subject.id === id
+                );
+
+
+            const order =
+                id
+                    ? (
+                        oldSubject?.order ||
+                        0
+                    )
+                    : (
+                        subjects.length
+                            ? Math.max(
+                                ...subjects.map(
+                                    (subject) =>
+                                        subject.order ||
+                                        0
+                                )
+                            ) + 1
+                            : 1
+                    );
+
+
+            const data = {
+
+                name,
+
+                icon,
+
+                order,
+
+                updatedAt:
+                    serverTimestamp()
+            };
+
+
+            try {
+
+                const documentId =
+                    id ||
+                    crypto.randomUUID();
+
+
+                await setDoc(
+                    doc(
+                        db,
+                        "subjects",
+                        documentId
+                    ),
+                    data
+                );
+
+
+                const dialog =
+                    $("tabDialog");
+
+                if (
+                    dialog &&
+                    typeof dialog.close ===
+                        "function"
+                ) {
+
+                    dialog.close();
+                }
+
+
+                $("tabError")
+                    .textContent =
+                    "";
+
+            } catch (error) {
+
+                console.error(
+                    "Save subject error:",
+                    error
+                );
+
+
+                $("tabError")
+                    .textContent =
+                    "Không thể lưu: " +
+                    error.message;
+            }
+        }
+    );
+}
+
+
+// ============================================================
+// EDIT HOMEWORK
+// ============================================================
+
+window.editHomework =
+    (id) => {
+
+        const homework =
+            homeworks.find(
+                (item) =>
+                    item.id === id
+            );
+
+
+        if (!homework) {
+            return;
+        }
+
+
+        $("hwDialogTitle")
+            .textContent =
+            "Sửa bài tập";
+
+
+        $("hwId").value =
+            homework.id;
+
+
+        fillSubjectSelect(
+            homework.subjectId ||
+            ""
+        );
+
+
+        $("hwTitle").value =
+            homework.title ||
+            "";
+
+
+        $("hwContent").value =
+            homework.content ||
+            "";
+
+
+        $("hwDue").value =
+            homework.dueDate ||
+            "";
+
+
+        $("hwPinned").checked =
+            !!homework.pinned;
+
+
+        $("hwImportant").checked =
+            !!homework.important;
+
+
+        $("hwError").textContent =
+            "";
+
+
+        const dialog =
+            $("homeworkDialog");
+
+        if (
+            dialog &&
+            typeof dialog.showModal ===
+                "function"
+        ) {
+
+            dialog.showModal();
+        }
+    };
+
+
+// ============================================================
+// DELETE HOMEWORK
+// ============================================================
+
+window.removeHomework =
+    async (id) => {
+
+        if (
+            !confirm(
+                "Bạn có chắc muốn xóa bài tập này?"
+            )
+        ) {
+
+            return;
+        }
+
+
+        try {
+
+            await deleteDoc(
+                doc(
+                    db,
+                    "homework",
+                    id
+                )
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Delete homework error:",
+                error
+            );
+
+
+            alert(
+                "Không thể xóa: " +
+                error.message
+            );
+        }
+    };
+
+
+// ============================================================
+// EDIT SUBJECT
+// ============================================================
+
+window.editSubject =
+    (id) => {
+
+        const subject =
+            subjects.find(
+                (item) =>
+                    item.id === id
+            );
+
+
+        if (!subject) {
+            return;
+        }
+
+
+        $("tabId").value =
+            id;
+
+
+        $("tabName").value =
+            subject.name ||
+            "";
+
+
+        $("tabIcon").value =
+            subject.icon ||
+            "";
+
+
+        $("tabDialogTitle")
+            .textContent =
+            "Sửa môn học";
+
+
+        $("tabError")
+            .textContent =
+            "";
+
+
+        const dialog =
+            $("tabDialog");
+
+        if (
+            dialog &&
+            typeof dialog.showModal ===
+                "function"
+        ) {
+
+            dialog.showModal();
+        }
+    };
+
+
+// ============================================================
+// DELETE SUBJECT
+// ============================================================
+
+window.removeSubject =
+    async (id) => {
+
+        const hasHomework =
+            homeworks.some(
+                (homework) =>
+                    homework.subjectId ===
+                    id
+            );
+
+
+        if (hasHomework) {
+
+            alert(
+                "Môn này đang có bài tập.\n\n" +
+                "Hãy chuyển hoặc xóa các bài tập " +
+                "thuộc môn này trước."
+            );
+
+            return;
+        }
+
+
+        if (
+            !confirm(
+                "Bạn có chắc muốn xóa môn này?"
+            )
+        ) {
+
+            return;
+        }
+
+
+        try {
+
+            await deleteDoc(
+                doc(
+                    db,
+                    "subjects",
+                    id
+                )
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Delete subject error:",
+                error
+            );
+
+
+            alert(
+                "Không thể xóa: " +
+                error.message
+            );
+        }
+    };
+
+
+// ============================================================
+// USERS
+// ============================================================
+
+function renderUsers() {
+
+    const container =
+        $("adminUsers");
+
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!users.length) {
+
+        container.innerHTML =
+            `<p class="muted">
+                Chưa có người dùng.
+            </p>`;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        users.map(
+            (user) => {
+
+                const email =
+                    user.email ||
+                    "Không có email";
+
+
+                const name =
+                    user.displayName ||
+                    user.name ||
+                    email;
+
+
+                const streak =
+                    Number(
+                        user.streak ||
+                        0
+                    );
+
+
+                const highest =
+                    Number(
+                        user.highestStreak ||
+                        user.maxStreak ||
+                        0
+                    );
+
+
+                let lastAccess =
+                    "Chưa có";
+
+
+                if (
+                    user.lastAccess
+                ) {
+
+                    try {
+
+                        const date =
+                            user.lastAccess
+                                .toDate
+                                ? user.lastAccess.toDate()
+                                : new Date(
+                                    user.lastAccess
+                                );
+
+
+                        if (
+                            !Number.isNaN(
+                                date.getTime()
+                            )
+                        ) {
+
+                            lastAccess =
+                                date.toLocaleString(
+                                    "vi-VN"
+                                );
+                        }
+
+                    } catch {
+
+                        lastAccess =
+                            "Không xác định";
+                    }
+                }
+
+
+                return `
+                    <div class="admin-item">
+
+                        <b>
+                            ${esc(name)}
+                        </b>
+
+                        <small>
+                            ${esc(email)}
+                        </small>
+
+                        <small>
+
+                            🔥 Streak:
+
+                            <strong>
+                                ${streak}
+                            </strong>
+
+                            · Cao nhất:
+
+                            <strong>
+                                ${highest}
+                            </strong>
+
+                        </small>
+
+                        <small>
+                            🕒 Truy cập:
+                            ${esc(lastAccess)}
+                        </small>
+
+                        <div class="actions">
+
+                            <button
+                                type="button"
+                                onclick="editUser('${esc(user.id)}')"
+                            >
+                                Sửa
+                            </button>
+
+                        </div>
+
+                    </div>
+                `;
+            }
+        ).join("");
+}
+
+
+// ============================================================
+// USER STATS
+// ============================================================
+
+function updateUserStats() {
+
+    const statUsers =
+        $("statUsers");
+
+    const statVisited =
+        $("statVisitedToday");
+
+    const statStreak =
+        $("statTotalStreak");
+
+
+    if (statUsers) {
+
+        statUsers.textContent =
+            String(
+                users.length
+            );
+    }
+
+
+    const today =
+        new Date();
+
+
+    const todayString =
+        today.toLocaleDateString(
+            "en-CA"
+        );
+
+
+    const visitedToday =
+        users.filter(
+            (user) => {
+
+                if (
+                    !user.lastAccess
+                ) {
+
+                    return false;
+                }
+
+
+                try {
+
+                    const date =
+                        user.lastAccess
+                            .toDate
+                            ? user.lastAccess.toDate()
+                            : new Date(
+                                user.lastAccess
+                            );
+
+
+                    return (
+                        date.toLocaleDateString(
+                            "en-CA"
+                        ) ===
+                        todayString
+                    );
+
+                } catch {
+
+                    return false;
+                }
+            }
+        ).length;
+
+
+    const totalStreak =
+        users.reduce(
+            (total, user) =>
+                total +
+                Number(
+                    user.streak ||
+                    0
+                ),
+            0
+        );
+
+
+    if (statVisited) {
+
+        statVisited.textContent =
+            String(
+                visitedToday
+            );
+    }
+
+
+    if (statStreak) {
+
+        statStreak.textContent =
+            String(
+                totalStreak
+            );
+    }
+}
+
+
+// ============================================================
+// EDIT USER
+// ============================================================
+
+window.editUser =
+    async (id) => {
+
+        const user =
+            users.find(
+                (item) =>
+                    item.id === id
+            );
+
+
+        if (!user) {
+            return;
+        }
+
+
+        const name =
+            prompt(
+                "Tên hiển thị:",
+                user.displayName ||
+                user.name ||
+                ""
+            );
+
+
+        if (name === null) {
+            return;
+        }
+
+
+        const streakInput =
+            prompt(
+                "Streak hiện tại:",
+                String(
+                    user.streak ||
+                    0
+                )
+            );
+
+
+        if (
+            streakInput === null
+        ) {
+
+            return;
+        }
+
+
+        const highestInput =
+            prompt(
+                "Streak cao nhất:",
+                String(
+                    user.highestStreak ||
+                    user.maxStreak ||
+                    0
+                )
+            );
+
+
+        if (
+            highestInput === null
+        ) {
+
+            return;
+        }
+
+
+        const streak =
+            Math.max(
+                0,
+                Number(
+                    streakInput
+                ) || 0
+            );
+
+
+        const highestStreak =
+            Math.max(
+                streak,
+                Number(
+                    highestInput
+                ) || 0
+            );
+
+
+        try {
+
+            await setDoc(
+                doc(
+                    db,
+                    "users",
+                    id
+                ),
+                {
+
+                    displayName:
+                        name.trim(),
+
+                    streak,
+
+                    highestStreak,
+
+                    updatedAt:
+                        serverTimestamp()
+
+                },
+                {
+                    merge: true
+                }
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Edit user error:",
+                error
+            );
+
+
+            alert(
+                "Không thể sửa người dùng: " +
+                error.message
+            );
+        }
+    };
+
+
+// ============================================================
+// SITE SETTINGS
+// ============================================================
+
+function renderSiteSettings() {
+
+    const container =
+        $("adminSettings");
+
+
+    if (!container) {
+        return;
+    }
+
+
+    const enabled =
+        siteSettings
+            .oldHomeworkNoticeEnabled !==
+        false;
+
+
+    container.innerHTML = `
+
+        <div class="admin-item">
+
+            <b>
+                🔔 Thông báo bài tập
+            </b>
+
+            <label>
+
+                <input
+                    type="checkbox"
+                    id="oldHomeworkToggle"
+                    ${enabled ? "checked" : ""}
+                >
+
+                Bật thông báo khi không có bài tập mới
+
+            </label>
+
+            <small>
+                Khi bật, người dùng sẽ được thông báo
+                rằng hôm nay không có bài tập mới.
+            </small>
+
+        </div>
+
+    `;
+
+
+    const toggle =
+        $("oldHomeworkToggle");
+
+
+    if (toggle) {
+
+        toggle.addEventListener(
+            "change",
+            async () => {
+
+                await saveSiteSettings({
+                    oldHomeworkNoticeEnabled:
+                        toggle.checked
+                });
+            }
+        );
+    }
+}
+
+
+// ============================================================
+// SAVE SITE SETTINGS
+// ============================================================
+
+async function saveSiteSettings(
+    changes
+) {
+
+    try {
+
+        const currentUser =
+            auth.currentUser;
+
+
+        // ----------------------------------------------------
+        // CHECK LOGIN
+        // ----------------------------------------------------
+
+        if (!currentUser) {
+
+            throw new Error(
+                "Bạn chưa đăng nhập."
+            );
+        }
+
+
+        // ----------------------------------------------------
+        // CHECK ADMIN
+        // ----------------------------------------------------
+
+        if (
+            !isAdminEmail(
+                currentUser.email
+            )
+        ) {
+
+            throw new Error(
+                "Tài khoản hiện tại không có quyền Admin."
+            );
+        }
+
+
+        // ----------------------------------------------------
+        // SAVE
+        // ----------------------------------------------------
+
+        await setDoc(
+            doc(
+                db,
+                "settings",
+                "site"
+            ),
+            {
+                ...changes,
+                updatedAt:
+                    serverTimestamp()
+            },
+            {
+                merge: true
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Save site settings error:",
+            error
+        );
+
+
+        alert(
+            "Không thể lưu cài đặt: " +
+            error.message
+        );
+    }
+}
