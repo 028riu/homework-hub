@@ -1,41 +1,76 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
     function isAdmin() {
-      return request.auth != null && request.auth.token.email != null && (
+      return signedIn() && request.auth.token.email != null && (
         request.auth.token.email == "028riu@gmail.com" ||
         request.auth.token.email == "tu0ngtun2gsahur8@gmail.com" ||
         request.auth.token.email == "linh085760@gmail.com" ||
         request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
       );
     }
-    function signedInUser(userId) { return request.auth != null && request.auth.uid == userId; }
-    match /users/{userId} {
-      allow read: if isAdmin() || signedInUser(userId);
-      allow create, update: if isAdmin() || signedInUser(userId);
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function safeUserFields() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        "displayName", "name", "username", "photoURL", "lastLoginAt", "lastVisitAt", "lastVisitDate",
+        "currentStreak", "streak", "longestStreak", "highestStreak", "totalXP", "points", "level",
+        "completedHomeworkCount", "dailyRewardDate", "lastRewardReason", "lastRewardAt", "pet",
+        "unlockedItems", "equippedItems", "updatedAt", "uid", "email"
+      ]);
+    }
+    function safeNumbers() {
+      return request.resource.data.totalXP is number && request.resource.data.points is number &&
+        request.resource.data.totalXP >= 0 && request.resource.data.points >= 0;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid) || isAdmin();
+      allow update: if isAdmin() || (isOwner(uid) && safeUserFields() && safeNumbers());
       allow delete: if isAdmin();
+
       match /homeworkProgress/{homeworkId} {
-        allow read, create, update: if isAdmin() || signedInUser(userId);
-        allow delete: if isAdmin() || signedInUser(userId);
+        allow read: if isOwner(uid) || isAdmin();
+        allow create, update: if isOwner(uid) || isAdmin();
+        allow delete: if isOwner(uid) || isAdmin();
       }
       match /achievements/{achievementId} {
-        allow read: if isAdmin() || signedInUser(userId);
-        allow create, update: if isAdmin() || signedInUser(userId);
-        allow delete: if isAdmin() || signedInUser(userId);
+        allow read, write: if isOwner(uid) || isAdmin();
       }
       match /inventory/{itemId} {
-        allow read: if isAdmin() || signedInUser(userId);
-        allow create, update: if isAdmin() || signedInUser(userId);
-        allow delete: if isAdmin() || signedInUser(userId);
+        allow read, write: if isOwner(uid) || isAdmin();
       }
     }
-    match /subjects/{subjectId} { allow read: if true; allow create, update, delete: if isAdmin(); }
-    match /homework/{homeworkId} { allow read: if true; allow create, update, delete: if isAdmin(); }
-    match /settings/{settingId} { allow read: if true; allow write: if isAdmin(); }
-    match /achievements/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /items/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /pets/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /themes/{id} { allow read: if true; allow write: if isAdmin(); }
+
+    match /subjects/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /homework/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /items/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /pets/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /themes/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /achievements/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
     match /{document=**} { allow read, write: if false; }
   }
 }
