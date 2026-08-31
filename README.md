@@ -1,29 +1,28 @@
-# Homework Hub — rebuilt
+# Homework Hub V3
 
-## Có gì trong bản này
-- Google Login + Firebase realtime.
-- Tick bài tập: cộng XP + Points; bỏ tick hoàn tác phần thưởng của chính bài đó.
-- Daily bonus khi hoàn thành toàn bộ bài được tạo trong ngày.
-- Streak/Level/XP/Points.
-- Pet nổi có thể kéo thả; chạm/click Pet để mở tủ đồ.
-- Shop Pet: mua phụ kiện bằng Points, mua một lần và mặc lại miễn phí.
-- Settings gọn hơn: Dark/Light/System, 6 accent, 4 background, bật/tắt Floating Pet.
-- Avatar trên header dùng kích thước nhỏ, không còn phóng đại.
-- Admin: overview, users, homework, subjects, calendar, settings.
-- Firestore rules có kiểm tra admin và giới hạn các field user được tự sửa.
+Mô hình: 1 GitHub + 1 Netlify + 1 Firebase.
 
-## Deploy GitHub Pages
-Repository dùng thư mục gốc làm source. Với repo `homework-hub`, URL mặc định là:
-`https://028riu.github.io/homework-hub/`
+## Tính năng
+- Trang xem bài `/`
+- Mọi người có thể đăng nhập Google ở trang xem bài để dùng chuỗi; không đăng nhập vẫn xem bình thường
+- Admin `/admin/` đăng nhập bằng Google
+- Admin tạo/sửa/xóa môn học (tab)
+- Admin tạo/sửa/xóa bài tập
+- Ghim/quan trọng + hạn nộp
+- Firestore realtime
+- Cảnh báo nếu hôm nay chưa có bài mới: hiển thị tối đa 1 lần/ngày trên mỗi trình duyệt
+- Hiển thị ngày hiện tại
+- Chuỗi truy cập hằng ngày (lưu trên trình duyệt, không cần tài khoản)
+- Tìm kiếm, lọc theo môn
+- Dark/light mode
+- Responsive cho điện thoại/tablet/PC
 
 ## Firebase
-- Authentication → Sign-in method → bật Google.
-- Authentication → Settings → Authorized domains: thêm `028riu.github.io` và domain riêng nếu có.
-- Firestore → Rules: dùng `firebase/firestore.rules`.
-- Firestore → tạo `settings/site` nếu muốn thay giá trị mặc định.
-- Firestore → `items` có thể thêm item với: `name`, `description`, `price`, `emoji`, `petSkin`.
+1. Bật Authentication → Sign-in method → Google.
+2. Dán Web config vào `js/firebase-config.js`.
+3. Tạo Firestore (Standard, Production).
+4. Trong `firebase/firestore.rules`, thay `YOUR_GOOGLE_EMAIL` bằng email Google Admin của bạn rồi publish Rules.
+5. Authentication → Settings → Authorized domains: sau này thêm domain Netlify của bạn.
 
-## Kiểm thử
-Trước khi đóng gói, các file JavaScript được kiểm tra syntax bằng Node.js. Sau đó kiểm tra cấu trúc HTML, đường dẫn script/css, Firestore rules và các handler chính trong viewer/admin.
-
-Lưu ý: vì đây là frontend Firebase thuần, mọi phần thưởng kinh tế phía client vẫn cần Cloud Functions/App Check nếu muốn chống gian lận ở mức sản phẩm production.
+## Lưu ý về chuỗi
+Chuỗi chỉ hiển thị cho người đã đăng nhập Google. Hiện chuỗi được lưu theo trình duyệt/thiết bị bằng localStorage; nếu xóa dữ liệu trình duyệt hoặc đổi thiết bị, chuỗi sẽ reset. Có thể nâng cấp sang lưu streak theo UID trên Firestore.

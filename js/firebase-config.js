@@ -1,5 +1,5 @@
-// Homework Hub Firebase configuration
-// Project: homeworkhuba5
+// Firebase configuration for Homework Hub.
+// Do not put any passwords or private keys in this file.
 export const firebaseConfig = {
   apiKey: "AIzaSyAahQiF9OONWrQIbs-lfQKUAzkG9fov-Ic",
   authDomain: "homeworkhuba5.firebaseapp.com",
