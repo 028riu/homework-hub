@@ -1,104 +1,41 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // =====================================================
-    // DANH SÁCH ADMIN
-    // =====================================================
-
     function isAdmin() {
-      return request.auth != null
-        && request.auth.token.email != null
-        && (
-          request.auth.token.email == "028riu@gmail.com"
-          || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
-          || request.auth.token.email == "linh085760@gmail.com"
-          || request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
-        );
+      return request.auth != null && request.auth.token.email != null && (
+        request.auth.token.email == "028riu@gmail.com" ||
+        request.auth.token.email == "tu0ngtun2gsahur8@gmail.com" ||
+        request.auth.token.email == "linh085760@gmail.com" ||
+        request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
+      );
     }
-
-
-    // =====================================================
-    // NGƯỜI DÙNG
-    // =====================================================
-
+    function signedInUser(userId) { return request.auth != null && request.auth.uid == userId; }
     match /users/{userId} {
-
-      // Admin xem tất cả người dùng.
-      // Người dùng thường chỉ xem chính mình.
-      allow read: if isAdmin()
-        || (
-          request.auth != null
-          && request.auth.uid == userId
-        );
-
-      // Admin có thể tạo hồ sơ người dùng.
-      // Người dùng có thể tạo hồ sơ của chính mình.
-      allow create: if isAdmin()
-        || (
-          request.auth != null
-          && request.auth.uid == userId
-        );
-
-      // Admin có thể sửa tất cả.
-      // Người dùng chỉ được sửa hồ sơ của chính mình.
-      allow update: if isAdmin()
-        || (
-          request.auth != null
-          && request.auth.uid == userId
-        );
-
-      // Chỉ Admin được xóa người dùng.
+      allow read: if isAdmin() || signedInUser(userId);
+      allow create, update: if isAdmin() || signedInUser(userId);
       allow delete: if isAdmin();
+      match /homeworkProgress/{homeworkId} {
+        allow read, create, update: if isAdmin() || signedInUser(userId);
+        allow delete: if isAdmin() || signedInUser(userId);
+      }
+      match /achievements/{achievementId} {
+        allow read: if isAdmin() || signedInUser(userId);
+        allow create, update: if isAdmin() || signedInUser(userId);
+        allow delete: if isAdmin() || signedInUser(userId);
+      }
+      match /inventory/{itemId} {
+        allow read: if isAdmin() || signedInUser(userId);
+        allow create, update: if isAdmin() || signedInUser(userId);
+        allow delete: if isAdmin() || signedInUser(userId);
+      }
     }
-
-
-    // =====================================================
-    // MÔN HỌC / TAB
-    // =====================================================
-
-    match /subjects/{subjectId} {
-
-      // Ai cũng được xem môn học.
-      allow read: if true;
-
-      // Chỉ Admin được tạo / sửa / xóa.
-      allow create, update, delete: if isAdmin();
-    }
-
-
-    // =====================================================
-    // BÀI TẬP
-    // =====================================================
-
-    match /homework/{homeworkId} {
-
-      // Ai cũng được xem bài tập.
-      allow read: if true;
-
-      // Chỉ Admin được tạo / sửa / xóa.
-      allow create, update, delete: if isAdmin();
-    }
-
-
-    // =====================================================
-    // CÀI ĐẶT THÔNG BÁO / HỆ THỐNG
-    // =====================================================
-
-    match /settings/{settingId} {
-
-      // Chỉ Admin được xem và chỉnh sửa.
-      allow read, write: if isAdmin();
-    }
-
-
-    // =====================================================
-    // KHÓA TẤT CẢ COLLECTION KHÁC
-    // =====================================================
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    match /subjects/{subjectId} { allow read: if true; allow create, update, delete: if isAdmin(); }
+    match /homework/{homeworkId} { allow read: if true; allow create, update, delete: if isAdmin(); }
+    match /settings/{settingId} { allow read: if true; allow write: if isAdmin(); }
+    match /achievements/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /items/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /pets/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /themes/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /{document=**} { allow read, write: if false; }
   }
 }

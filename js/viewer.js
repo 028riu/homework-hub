@@ -1,178 +1,63 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, doc, onSnapshot, query, orderBy, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, collection, doc, onSnapshot, query, orderBy, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
-
-const app=initializeApp(firebaseConfig),db=getFirestore(app),auth=getAuth(app),$=id=>document.getElementById(id);
-const googleProvider=new GoogleAuthProvider();
-const now=new Date();
-$("today").textContent=new Intl.DateTimeFormat("vi-VN",{dateStyle:"full"}).format(now);
-
-let tabs=[],homework=[],active="all",search="";
-const DAY=86400000;
-function dayKey(d=new Date()){return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Ho_Chi_Minh"}).format(d)}
-function updateStreak(){
-  const key="hh_streak_v2";
-  const today=dayKey();
-  let data;
-  try{data=JSON.parse(localStorage.getItem(key)||'{"last":"","count":0}')}catch{data={last:"",count:0}}
-  if(data.last!==today){
-    const prev=data.last?new Date(data.last+"T12:00:00+07:00"):null;
-    const cur=new Date(today+"T12:00:00+07:00");
-    const gap=prev?Math.round((cur-prev)/DAY):0;
-    data.count=(data.last&&gap===1)?data.count+1:1;
-    data.last=today;
-    localStorage.setItem(key,JSON.stringify(data));
-  }
-  const count=Math.max(1,Number(data.count)||1);
-  const streak=$('streakCount');
-  if(streak)streak.textContent=`${count} ngày`;
-  const pet=$('firePet');
-  const widget=$('streakWidget');
-  if(widget){
-    widget.title=count>=30?'🔥 Pet lửa: cấp độ Huyền thoại!':count>=7?'🔥 Pet lửa đang rất sung!':'🔥 Pet lửa đang nghịch!';
-  }
-  if(pet){
-    pet.dataset.level=count>=30?'legendary':count>=7?'hot':'baby';
-  }
-}
-
-function renderUser(user){
- const area=$("userArea");
- if(user){
-   const name=user.displayName||user.email||"Bạn";
-   area.innerHTML=`<div class="user-pill"><span class="avatar">${esc((name[0]||"U").toUpperCase())}</span><div><b>${esc(name)}</b><small>🔥 Chuỗi: <span id="userStreak">0</span> ngày</small></div><button id="logoutGoogle" class="logout-mini">Đăng xuất</button></div>`;
-   $("userStreak").textContent=JSON.parse(localStorage.getItem("hh_streak_v2")||'{"count":0}').count||1;
- }else{
-   area.innerHTML=`<button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button>`;
-   $("googleLogin").onclick=()=>signInWithPopup(auth,googleProvider).catch(e=>console.error(e));
-   $("streakCount").textContent="Đăng nhập để dùng";
+const app=initializeApp(firebaseConfig),db=getFirestore(app),auth=getAuth(app),$=id=>document.getElementById(id),provider=new GoogleAuthProvider();
+const DAY=86400000, TZ="Asia/Ho_Chi_Minh";
+let tabs=[],homework=[],progress={},profile=null,user=null,active="all",search="",siteSettings={noHomeworkNoticeEnabled:true,oldHomeworkNoticeEnabled:true,noHomeworkNoticeTitle:"📚 Hôm nay không có bài tập mới",noHomeworkNoticeMessage:"Hôm nay chưa có bài tập mới được cập nhật.",oldHomeworkNoticeTitle:"📢 Bài tập chưa có cập nhật",oldHomeworkNoticeMessage:"Danh sách bài tập hôm nay vẫn giống ngày trước."};
+let unsubs=[]; let globalUnsubs=[]; let localPrefs={theme:localStorage.getItem("hh_theme")||"dark",accent:localStorage.getItem("hh_accent")||"purple",background:localStorage.getItem("hh_bg")||"default",petEnabled:localStorage.getItem("hh_pet_enabled")!=="0"};
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dayKey=d=>new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(d||new Date());
+const parseDate=v=>v?.toDate?v.toDate():v?.seconds?new Date(v.seconds*1000):v?new Date(v):null;
+const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
+const levelFromXP=xp=>Math.max(1,Math.floor(Math.sqrt(Math.max(0,xp)/100))+1);
+const levelBounds=l=>({cur:(l<=1?0:(l-1)**2*100),next:l**2*100});
+function applyPrefs(){document.body.classList.toggle("light",localPrefs.theme==="light"||(localPrefs.theme==="system"&&matchMedia("(prefers-color-scheme:light)").matches));document.documentElement.dataset.accent=localPrefs.accent;document.documentElement.dataset.background=localPrefs.background;$('floatingPet')?.classList.toggle('hidden',!user||!localPrefs.petEnabled);}
+function renderAuth(){const area=$("userArea");if(!user){area.innerHTML='<button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button>';$('googleLogin').onclick=()=>signInWithPopup(auth,provider).catch(console.error);$('greeting').textContent="Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.";return}const name=user.displayName||user.email||"Bạn";area.innerHTML=`<div class="user-pill"><img class="avatar-img" src="${esc(user.photoURL||"")}" onerror="this.style.display='none'"><span class="avatar">${esc((name[0]||"U").toUpperCase())}</span><div><b>${esc(name)}</b><small>🔥 <span id="userStreak">${num(profile?.streak)}</span> ngày</small></div><button id="logoutGoogle" class="logout-mini">Thoát</button></div>`;const img=area.querySelector('.avatar-img');if(img?.src)img.onload=()=>area.querySelector('.avatar').style.display='none';$('logoutGoogle').onclick=()=>signOut(auth);$('greeting').textContent=`Chào ${name} 👋 Hôm nay mình làm bài nhé!`}
+function ensureProfile(u){return runTransaction(db,async tx=>{const ref=doc(db,"users",u.uid),snap=await tx.get(ref),d=snap.exists()?snap.data():{},today=dayKey(),last=d.lastVisitDate||"";let streak=Math.max(0,num(d.currentStreak??d.streak));let longest=Math.max(streak,num(d.longestStreak));let xp=Math.max(0,num(d.totalXP));let points=Math.max(0,num(d.points));if(last!==today){const prev=last?new Date(last+"T12:00:00+07:00"):null,cur=new Date(today+"T12:00:00+07:00"),gap=prev?Math.round((cur-prev)/DAY):0;streak=last&&gap===1?streak+1:1;longest=Math.max(longest,streak);xp+=20;points+=10;tx.set(ref,{uid:u.uid,email:u.email||d.email||"",displayName:u.displayName||d.displayName||u.email||"Bạn",photoURL:u.photoURL||d.photoURL||"",streak,currentStreak:streak,longestStreak:longest,highestStreak:longest,totalXP:xp,points,level:levelFromXP(xp),lastVisitDate:today,lastVisitAt:serverTimestamp(),lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp(),pet:{type:d.pet?.type||"flamey",skin:d.pet?.skin||"default",position:d.pet?.position||{x:82,y:70}},unlockedItems:Array.isArray(d.unlockedItems)?d.unlockedItems:[],equippedItems:Array.isArray(d.equippedItems)?d.equippedItems:[]},{merge:true});}else tx.set(ref,{email:u.email||d.email||"",displayName:u.displayName||d.displayName||u.email||"Bạn",photoURL:u.photoURL||d.photoURL||"",lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});});}
+async function award(uid,deltaXP=0,deltaPoints=0,reason="reward"){const ref=doc(db,"users",uid);await runTransaction(db,async tx=>{const s=await tx.get(ref),d=s.exists()?s.data():{};const xp=Math.max(0,num(d.totalXP)+deltaXP),points=Math.max(0,num(d.points)+deltaPoints);tx.set(ref,{totalXP:xp,points,level:levelFromXP(xp),lastRewardReason:reason,lastRewardAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});});}
+async function completeHomework(id,checked){
+ if(!user)return signInWithPopup(auth,provider);
+ const progressRef=doc(db,"users",user.uid,"homeworkProgress",id), userRef=doc(db,"users",user.uid);
+ const xpPer=Math.max(0,num(siteSettings.xpPerHomework,30)), pointsPer=Math.max(0,num(siteSettings.pointsPerHomework,20));
+ if(!checked){
+   await runTransaction(db,async tx=>{
+     const ps=await tx.get(progressRef), us=await tx.get(userRef);
+     if(!ps.exists()||!ps.data().completed)return;
+     const d=us.exists()?us.data():{},xp=Math.max(0,num(d.totalXP)-num(ps.data().xp,xpPer)),points=Math.max(0,num(d.points)-num(ps.data().points,pointsPer));
+     tx.set(progressRef,{completed:false,updatedAt:serverTimestamp()},{merge:true});
+     tx.set(userRef,{totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:Math.max(0,num(d.completedHomeworkCount)-1),updatedAt:serverTimestamp()},{merge:true});
+   });
+   return;
  }
-}
-async function syncUserProfile(user) {
-  if (!user?.uid) return;
-
-  const today = dayKey(new Date());
-  const streakData = (() => {
-    try {
-      return JSON.parse(localStorage.getItem("hh_streak_v2") || '{"last":"","count":0}');
-    } catch {
-      return { last: today, count: 1 };
-    }
-  })();
-
-  // Ghi/cập nhật hồ sơ người dùng vào Firestore.
-  // Dùng merge để không ghi đè các trường admin hoặc dữ liệu cũ.
-  try {
-    await setDoc(doc(db, "users", user.uid), {
-      uid: user.uid,
-      displayName: user.displayName || "",
-      email: user.email || "",
-      photoURL: user.photoURL || "",
-      provider: "google",
-      lastLoginAt: serverTimestamp(),
-      lastVisitAt: serverTimestamp(),
-      lastVisitDate: today,
-      streak: Math.max(1, Number(streakData.count) || 1),
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-  } catch (error) {
-    console.error("Không thể đồng bộ hồ sơ người dùng:", error);
-  }
+ if(progress[id]?.completed)return;
+ const today=dayKey(),todays=homework.filter(h=>dayKey(parseDate(h.createdAt))===today),dailyEligible=todays.length>0&&todays.every(h=>progress[h.id]?.completed||h.id===id);
+ await runTransaction(db,async tx=>{
+   const ps=await tx.get(progressRef),us=await tx.get(userRef);
+   if(ps.exists()&&ps.data().completed)return;
+   const d=us.exists()?us.data():{},oldDaily=d.dailyRewardDate||"",dailyBonus=dailyEligible&&oldDaily!==today?100:0,dailyPoints=dailyEligible&&oldDaily!==today?50:0;
+   const xp=Math.max(0,num(d.totalXP)+xpPer+dailyBonus),points=Math.max(0,num(d.points)+pointsPer+dailyPoints);
+   tx.set(progressRef,{completed:true,completedAt:serverTimestamp(),xp:xpPer,points:pointsPer},{merge:true});
+   tx.set(userRef,{totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:num(d.completedHomeworkCount)+1,...(dailyBonus?{dailyRewardDate:today}:{ }),updatedAt:serverTimestamp()},{merge:true});
+ });
+ showToast(dailyEligible?`🎉 Hoàn thành toàn bộ hôm nay! +${xpPer+100} XP · +${pointsPer+50} Points`:`✨ +${xpPer} XP · +${pointsPer} Points`);
 }
 
-onAuthStateChanged(auth, async user=>{
- renderUser(user);
- if(user){
-   $("streakCount").textContent=JSON.parse(localStorage.getItem("hh_streak_v2")||'{"count":0}').count+" ngày";
-   await syncUserProfile(user);
- } else $("streakCount").textContent="—";
-});
-updateStreak();
-
-
-let siteSettings={
-  noHomeworkNoticeEnabled:true,
-  oldHomeworkNoticeEnabled:true,
-  noHomeworkNoticeTitle:"📚 Hôm nay không có bài tập mới",
-  noHomeworkNoticeMessage:"Hôm nay chưa có bài tập mới được cập nhật.",
-  oldHomeworkNoticeTitle:"📢 Bài tập chưa có cập nhật",
-  oldHomeworkNoticeMessage:"Danh sách bài tập hôm nay vẫn giống ngày trước."
-};
-
-function showUpdateNotice(){
-  const todayKey=dayKey(new Date());
-  const dismissed=localStorage.getItem("hh_notice_dismissed");
-  if(dismissed===todayKey)return;
-
-  const latest=homework.reduce((m,h)=>{
-    const d=h.createdAt?.toDate?h.createdAt.toDate():(h.createdAt?new Date(h.createdAt):null);
-    return d&&(!m||d>m)?d:m;
-  },null);
-
-  let title="",text="";
-  if(!homework.length){
-    if(siteSettings.noHomeworkNoticeEnabled===false)return;
-    title=siteSettings.noHomeworkNoticeTitle;
-    text=siteSettings.noHomeworkNoticeMessage;
-  }else{
-    if(!latest)return;
-    const latestKey=dayKey(latest);
-    if(latestKey===todayKey)return;
-    if(siteSettings.oldHomeworkNoticeEnabled===false)return;
-    const diff=Math.max(1,Math.round((new Date(todayKey+"T12:00:00+07:00")-new Date(latestKey+"T12:00:00+07:00"))/DAY));
-    title=siteSettings.oldHomeworkNoticeTitle;
-    text=siteSettings.oldHomeworkNoticeMessage.replaceAll("{days}",String(diff)).replaceAll("{date}",latest.toLocaleDateString("vi-VN"));
-  }
-  $("noticeTitle").textContent=title;
-  $("noticeText").textContent=text;
-  $("updateNotice").classList.remove("hidden");
-}
-$("noticeClose").onclick=()=>{localStorage.setItem("hh_notice_dismissed",dayKey());$("updateNotice").classList.add("hidden")};
-
-onSnapshot(query(collection(db,"subjects")),s=>{tabs=s.docs.map(d=>({id:d.id,...d.data()}));renderTabs();render()});
-onSnapshot(query(collection(db,"homework"),orderBy("createdAt","desc")),s=>{homework=s.docs.map(d=>({id:d.id,...d.data()}));render();showUpdateNotice()});
-onSnapshot(doc(db,"settings","site"),s=>{
-  if(s.exists())siteSettings={...siteSettings,...s.data()};
-  showUpdateNotice();
-});
-
+function renderStats(){const streak=Math.max(0,num(profile?.currentStreak??profile?.streak));const xp=Math.max(0,num(profile?.totalXP)),points=Math.max(0,num(profile?.points)),level=Math.max(1,num(profile?.level,levelFromXP(xp))),b=levelBounds(level),pct=Math.min(100,Math.max(0,(xp-b.cur)/(b.next-b.cur)*100));$('heroStreak').textContent=user?streak:"—";$('heroLevel').textContent=user?`Lv.${level}`:"—";$('heroPoints').textContent=user?points.toLocaleString("vi-VN"):"—";$('xpLevelText').textContent=user?`⭐ Level ${level}`:"Đăng nhập để bắt đầu";$('xpText').textContent=user?`${xp.toLocaleString("vi-VN")} / ${b.next.toLocaleString("vi-VN")} XP · còn ${Math.max(0,b.next-xp).toLocaleString("vi-VN")} XP lên level`:"XP và tiến độ sẽ được lưu bằng Firebase";$('xpPercent').textContent=user?`${Math.round(pct)}%`:"0%";$('xpBar').style.width=`${user?pct:0}%`;const today=dayKey(),todays=homework.filter(h=>dayKey(parseDate(h.createdAt))===today),done=todays.filter(h=>progress[h.id]?.completed).length;$('dailyProgress').textContent=`☑ ${done} / ${todays.length} bài hôm nay`;if($('userStreak'))$('userStreak').textContent=String(streak);applyPrefs();}
 function renderTabs(){
- $("tabs").innerHTML=`<button class="tab ${active==="all"?"active":""}" data-tab="all">✨ Tất cả</button>`+
- tabs.map(t=>`<button class="tab ${active===t.id?"active":""}" data-tab="${t.id}">${esc(t.icon||"📚")} ${esc(t.name)}</button>`).join("");
- document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{active=b.dataset.tab;renderTabs();render()});
-}
-$("search").oninput=e=>{search=e.target.value.toLowerCase();$("clearSearch").classList.toggle("hidden",!search);render()};
-$("clearSearch").onclick=()=>{$("search").value="";search="";$("clearSearch").classList.add("hidden");render()};
-function render(){
- $("totalCount").textContent=homework.length;
- let list=homework.filter(h=>(active==="all"||h.subjectId===active)&&(!search||`${h.title} ${h.content}`.toLowerCase().includes(search)));
- $("status").textContent=`${list.length} bài tập${active==="all"?"":" trong môn đã chọn"}`;
- $("empty").classList.toggle("hidden",list.length>0);
- $("homeworkList").innerHTML=list.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)).map((h,i)=>{
-  const t=tabs.find(x=>x.id===h.subjectId),due=h.dueDate?new Date(h.dueDate):null,state=due?dueState(due):{};
-  return `<article class="card ${h.pinned?"pinned":""}" style="animation-delay:${Math.min(i,10)*45}ms">
-   <div class="card-top"><span class="subject">${esc(t?.icon||"📚")} ${esc(t?.name||"Chưa phân loại")}</span>
-   <span class="badge ${state.cls||""}">${h.pinned?"📌 Ghim":h.important?"⭐ Quan trọng":"Mới"}</span></div>
-   <h2>${esc(h.title)}</h2><div class="content">${esc(h.content)}</div>
-   ${due?`<div class="due ${state.cls||""}">⏰ Hạn nộp: ${due.toLocaleString("vi-VN",{dateStyle:"medium",timeStyle:"short"})} · ${state.text}</div>`:""}
-  </article>`}).join("");
-}
-function dueState(d){const diff=d-new Date(),day=DAY;if(diff<0)return{cls:"red",text:"Đã hết hạn"};if(diff<2*day)return{cls:"yellow",text:"Sắp hết hạn"};return{cls:"",text:"Còn hạn"}}
-function esc(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-document.addEventListener("mousemove",e=>document.querySelectorAll(".card").forEach(c=>{const r=c.getBoundingClientRect();c.style.setProperty("--mx",`${e.clientX-r.left}px`);c.style.setProperty("--my",`${e.clientY-r.top}px`)}));
-const firePet=$("firePet");
-const streakWidget=$("streakWidget");
-function petPlay(){
-  if(!firePet)return;
-  firePet.classList.remove("pet-play");
-  void firePet.offsetWidth;
-  firePet.classList.add("pet-play");
-  const label=$("streakLabel");
-  if(label){label.textContent="Hí hí! 🔥";clearTimeout(window.__petTimer);window.__petTimer=setTimeout(()=>label.textContent="chuỗi học tập",1400)}
-}
-if(streakWidget){streakWidget.addEventListener("click",petPlay);streakWidget.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();petPlay()}})}
-setInterval(()=>{if(firePet&&!document.hidden)petPlay()},17000);
-
-const themeKey="hh_theme"; if(localStorage.getItem(themeKey)==="light")document.body.classList.add("light");
-$("themeBtn").onclick=()=>{document.body.classList.toggle("light");localStorage.setItem(themeKey,document.body.classList.contains("light")?"light":"dark")};
+ $('tabs').innerHTML=`<button class="tab ${active==='all'?'active':''}" data-tab="all">✨ Tất cả</button>`+tabs.map(t=>`<button class="tab ${active===t.id?'active':''}" data-tab="${esc(t.id)}">${esc(t.icon||'📚')} ${esc(t.name)}</button>`).join('');document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{active=b.dataset.tab;renderTabs();render()});}
+function render(){const list=homework.filter(h=>(active==='all'||h.subjectId===active)&&(!search||`${h.title} ${h.content}`.toLowerCase().includes(search)));$('totalCount')?.textContent;$("status").textContent=`${list.length} bài tập${active==='all'?'':' trong môn đã chọn'}`;$('empty').classList.toggle('hidden',list.length>0);$('homeworkList').innerHTML=list.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)).map((h,i)=>{const t=tabs.find(x=>x.id===h.subjectId),due=h.dueDate?new Date(h.dueDate):null,over=due&&due<new Date(),done=!!progress[h.id]?.completed;return `<article class="card ${h.pinned?'pinned':''} ${done?'completed':''}" style="animation-delay:${Math.min(i,10)*35}ms"><div class="card-top"><span class="subject">${esc(t?.icon||'📚')} ${esc(t?.name||'Chưa phân loại')}</span><span class="badge ${over?'red':''}">${h.pinned?'📌 Ghim':h.important?'⭐ Quan trọng':'Mới'}</span></div><h2>${esc(h.title)}</h2><div class="content">${esc(h.content)}</div>${due?`<div class="due ${over?'red':''}">⏰ Hạn: ${due.toLocaleString('vi-VN',{dateStyle:'medium',timeStyle:'short'})} · ${over?'Đã hết hạn':'Còn hạn'}</div>`:''}<div class="card-footer"><label class="task-check"><input type="checkbox" data-homework="${esc(h.id)}" ${done?'checked':''}><span></span><b>${done?'Đã hoàn thành':'Đã làm'}</b></label><span class="xp-chip">⭐ +${Math.max(0,num(siteSettings.xpPerHomework,30))} XP</span></div></article>`}).join('');document.querySelectorAll('[data-homework]').forEach(c=>c.onchange=e=>completeHomework(e.target.dataset.homework,e.target.checked));renderStats();}
+function showToast(text){const x=document.createElement('div');x.className='toast';x.textContent=text;document.body.appendChild(x);setTimeout(()=>x.classList.add('show'),20);setTimeout(()=>{x.classList.remove('show');setTimeout(()=>x.remove(),250)},2600);}
+function openProfile(){if(!user)return signInWithPopup(auth,provider);const p=profile||{},streak=num(p.streak),longest=num(p.longestStreak),xp=num(p.totalXP),level=num(p.level,levelFromXP(xp)),done=Object.values(progress).filter(x=>x.completed).length;$("profileContent").innerHTML=`<div class="panel-title"><div><p class="eyebrow">YOUR PROGRESS</p><h2>👤 Hồ sơ</h2></div><button class="icon-btn" id="closeProfile">×</button></div><div class="profile-hero"><img src="${esc(user.photoURL||'')}" class="profile-avatar" onerror="this.style.display='none'"><div><h2>${esc(user.displayName||user.email||'Bạn')}</h2><p class="muted">${esc(user.email||'')}</p></div></div><div class="profile-stats"><div>🔥<b>${streak}</b><small>Streak</small></div><div>🏆<b>${longest}</b><small>Cao nhất</small></div><div>⭐<b>${xp}</b><small>XP</small></div><div>💎<b>${num(p.points)}</b><small>Points</small></div></div><div class="achievement-list"><h3>🏆 Thành tựu</h3>${achievementRows(p,done)}</div>`;$("profileDialog").showModal();$('closeProfile').onclick=()=>$("profileDialog").close();}
+function achievementRows(p,done){const s=num(p.streak),xp=num(p.totalXP);return [['🔥 First Flame',s>=1,'Đăng nhập ngày đầu tiên'],['🔥 Week Warrior',s>=7,'7 ngày liên tục'],['🔥 Two Weeks',s>=14,'14 ngày liên tục'],['📚 Homework Hero',done>=50,`${done}/50 bài hoàn thành`],['⚡ XP Hunter',xp>=1000,'Đạt 1.000 XP'],['👑 Legend',s>=100,'100 ngày liên tục']].map(a=>`<div class="achievement ${a[1]?'unlocked':''}"><span>${a[1]?'✓':'🔒'}</span><div><b>${a[0]}</b><small>${a[2]}</small></div></div>`).join('')}
+function openPet(){if(!user)return signInWithPopup(auth,provider);const p=profile||{},s=num(p.streak),skin=p.pet?.skin||'default';$('petContent').innerHTML=`<div class="panel-title"><div><p class="eyebrow">PET COLLECTION</p><h2>🐾 Tủ đồ Pet</h2></div><button class="icon-btn" id="closePet">×</button></div><div class="pet-showcase"><div class="big-pet">🔥<span>•ᴗ•</span></div><div><h2>Flamey · Lv.${num(p.level,1)}</h2><p class="muted">Streak ${s} ngày · Skin hiện tại: ${esc(skin)}</p><div class="pet-grid">${[['default','🔥 Flamey',1],['cap','🧢 School Cap',7],['hoodie','👕 Hoodie',14],['glasses','👓 Glasses',21],['crown','👑 Crown',30],['galaxy','🌌 Galaxy',75]].map(x=>{const unlocked=s>=x[2]||Array.isArray(p.unlockedItems)&&p.unlockedItems.includes(x[0]);return `<button class="pet-item ${skin===x[0]?'equipped':''} ${unlocked?'':'locked'}" data-skin="${x[0]}" ${unlocked?'':'disabled'}>${x[1]}<small>${unlocked?'Đã mở':'🔒 '+x[2]+' ngày'}</small></button>`}).join('')}</div></div></div>`;$('petDialog').showModal();$('closePet').onclick=()=>$('petDialog').close();document.querySelectorAll('[data-skin]').forEach(b=>b.onclick=async()=>{await setDoc(doc(db,'users',user.uid),{pet:{...(profile?.pet||{}),skin:b.dataset.skin},equippedItems:[b.dataset.skin],updatedAt:serverTimestamp()},{merge:true});$('petDialog').close();showToast('🐾 Đã trang bị skin cho Flamey!')});}
+function showUpdateNotice(){const dismissed=localStorage.getItem('hh_notice_dismissed'),today=dayKey();if(dismissed===today)return;const latest=homework.reduce((m,h)=>{const d=parseDate(h.createdAt);return d&&(!m||d>m)?d:m},null);let title='',text='';if(!homework.length){if(siteSettings.noHomeworkNoticeEnabled===false)return;title=siteSettings.noHomeworkNoticeTitle;text=siteSettings.noHomeworkNoticeMessage}else{if(!latest)return;const latestKey=dayKey(latest);if(latestKey===today)return;if(siteSettings.oldHomeworkNoticeEnabled===false)return;const diff=Math.max(1,Math.round((new Date(today+'T12:00:00+07:00')-new Date(latestKey+'T12:00:00+07:00'))/DAY));title=siteSettings.oldHomeworkNoticeTitle;text=(siteSettings.oldHomeworkNoticeMessage||'').replaceAll('{days}',String(diff)).replaceAll('{date}',latest.toLocaleDateString('vi-VN'));}$('noticeTitle').textContent=title;$('noticeText').textContent=text;$('updateNotice').classList.remove('hidden')}
+$('noticeClose').onclick=()=>{$('updateNotice').classList.add('hidden');localStorage.setItem('hh_notice_dismissed',dayKey())};$('search').oninput=e=>{search=e.target.value.toLowerCase();$('clearSearch').classList.toggle('hidden',!search);render()};$('clearSearch').onclick=()=>{$('search').value='';search='';$('clearSearch').classList.add('hidden');render()};$('themeBtn').onclick=()=>{localPrefs.theme=document.body.classList.contains('light')?'dark':'light';localStorage.setItem('hh_theme',localPrefs.theme);applyPrefs()};$('settingsBtn').onclick=()=>{$('settingsDialog').showModal();$('petEnabled').checked=localPrefs.petEnabled};$('closeSettings').onclick=()=>$('settingsDialog').close();$('saveSettings').onclick=()=>{localPrefs.petEnabled=$('petEnabled').checked;localStorage.setItem('hh_pet_enabled',localPrefs.petEnabled?'1':'0');$('settingsDialog').close();applyPrefs()};document.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{localPrefs.theme=b.dataset.theme;localStorage.setItem('hh_theme',localPrefs.theme);applyPrefs()});document.querySelectorAll('[data-accent]').forEach(b=>b.onclick=()=>{localPrefs.accent=b.dataset.accent;localStorage.setItem('hh_accent',localPrefs.accent);applyPrefs()});document.querySelectorAll('[data-bg]').forEach(b=>b.onclick=()=>{localPrefs.background=b.dataset.bg;localStorage.setItem('hh_bg',localPrefs.background);applyPrefs()});$('profileNav').onclick=openProfile;$('petNav').onclick=openPet;$('petNav').onclick=openPet;
+const pet=$('floatingPet');let dragging=false,ox=0,oy=0;function setPetPos(x,y,save=true){x=Math.max(8,Math.min(92,x));y=Math.max(8,Math.min(90,y));pet.style.left=x+'%';pet.style.top=y+'%';if(save&&user)setDoc(doc(db,'users',user.uid),{pet:{...(profile?.pet||{}),position:{x,y}},updatedAt:serverTimestamp()},{merge:true}).catch(console.error)}function loadPet(){const pos=profile?.pet?.position;setPetPos(num(pos?.x,82),num(pos?.y,70),false)}pet.addEventListener('pointerdown',e=>{dragging=true;pet.setPointerCapture(e.pointerId);const r=pet.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;pet.classList.add('dragging')});pet.addEventListener('pointermove',e=>{if(!dragging)return;setPetPos((e.clientX-ox)/innerWidth*100,(e.clientY-oy)/innerHeight*100,false)});pet.addEventListener('pointerup',()=>{if(dragging){dragging=false;pet.classList.remove('dragging');setPetPos(parseFloat(pet.style.left),parseFloat(pet.style.top),true)}});pet.onclick=()=>{if(!dragging){pet.classList.remove('pet-play');void pet.offsetWidth;pet.classList.add('pet-play');showToast(profile?.streak>=7?'🔥 Flamey: Giữ chuỗi thôi!':'🔥 Flamey: Đi làm bài nào!')}};
+function cleanup(){unsubs.forEach(u=>u&&u());unsubs=[];progress={};profile=null}
+onAuthStateChanged(auth,async u=>{cleanup();user=u;renderAuth();renderStats();if(!u)return;try{await ensureProfile(u)}catch(e){console.error(e)}unsubs.push(onSnapshot(doc(db,'users',u.uid),s=>{profile=s.exists()?s.data():{};renderAuth();renderStats();loadPet();}));unsubs.push(onSnapshot(collection(db,'users',u.uid,'homeworkProgress'),s=>{progress={};s.docs.forEach(d=>progress[d.id]=d.data());render();}));loadPet()});
+globalUnsubs.push(onSnapshot(query(collection(db,'subjects'),orderBy('order','asc')),
+ s=>{tabs=s.docs.map(d=>({id:d.id,...d.data()}));renderTabs();render()},e=>console.error(e)));
+globalUnsubs.push(onSnapshot(query(collection(db,'homework'),orderBy('createdAt','desc')),s=>{homework=s.docs.map(d=>({id:d.id,...d.data()}));render();showUpdateNotice()},e=>console.error(e)));
+globalUnsubs.push(onSnapshot(doc(db,'settings','site'),s=>{if(s.exists())siteSettings={...siteSettings,...s.data()};showUpdateNotice()}));
+$('today').textContent=new Intl.DateTimeFormat('vi-VN',{dateStyle:'full',timeZone:TZ}).format(new Date());applyPrefs();render();
