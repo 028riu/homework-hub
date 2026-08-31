@@ -4,7 +4,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // =====================================================
-    // DANH SÁCH ADMIN
+    // KIỂM TRA ADMIN
     // =====================================================
 
     function isAdmin() {
@@ -20,82 +20,143 @@ service cloud.firestore {
 
 
     // =====================================================
-    // NGƯỜI DÙNG
+    // USERS
     // =====================================================
 
     match /users/{userId} {
 
-      // Admin xem tất cả người dùng.
-      // Người dùng thường chỉ xem chính mình.
+      // Admin xem tất cả.
+      // User chỉ xem chính mình.
       allow read: if isAdmin()
         || (
           request.auth != null
           && request.auth.uid == userId
         );
 
-      // Admin có thể tạo hồ sơ người dùng.
-      // Người dùng có thể tạo hồ sơ của chính mình.
+      // Admin tạo user.
+      // User có thể tạo hồ sơ của chính mình.
       allow create: if isAdmin()
         || (
           request.auth != null
           && request.auth.uid == userId
         );
 
-      // Admin có thể sửa tất cả.
-      // Người dùng chỉ được sửa hồ sơ của chính mình.
+      // Admin sửa tất cả.
+      // User chỉ sửa hồ sơ của mình.
       allow update: if isAdmin()
         || (
           request.auth != null
           && request.auth.uid == userId
         );
 
-      // Chỉ Admin được xóa người dùng.
+      // Chỉ admin được xóa.
       allow delete: if isAdmin();
     }
 
 
     // =====================================================
-    // MÔN HỌC / TAB
+    // SUBJECTS
     // =====================================================
 
     match /subjects/{subjectId} {
 
-      // Ai cũng được xem môn học.
+      // Mọi người được xem môn học.
       allow read: if true;
 
-      // Chỉ Admin được tạo / sửa / xóa.
+      // Chỉ admin quản lý môn học.
       allow create, update, delete: if isAdmin();
     }
 
 
     // =====================================================
-    // BÀI TẬP
+    // HOMEWORK
     // =====================================================
 
     match /homework/{homeworkId} {
 
-      // Ai cũng được xem bài tập.
+      // ===================================================
+      // VIEW
+      // ===================================================
+      // Mọi người có thể xem bài tập.
+      //
+      // Document homework có thể chứa:
+      // - title
+      // - description
+      // - subject
+      // - createdAt
+      // - links
+      // - files
+      // - url
+      // - các trường khác của bài tập
+      //
+      // Firestore không giới hạn các field này vì admin
+      // là người duy nhất được ghi dữ liệu.
       allow read: if true;
 
-      // Chỉ Admin được tạo / sửa / xóa.
+
+      // ===================================================
+      // CREATE
+      // ===================================================
+      // Chỉ admin được đăng bài.
+      //
+      // Có thể đăng:
+      // - Chỉ nội dung
+      // - Nội dung + link
+      // - Nội dung + file
+      // - Nội dung + nhiều link
+      // - Nội dung + nhiều file
+      // - Nội dung + nhiều link + nhiều file
+      //
+      // Link và file đều không bắt buộc.
+      allow create: if isAdmin();
+
+
+      // ===================================================
+      // UPDATE
+      // ===================================================
+      // Chỉ admin được sửa bài.
+      //
+      // Cho phép cập nhật:
+      // - Nội dung
+      // - Link
+      // - File
+      // - Nhiều link
+      // - Nhiều file
+      // - Các thông tin khác của bài.
+      allow update: if isAdmin();
+
+
+      // ===================================================
+      // DELETE
+      // ===================================================
+      // Chỉ admin được xóa bài.
+      allow delete: if isAdmin();
+    }
+
+
+    // =====================================================
+    // SETTINGS
+    // =====================================================
+
+    match /settings/{settingId} {
+
+      // Chỉ admin xem được cài đặt hệ thống.
+      allow read: if isAdmin();
+
+      // Chỉ admin chỉnh sửa.
       allow create, update, delete: if isAdmin();
     }
 
 
     // =====================================================
-    // CÀI ĐẶT THÔNG BÁO / HỆ THỐNG
+    // KHÓA MẶC ĐỊNH
     // =====================================================
-
-    match /settings/{settingId} {
-
-      // Chỉ Admin được xem và chỉnh sửa.
-      allow read, write: if isAdmin();
-    }
-
-
-    // =====================================================
-    // KHÓA TẤT CẢ COLLECTION KHÁC
-    // =====================================================
+    //
+    // Những collection khác không được phép truy cập.
+    //
+    // Điều này giúp tránh trường hợp vô tình tạo ra
+    // collection mới nhưng quên viết security rules.
+    //
 
     match /{document=**} {
       allow read, write: if false;
