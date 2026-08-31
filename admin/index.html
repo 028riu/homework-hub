@@ -22,14 +22,21 @@
 <dialog id="homeworkDialog"><form method="dialog" id="homeworkForm" class="modal"><div class="panel-title"><h2 id="hwDialogTitle">Tạo bài tập</h2><button value="cancel" class="icon-btn">×</button></div><input type="hidden" id="hwId">
 <label>Môn học<select id="hwTab" required></select></label><label>Tiêu đề<input id="hwTitle" required maxlength="120"></label>
 <label>Nội dung<textarea id="hwContent" required rows="7"></textarea></label><label>Hạn nộp<input id="hwDue" type="datetime-local"></label>
-<label>🔗 Link đính kèm <span class="muted">(không bắt buộc)</span>
-<input id="hwUrl" type="url" placeholder="https://example.com/..."></label>
-<label>📎 File từ máy <span class="muted">(không bắt buộc, tối đa 50 MB)</span>
-<input id="hwFile" type="file"></label>
-<div id="hwExistingAttachments" class="existing-attachments"><span class="muted">Chưa có tệp/link cũ.</span></div>
-<p id="hwUploadStatus" class="upload-status"></p>
+
+<div class="attachment-builder">
+  <div class="attachment-builder-head">
+    <div><b>📎 Tệp & liên kết</b><small>Không bắt buộc. Có thể thêm nhiều link/file.</small></div>
+    <div class="attachment-add-buttons">
+      <button type="button" id="addLinkBtn" class="ghost small">＋ Thêm link</button>
+      <button type="button" id="addFileBtn" class="ghost small">＋ Thêm file</button>
+    </div>
+  </div>
+  <div id="attachmentList" class="attachment-list"></div>
+  <p id="hwUploadProgress" class="muted"></p>
+</div>
+
 <div class="checks"><label><input id="hwPinned" type="checkbox"> 📌 Ghim bài</label><label><input id="hwImportant" type="checkbox"> ⭐ Quan trọng</label></div>
-<button class="primary" value="submit">Lưu bài tập</button><p id="hwError" class="error"></p></form></dialog>
+<button id="saveHomeworkBtn" class="primary" value="submit">💾 Lưu bài tập</button><p id="hwError" class="error"></p></form></dialog>
 <dialog id="tabDialog"><form method="dialog" id="tabForm" class="modal"><div class="panel-title"><h2 id="tabDialogTitle">Tạo tab</h2><button value="cancel" class="icon-btn">×</button></div>
 <input type="hidden" id="tabId"><label>Tên môn<input id="tabName" required maxlength="40" placeholder="Ví dụ: Toán"></label><label>Biểu tượng<input id="tabIcon" maxlength="4" placeholder="📐"></label>
 <button class="primary" value="submit">Lưu tab</button><p id="tabError" class="error"></p></form></dialog>
