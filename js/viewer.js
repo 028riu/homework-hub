@@ -110,6 +110,156 @@ function renderTabs(){
 }
 $("search").oninput=e=>{search=e.target.value.toLowerCase();$("clearSearch").classList.toggle("hidden",!search);render()};
 $("clearSearch").onclick=()=>{$("search").value="";search="";$("clearSearch").classList.add("hidden");render()};
+
+function getAttachments(h) {
+  const list = Array.isArray(h?.attachments) ? h.attachments : [];
+  const result = [...list];
+
+  if (h?.linkUrl && !result.some((x) => x?.type === "link" && x?.url === h.linkUrl)) {
+    result.push({ type: "link", url: h.linkUrl, name: h.linkName || "Liên kết" });
+  }
+  if (h?.fileUrl && !result.some((x) => x?.type === "file" && x?.url === h.fileUrl)) {
+    result.push({
+      type: "file",
+      url: h.fileUrl,
+      name: h.fileName || "Tệp đính kèm",
+      mimeType: h.fileType || "",
+      size: h.fileSize || 0
+    });
+  }
+  return result.filter((x) => x?.url);
+}
+
+function attachmentIcon(item) {
+  const mime = String(item?.mimeType || "").toLowerCase();
+  if (mime.startsWith("image/")) return "🖼️";
+  if (mime.startsWith("video/")) return "🎬";
+  if (mime.startsWith("audio/")) return "🎵";
+  if (mime.includes("pdf")) return "📕";
+  return item?.type === "link" ? "🔗" : "📎";
+}
+
+function safeAttachmentName(item) {
+  return item?.name || (item?.type === "link" ? item.url : "Tệp đính kèm");
+}
+
+function isPreviewableFile(item) {
+  const mime = String(item?.mimeType || "").toLowerCase();
+  return mime.startsWith("image/") ||
+    mime.startsWith("video/") ||
+    mime.startsWith("audio/") ||
+    mime.includes("pdf") ||
+    mime.startsWith("text/");
+}
+
+function renderAttachments(h) {
+  const attachments = getAttachments(h);
+  if (!attachments.length) return "";
+
+  return `
+    <div class="homework-attachments">
+      <div class="attachment-heading">📎 Tài liệu / liên kết</div>
+      ${attachments.map((item, index) => {
+        const name = safeAttachmentName(item);
+        const isLink = item.type === "link";
+        return `
+          <div class="attachment-card">
+            <div class="attachment-info">
+              <span class="attachment-icon">${attachmentIcon(item)}</span>
+              <div>
+                <b>${esc(name)}</b>
+                ${isLink ? `<small>${esc(item.url)}</small>` : `<small>${esc(item.mimeType || "Tệp đính kèm")}</small>`}
+              </div>
+            </div>
+            <div class="attachment-actions">
+              ${isLink
+                ? `<button type="button" class="attachment-btn preview-link" data-url="${esc(item.url)}" data-index="${index}">👁️ Xem</button>
+                   <button type="button" class="attachment-btn open-link" data-url="${esc(item.url)}">↗ Mở link</button>`
+                : `<button type="button" class="attachment-btn preview-file" data-url="${esc(item.url)}" data-name="${esc(name)}" data-mime="${esc(item.mimeType || "")}">👁️ Xem trực tiếp</button>
+                   <a class="attachment-btn" href="${esc(item.url)}" download="${esc(name)}" target="_blank" rel="noopener">⬇️ Download</a>`}
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function openAttachmentPreview(itemUrl, title, isLink = false) {
+  const old = document.getElementById("attachmentPreviewDialog");
+  if (old) old.remove();
+
+  const dialog = document.createElement("dialog");
+  dialog.id = "attachmentPreviewDialog";
+  dialog.className = "attachment-preview-dialog";
+
+  const safeUrl = esc(itemUrl);
+  dialog.innerHTML = `
+    <div class="attachment-preview-modal">
+      <div class="attachment-preview-head">
+        <b>${esc(title || "Xem tài liệu")}</b>
+        <button type="button" class="icon-button close-attachment-preview">×</button>
+      </div>
+      <div class="attachment-preview-body">
+        ${isLink
+          ? `<div class="link-preview-loading">
+               <div class="preview-spinner">⏳</div>
+               <p>Đang thử hiển thị nội dung của link...</p>
+               <iframe class="attachment-iframe" src="${safeUrl}" title="${esc(title || "Liên kết")}" referrerpolicy="no-referrer"></iframe>
+               <div class="preview-fallback">
+                 <p>Trang này có thể chặn hiển thị bên trong Homework Hub.</p>
+                 <button type="button" class="primary open-link-fallback" data-url="${safeUrl}">↗ Mở link ở tab mới</button>
+               </div>
+             </div>`
+          : `<iframe class="attachment-iframe" src="${safeUrl}" title="${esc(title || "Tài liệu")}" loading="lazy"></iframe>
+             <div class="preview-fallback">
+               <p>Nếu trình duyệt không hiển thị được file:</p>
+               <a class="primary" href="${safeUrl}" download="${esc(title || "file")}" target="_blank" rel="noopener">⬇️ Download file</a>
+             </div>`}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(dialog);
+  dialog.querySelector(".close-attachment-preview")?.addEventListener("click", () => dialog.close());
+  dialog.querySelector(".open-link-fallback")?.addEventListener("click", () => {
+    window.open(itemUrl, "_blank", "noopener,noreferrer");
+  });
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else dialog.setAttribute("open", "");
+}
+
+document.addEventListener("click", (event) => {
+  const previewFile = event.target.closest(".preview-file");
+  if (previewFile) {
+    openAttachmentPreview(
+      previewFile.dataset.url,
+      previewFile.dataset.name || "Tệp",
+      false
+    );
+    return;
+  }
+
+  const previewLink = event.target.closest(".preview-link");
+  if (previewLink) {
+    openAttachmentPreview(
+      previewLink.dataset.url,
+      "Xem liên kết",
+      true
+    );
+    return;
+  }
+
+  const openLink = event.target.closest(".open-link");
+  if (openLink) {
+    window.open(openLink.dataset.url, "_blank", "noopener,noreferrer");
+  }
+});
+
 function render(){
  $("totalCount").textContent=homework.length;
  let list=homework.filter(h=>(active==="all"||h.subjectId===active)&&(!search||`${h.title} ${h.content}`.toLowerCase().includes(search)));
@@ -122,6 +272,7 @@ function render(){
    <span class="badge ${state.cls||""}">${h.pinned?"📌 Ghim":h.important?"⭐ Quan trọng":"Mới"}</span></div>
    <h2>${esc(h.title)}</h2><div class="content">${esc(h.content)}</div>
    ${due?`<div class="due ${state.cls||""}">⏰ Hạn nộp: ${due.toLocaleString("vi-VN",{dateStyle:"medium",timeStyle:"short"})} · ${state.text}</div>`:""}
+   ${renderAttachments(h)}
   </article>`}).join("");
 }
 function dueState(d){const diff=d-new Date(),day=DAY;if(diff<0)return{cls:"red",text:"Đã hết hạn"};if(diff<2*day)return{cls:"yellow",text:"Sắp hết hạn"};return{cls:"",text:"Còn hạn"}}

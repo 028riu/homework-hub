@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && (
+          request.auth.token.email == "028riu@gmail.com"
+          || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
+          || request.auth.token.email == "linh085760@gmail.com"
+          || request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
+        );
+    }
+
+    match /homework-files/{homeworkId}/{fileName=**} {
+      allow read: if true;
+      allow write: if isAdmin()
+        && request.resource.size <= 50 * 1024 * 1024;
+      allow delete: if isAdmin();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,29 @@
+HOMEWORK HUB — BẢN ĐÃ CẬP NHẬT
+
+Tính năng mới:
+1. Admin tạo/sửa bài tập có ô URL, không bắt buộc.
+2. Admin có thể chọn file từ máy, tối đa 50 MB.
+3. File được upload lên Firebase Storage.
+4. Firestore lưu attachments[] cho từng bài tập.
+5. Trang người xem có nút Xem trực tiếp + Download cho file.
+6. Link được thử hiển thị trực tiếp trong cửa sổ xem.
+7. Nếu website chặn iframe/không hiển thị, người dùng có nút Mở link ở tab mới.
+8. Dữ liệu cũ dùng linkUrl/fileUrl/fileName/fileType vẫn được tương thích.
+
+QUAN TRỌNG — FIREBASE STORAGE RULES:
+File firebase/storage.rules cần được publish lên Firebase Storage Rules.
+Trong Firebase Console:
+Storage → Rules → thay rules hiện tại bằng nội dung file firebase/storage.rules → Publish.
+
+Nếu Storage chưa được bật trong Firebase project, hãy bật Firebase Storage trước khi upload.
+
+GitHub Pages:
+Không cần Netlify để chạy phần frontend. Push toàn bộ thư mục lên GitHub branch main.
+URL dự kiến:
+https://028riu.github.io/homework-hub/
+
+Các admin vẫn giữ nguyên:
+- 028riu@gmail.com
+- tu0ngtun2gsahur8@gmail.com
+- linh085760@gmail.com
+- phuong026443@stu.vinschool.edu.vn

@@ -24,6 +24,7 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
 
 // ============================================================
 // FIREBASE
@@ -31,6 +32,7 @@ import { firebaseConfig } from "./firebase-config.js";
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 const provider = new GoogleAuthProvider();
 const $ = (id) => document.getElementById(id);
 
@@ -416,6 +418,148 @@ if (tabForm) {
   });
 }
 
+
+// ============================================================
+// ATTACHMENTS / FILE UPLOAD
+// ============================================================
+const MAX_UPLOAD_SIZE = 50 * 1024 * 1024;
+
+function normalizeUrl(value = "") {
+  const raw = String(value).trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "";
+    return url.href;
+  } catch {
+    return "";
+  }
+}
+
+function formatFileSize(bytes) {
+  const n = Number(bytes) || 0;
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(n / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function getHomeworkAttachments(homework) {
+  const list = Array.isArray(homework?.attachments) ? homework.attachments : [];
+  const legacy = [];
+
+  if (homework?.linkUrl && !list.some((x) => x?.type === "link" && x?.url === homework.linkUrl)) {
+    legacy.push({ type: "link", url: homework.linkUrl, name: homework.linkName || "Liên kết" });
+  }
+  if (homework?.fileUrl && !list.some((x) => x?.type === "file" && x?.url === homework.fileUrl)) {
+    legacy.push({
+      type: "file",
+      url: homework.fileUrl,
+      name: homework.fileName || "Tệp đính kèm",
+      mimeType: homework.fileType || "",
+      size: homework.fileSize || 0
+    });
+  }
+
+  return [...list, ...legacy];
+}
+
+function renderAttachmentAdminSummary(homework) {
+  const attachments = getHomeworkAttachments(homework);
+  if (!attachments.length) return `<small class="muted">Không có link hoặc file đính kèm.</small>`;
+
+  return `
+    <div class="attachment-admin-list">
+      ${attachments.map((item) => {
+        const isLink = item?.type === "link";
+        const name = item?.name || (isLink ? item.url : "Tệp");
+        return `
+          <small class="attachment-admin-item">
+            ${isLink ? "🔗" : "📎"} ${esc(name)}
+            ${isLink ? `<span class="muted"> · ${esc(item.url || "")}</span>` : ` · ${esc(formatFileSize(item.size))}`}
+          </small>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function setUploadStatus(message = "", isError = false) {
+  const el = $("hwUploadStatus");
+  if (!el) return;
+  el.textContent = message;
+  el.classList.toggle("error", isError);
+  el.classList.toggle("success", !isError && !!message);
+}
+
+function resetAttachmentInputs() {
+  const url = $("hwUrl");
+  const file = $("hwFile");
+  const old = $("hwExistingAttachments");
+  if (url) url.value = "";
+  if (file) file.value = "";
+  if (old) old.innerHTML = "";
+  setUploadStatus("");
+}
+
+function renderExistingAttachments(homework) {
+  const container = $("hwExistingAttachments");
+  if (!container) return;
+
+  const attachments = getHomeworkAttachments(homework);
+  if (!attachments.length) {
+    container.innerHTML = `<span class="muted">Chưa có tệp/link cũ.</span>`;
+    return;
+  }
+
+  container.innerHTML = attachments.map((item, index) => {
+    const isLink = item?.type === "link";
+    return `
+      <div class="existing-attachment" data-existing-index="${index}">
+        <span>${isLink ? "🔗" : "📎"} ${esc(item?.name || (isLink ? "Liên kết" : "Tệp"))}</span>
+        <small>${isLink ? esc(item?.url || "") : esc(formatFileSize(item?.size))}</small>
+      </div>
+    `;
+  }).join("");
+}
+
+async function uploadHomeworkFile(file, homeworkId) {
+  if (!file) return null;
+  if (file.size > MAX_UPLOAD_SIZE) {
+    throw new Error(`File quá lớn. Kích thước tối đa là ${formatFileSize(MAX_UPLOAD_SIZE)}.`);
+  }
+
+  const safeName = file.name.replace(/[^\w.\-À-ỹ ]/g, "_").replace(/\s+/g, "_");
+  const path = `homework-files/${homeworkId}/${Date.now()}-${safeName}`;
+  const storageRef = ref(storage, path);
+
+  setUploadStatus(`⏳ Đang tải ${file.name}...`);
+  const snapshot = await uploadBytes(storageRef, file, {
+    contentType: file.type || "application/octet-stream",
+    customMetadata: {
+      originalName: file.name
+    }
+  });
+  const url = await getDownloadURL(snapshot.ref);
+
+  setUploadStatus(`✅ Đã tải ${file.name} (${formatFileSize(file.size)})`);
+  return {
+    type: "file",
+    url,
+    storagePath: path,
+    name: file.name,
+    mimeType: file.type || "application/octet-stream",
+    size: file.size
+  };
+}
+
+function validateHomeworkUrl(value) {
+  if (!value.trim()) return "";
+  const normalized = normalizeUrl(value);
+  if (!normalized) throw new Error("URL không hợp lệ. Hãy nhập dạng https://... hoặc http://...");
+  return normalized;
+}
+
 // ============================================================
 // HOMEWORK
 // ============================================================
@@ -435,6 +579,7 @@ function renderHomework() {
         <b>${homework.pinned ? "📌 " : ""}${homework.important ? "⭐ " : ""}${esc(homework.title || "Bài tập")}</b>
         <small>${esc(subject?.icon || "📚")} ${esc(subject?.name || "Chưa phân loại")} · ${esc(getDueText(homework.dueDate))}</small>
         <small>${esc(homework.content || "")}</small>
+        ${renderAttachmentAdminSummary(homework)}
         <div class="actions">
           <button type="button" data-action="edit-homework" data-id="${esc(homework.id)}">Sửa</button>
           <button type="button" class="danger" data-action="delete-homework" data-id="${esc(homework.id)}">Xóa</button>
@@ -455,6 +600,7 @@ if (newHomework) {
     $("hwId").value = "";
     $("hwDialogTitle").textContent = "Tạo bài tập";
     $("hwError").textContent = "";
+    resetAttachmentInputs();
     fillSubjectSelect();
     showDialog("homeworkDialog");
   });
@@ -476,24 +622,51 @@ if (homeworkForm) {
     if (!content) return void (errorEl.textContent = "Vui lòng nhập nội dung.");
 
     const oldHomework = homeworks.find((item) => item.id === id);
-    const data = {
-      subjectId,
-      title,
-      content,
-      dueDate: $("hwDue").value || null,
-      pinned: $("hwPinned").checked,
-      important: $("hwImportant").checked,
-      updatedAt: serverTimestamp(),
-      createdAt: oldHomework?.createdAt || serverTimestamp()
-    };
+    const homeworkId = id || crypto.randomUUID();
 
     try {
-      await setDoc(doc(db, "homework", id || crypto.randomUUID()), data);
+      const linkUrl = validateHomeworkUrl($("hwUrl")?.value || "");
+      const selectedFile = $("hwFile")?.files?.[0] || null;
+      let attachments = getHomeworkAttachments(oldHomework);
+
+      // Nếu nhập URL mới, thêm URL vào danh sách đính kèm.
+      if (linkUrl) {
+        attachments = attachments.filter((item) => !(item?.type === "link" && item?.url === linkUrl));
+        attachments.push({
+          type: "link",
+          url: linkUrl,
+          name: "Liên kết",
+          addedAt: new Date().toISOString()
+        });
+      }
+
+      // Nếu chọn file mới, tải lên Firebase Storage.
+      if (selectedFile) {
+        const uploaded = await uploadHomeworkFile(selectedFile, homeworkId);
+        attachments = attachments.filter((item) => item?.type !== "file");
+        attachments.push(uploaded);
+      }
+
+      const data = {
+        subjectId,
+        title,
+        content,
+        dueDate: $("hwDue").value || null,
+        pinned: $("hwPinned").checked,
+        important: $("hwImportant").checked,
+        attachments,
+        updatedAt: serverTimestamp(),
+        createdAt: oldHomework?.createdAt || serverTimestamp()
+      };
+
+      await setDoc(doc(db, "homework", homeworkId), data);
       safeCloseDialog("homeworkDialog");
       errorEl.textContent = "";
+      setUploadStatus("");
     } catch (error) {
       console.error("Save homework error:", error);
       errorEl.textContent = `Không thể lưu: ${error.message}`;
+      setUploadStatus(`❌ ${error.message}`, true);
     }
   });
 }
@@ -526,6 +699,10 @@ function editHomework(id) {
   $("hwDue").value = homework.dueDate || "";
   $("hwPinned").checked = !!homework.pinned;
   $("hwImportant").checked = !!homework.important;
+  $("hwUrl").value = "";
+  $("hwFile").value = "";
+  renderExistingAttachments(homework);
+  setUploadStatus("");
   $("hwError").textContent = "";
   showDialog("homeworkDialog");
 }

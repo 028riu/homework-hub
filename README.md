@@ -26,3 +26,10 @@ Mô hình: 1 GitHub + 1 Netlify + 1 Firebase.
 
 ## Lưu ý về chuỗi
 Chuỗi chỉ hiển thị cho người đã đăng nhập Google. Hiện chuỗi được lưu theo trình duyệt/thiết bị bằng localStorage; nếu xóa dữ liệu trình duyệt hoặc đổi thiết bị, chuỗi sẽ reset. Có thể nâng cấp sang lưu streak theo UID trên Firestore.
+
+
+## Đính kèm bài tập
+- Admin có thể thêm URL (không bắt buộc) hoặc upload file tối đa 50 MB.
+- File được lưu bằng Firebase Storage và metadata nằm trong Firestore.
+- Người xem có thể xem trực tiếp, download; link web được thử nhúng trong iframe và có nút mở tab mới nếu website chặn iframe.
+- Cần publish `firebase/storage.rules` trong Firebase Console để upload hoạt động.
