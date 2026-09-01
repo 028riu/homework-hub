@@ -1,467 +1,63 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  doc,
-  setDoc,
-  serverTimestamp,
-  onSnapshot,
-  query,
-  orderBy
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut,
-  GoogleAuthProvider
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getFirestore, collection, doc, onSnapshot, query, orderBy, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-const $ = (id) => document.getElementById(id);
-const DAY = 86400000;
-
-let tabs = [];
-let homework = [];
-let active = "all";
-let search = "";
-let siteSettings = {
-  noHomeworkNoticeEnabled: true,
-  oldHomeworkNoticeEnabled: true,
-  noHomeworkNoticeTitle: "📚 Hôm nay không có bài tập mới",
-  noHomeworkNoticeMessage: "Hôm nay chưa có bài tập mới được cập nhật.",
-  oldHomeworkNoticeTitle: "📢 Bài tập chưa có cập nhật",
-  oldHomeworkNoticeMessage: "Danh sách bài tập hôm nay vẫn giống ngày trước."
-};
-
-$("today").textContent = new Intl.DateTimeFormat("vi-VN", { dateStyle: "full" }).format(new Date());
-
-function esc(value = "") {
-  return String(value).replace(/[&<>"']/g, (ch) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[ch]);
+const app=initializeApp(firebaseConfig),db=getFirestore(app),auth=getAuth(app),$=id=>document.getElementById(id),provider=new GoogleAuthProvider();
+const DAY=86400000, TZ="Asia/Ho_Chi_Minh";
+let tabs=[],homework=[],progress={},profile=null,user=null,active="all",search="",siteSettings={noHomeworkNoticeEnabled:true,oldHomeworkNoticeEnabled:true,noHomeworkNoticeTitle:"📚 Hôm nay không có bài tập mới",noHomeworkNoticeMessage:"Hôm nay chưa có bài tập mới được cập nhật.",oldHomeworkNoticeTitle:"📢 Bài tập chưa có cập nhật",oldHomeworkNoticeMessage:"Danh sách bài tập hôm nay vẫn giống ngày trước."};
+let unsubs=[]; let globalUnsubs=[]; let localPrefs={theme:localStorage.getItem("hh_theme")||"dark",accent:localStorage.getItem("hh_accent")||"purple",background:localStorage.getItem("hh_bg")||"default",petEnabled:localStorage.getItem("hh_pet_enabled")!=="0"};
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dayKey=d=>new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(d||new Date());
+const parseDate=v=>v?.toDate?v.toDate():v?.seconds?new Date(v.seconds*1000):v?new Date(v):null;
+const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
+const levelFromXP=xp=>Math.max(1,Math.floor(Math.sqrt(Math.max(0,xp)/100))+1);
+const levelBounds=l=>({cur:(l<=1?0:(l-1)**2*100),next:l**2*100});
+function applyPrefs(){document.body.classList.toggle("light",localPrefs.theme==="light"||(localPrefs.theme==="system"&&matchMedia("(prefers-color-scheme:light)").matches));document.documentElement.dataset.accent=localPrefs.accent;document.documentElement.dataset.background=localPrefs.background;$('floatingPet')?.classList.toggle('hidden',!user||!localPrefs.petEnabled);}
+function renderAuth(){const area=$("userArea");if(!user){area.innerHTML='<button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button>';$('googleLogin').onclick=()=>signInWithPopup(auth,provider).catch(console.error);$('greeting').textContent="Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.";return}const name=user.displayName||user.email||"Bạn";area.innerHTML=`<div class="user-pill"><img class="avatar-img" src="${esc(user.photoURL||"")}" onerror="this.style.display='none'"><span class="avatar">${esc((name[0]||"U").toUpperCase())}</span><div><b>${esc(name)}</b><small>🔥 <span id="userStreak">${num(profile?.streak)}</span> ngày</small></div><button id="logoutGoogle" class="logout-mini">Thoát</button></div>`;const img=area.querySelector('.avatar-img');if(img?.src)img.onload=()=>area.querySelector('.avatar').style.display='none';$('logoutGoogle').onclick=()=>signOut(auth);$('greeting').textContent=`Chào ${name} 👋 Hôm nay mình làm bài nhé!`}
+function ensureProfile(u){return runTransaction(db,async tx=>{const ref=doc(db,"users",u.uid),snap=await tx.get(ref),d=snap.exists()?snap.data():{},today=dayKey(),last=d.lastVisitDate||"";let streak=Math.max(0,num(d.currentStreak??d.streak));let longest=Math.max(streak,num(d.longestStreak));let xp=Math.max(0,num(d.totalXP));let points=Math.max(0,num(d.points));if(last!==today){const prev=last?new Date(last+"T12:00:00+07:00"):null,cur=new Date(today+"T12:00:00+07:00"),gap=prev?Math.round((cur-prev)/DAY):0;streak=last&&gap===1?streak+1:1;longest=Math.max(longest,streak);xp+=20;points+=10;tx.set(ref,{uid:u.uid,email:u.email||d.email||"",displayName:u.displayName||d.displayName||u.email||"Bạn",photoURL:u.photoURL||d.photoURL||"",streak,currentStreak:streak,longestStreak:longest,highestStreak:longest,totalXP:xp,points,level:levelFromXP(xp),lastVisitDate:today,lastVisitAt:serverTimestamp(),lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp(),pet:{type:d.pet?.type||"flamey",skin:d.pet?.skin||"default",position:d.pet?.position||{x:82,y:70}},unlockedItems:Array.isArray(d.unlockedItems)?d.unlockedItems:[],equippedItems:Array.isArray(d.equippedItems)?d.equippedItems:[]},{merge:true});}else tx.set(ref,{email:u.email||d.email||"",displayName:u.displayName||d.displayName||u.email||"Bạn",photoURL:u.photoURL||d.photoURL||"",lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});});}
+async function award(uid,deltaXP=0,deltaPoints=0,reason="reward"){const ref=doc(db,"users",uid);await runTransaction(db,async tx=>{const s=await tx.get(ref),d=s.exists()?s.data():{};const xp=Math.max(0,num(d.totalXP)+deltaXP),points=Math.max(0,num(d.points)+deltaPoints);tx.set(ref,{totalXP:xp,points,level:levelFromXP(xp),lastRewardReason:reason,lastRewardAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});});}
+async function completeHomework(id,checked){
+ if(!user)return signInWithPopup(auth,provider);
+ const progressRef=doc(db,"users",user.uid,"homeworkProgress",id), userRef=doc(db,"users",user.uid);
+ const xpPer=Math.max(0,num(siteSettings.xpPerHomework,30)), pointsPer=Math.max(0,num(siteSettings.pointsPerHomework,20));
+ if(!checked){
+   await runTransaction(db,async tx=>{
+     const ps=await tx.get(progressRef), us=await tx.get(userRef);
+     if(!ps.exists()||!ps.data().completed)return;
+     const d=us.exists()?us.data():{},xp=Math.max(0,num(d.totalXP)-num(ps.data().xp,xpPer)),points=Math.max(0,num(d.points)-num(ps.data().points,pointsPer));
+     tx.set(progressRef,{completed:false,updatedAt:serverTimestamp()},{merge:true});
+     tx.set(userRef,{totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:Math.max(0,num(d.completedHomeworkCount)-1),updatedAt:serverTimestamp()},{merge:true});
+   });
+   return;
+ }
+ if(progress[id]?.completed)return;
+ const today=dayKey(),todays=homework.filter(h=>dayKey(parseDate(h.createdAt))===today),dailyEligible=todays.length>0&&todays.every(h=>progress[h.id]?.completed||h.id===id);
+ await runTransaction(db,async tx=>{
+   const ps=await tx.get(progressRef),us=await tx.get(userRef);
+   if(ps.exists()&&ps.data().completed)return;
+   const d=us.exists()?us.data():{},oldDaily=d.dailyRewardDate||"",dailyBonus=dailyEligible&&oldDaily!==today?100:0,dailyPoints=dailyEligible&&oldDaily!==today?50:0;
+   const xp=Math.max(0,num(d.totalXP)+xpPer+dailyBonus),points=Math.max(0,num(d.points)+pointsPer+dailyPoints);
+   tx.set(progressRef,{completed:true,completedAt:serverTimestamp(),xp:xpPer,points:pointsPer},{merge:true});
+   tx.set(userRef,{totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:num(d.completedHomeworkCount)+1,...(dailyBonus?{dailyRewardDate:today}:{ }),updatedAt:serverTimestamp()},{merge:true});
+ });
+ showToast(dailyEligible?`🎉 Hoàn thành toàn bộ hôm nay! +${xpPer+100} XP · +${pointsPer+50} Points`:`✨ +${xpPer} XP · +${pointsPer} Points`);
 }
 
-function safeUrl(value) {
-  try {
-    const url = new URL(String(value).trim());
-    if (!["http:", "https:"].includes(url.protocol)) return null;
-    return url.href;
-  } catch {
-    return null;
-  }
-}
-
-function dayKey(date = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(date);
-}
-
-function updateStreak() {
-  const key = "hh_streak_v2";
-  const today = dayKey();
-  let data;
-  try {
-    data = JSON.parse(localStorage.getItem(key) || '{"last":"","count":0}');
-  } catch {
-    data = { last: "", count: 0 };
-  }
-
-  if (data.last !== today) {
-    const previous = data.last ? new Date(`${data.last}T12:00:00+07:00`) : null;
-    const current = new Date(`${today}T12:00:00+07:00`);
-    const gap = previous ? Math.round((current - previous) / DAY) : 0;
-    data.count = data.last && gap === 1 ? data.count + 1 : 1;
-    data.last = today;
-    localStorage.setItem(key, JSON.stringify(data));
-  }
-
-  const count = Math.max(1, Number(data.count) || 1);
-  $("streakCount").textContent = `${count} ngày`;
-  $("firePet").dataset.level = count >= 30 ? "legendary" : count >= 7 ? "hot" : "baby";
-  $("streakWidget").title = count >= 30
-    ? "🔥 Pet lửa: cấp độ Huyền thoại!"
-    : count >= 7
-      ? "🔥 Pet lửa đang rất sung!"
-      : "🔥 Pet lửa đang nghịch!";
-}
-
-function getLocalStreak() {
-  try {
-    return Number(JSON.parse(localStorage.getItem("hh_streak_v2") || '{"count":0}').count) || 1;
-  } catch {
-    return 1;
-  }
-}
-
-function renderUser(user) {
-  const area = $("userArea");
-  if (!area) return;
-
-  if (user) {
-    const name = user.displayName || user.email || "Bạn";
-    area.innerHTML = `
-      <div class="user-pill">
-        <span class="avatar">${esc((name[0] || "U").toUpperCase())}</span>
-        <div><b>${esc(name)}</b><small>🔥 Chuỗi: <span id="userStreak">${getLocalStreak()}</span> ngày</small></div>
-        <button id="logoutGoogle" class="logout-mini" type="button">Đăng xuất</button>
-      </div>`;
-    $("logoutGoogle")?.addEventListener("click", () => signOut(auth).catch((error) => console.error("Logout", error)));
-    $("streakCount").textContent = `${getLocalStreak()} ngày`;
-  } else {
-    area.innerHTML = `<button id="googleLogin" class="google-mini" type="button">G&nbsp; Đăng nhập Google</button>`;
-    $("googleLogin")?.addEventListener("click", async () => {
-      try {
-        await signInWithPopup(auth, googleProvider);
-      } catch (error) {
-        console.error("Google login", error);
-      }
-    });
-    $("streakCount").textContent = "—";
-  }
-}
-
-onAuthStateChanged(auth, async (user) => {
-  renderUser(user);
-  if (!user) return;
-
-  updateStreak();
-
-  // Tạo/cập nhật hồ sơ Firestore để Admin nhìn thấy mọi tài khoản đã đăng nhập.
-  try {
-    await setDoc(doc(db, "users", user.uid), {
-      email: user.email || "",
-      displayName: user.displayName || "",
-      name: user.displayName || "",
-      username: user.email ? user.email.split("@")[0] : "",
-      lastVisitAt: serverTimestamp(),
-      lastAccess: serverTimestamp(),
-      lastLoginAt: serverTimestamp(),
-      lastVisitDate: dayKey(),
-      lastLoginDate: dayKey(),
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-  } catch (error) {
-    console.error("Không thể lưu hồ sơ người dùng:", error);
-  }
-});
-updateStreak();
-
-function normalizeAttachments(item) {
-  const list = Array.isArray(item?.attachments) ? item.attachments : [];
-  const result = list.map((attachment) => ({
-    type: attachment.type === "file" ? "file" : "link",
-    url: attachment.url || attachment.fileUrl || attachment.linkUrl || "",
-    name: attachment.name || attachment.fileName || (attachment.type === "file" ? "Tệp đính kèm" : "Liên kết"),
-    fileName: attachment.fileName || attachment.name || "",
-    fileType: attachment.fileType || ""
-  })).filter((attachment) => safeUrl(attachment.url));
-
-  if (!result.length && item?.linkUrl && safeUrl(item.linkUrl)) {
-    result.push({ type: "link", url: item.linkUrl, name: "Liên kết" });
-  }
-  if (!result.length && item?.fileUrl && safeUrl(item.fileUrl)) {
-    result.push({ type: "file", url: item.fileUrl, name: item.fileName || "Tệp đính kèm", fileName: item.fileName || "" });
-  }
-  return result;
-}
-
-function getAttachmentKind(attachment) {
-  if (attachment.type === "link") return "link";
-  const type = String(attachment.fileType || "").toLowerCase();
-  const name = String(attachment.fileName || attachment.name || "").toLowerCase();
-  if (type.startsWith("image/") || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(name)) return "image";
-  if (type === "application/pdf" || name.endsWith(".pdf")) return "pdf";
-  if (type.startsWith("video/") || /\.(mp4|webm|ogg|mov|m4v)$/i.test(name)) return "video";
-  if (type.startsWith("audio/") || /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(name)) return "audio";
-  if (type.startsWith("text/") || /\.(txt|csv|json|md)$/i.test(name)) return "text";
-  return "file";
-}
-
-function attachmentCard(attachment, index) {
-  const url = safeUrl(attachment.url);
-  if (!url) return "";
-  const kind = getAttachmentKind(attachment);
-  const icon = kind === "link" ? "🔗" : kind === "image" ? "🖼️" : kind === "pdf" ? "📕" : kind === "video" ? "🎬" : kind === "audio" ? "🎵" : "📎";
-  const title = attachment.name || attachment.fileName || `Tệp ${index + 1}`;
-  const encoded = encodeURIComponent(url);
-
-  return `
-    <div class="attachment-card">
-      <div class="attachment-info">
-        <span class="attachment-type-icon">${icon}</span>
-        <div><b>${esc(title)}</b><small>${kind === "link" ? esc(url) : esc(attachment.fileType || "Tệp đính kèm")}</small></div>
-      </div>
-      <div class="attachment-actions">
-        <button type="button" class="attachment-view-btn" data-attachment-url="${esc(encoded)}" data-attachment-kind="${esc(kind)}" data-attachment-name="${esc(title)}">👁️ Xem</button>
-        <a class="attachment-download-btn" href="${esc(url)}" download target="_blank" rel="noopener noreferrer">⬇️ Download</a>
-        ${kind === "link" ? `<a class="attachment-open-btn" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ Mở link</a>` : ""}
-      </div>
-    </div>`;
-}
-
-function ensurePreviewModal() {
-  if ($("attachmentViewerModal")) return;
-  const modal = document.createElement("div");
-  modal.id = "attachmentViewerModal";
-  modal.className = "attachment-viewer-modal hidden";
-  modal.innerHTML = `
-    <div class="attachment-viewer-backdrop" data-close-viewer="1">
-      <div class="attachment-viewer" role="dialog" aria-modal="true" aria-labelledby="attachmentViewerTitle">
-        <div class="attachment-viewer-head">
-          <div><b id="attachmentViewerTitle">Xem tài liệu</b><small id="attachmentViewerStatus"></small></div>
-          <button type="button" id="closeAttachmentViewer" class="icon-btn">×</button>
-        </div>
-        <div id="attachmentViewerBody" class="attachment-viewer-body"></div>
-        <div class="attachment-viewer-foot">
-          <a id="attachmentViewerDownload" class="attachment-download-btn" href="#" target="_blank" rel="noopener noreferrer">⬇️ Download</a>
-          <a id="attachmentViewerOpen" class="attachment-open-btn" href="#" target="_blank" rel="noopener noreferrer">↗ Mở ở tab mới</a>
-        </div>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-
-  $("closeAttachmentViewer").addEventListener("click", closeAttachmentViewer);
-  modal.querySelector("[data-close-viewer]").addEventListener("click", (event) => {
-    if (event.target.dataset.closeViewer) closeAttachmentViewer();
-  });
-}
-
-function closeAttachmentViewer() {
-  $("attachmentViewerModal")?.classList.add("hidden");
-  const body = $("attachmentViewerBody");
-  if (body) body.innerHTML = "";
-}
-
-function openAttachmentViewer(url, kind, name) {
-  ensurePreviewModal();
-  const modal = $("attachmentViewerModal");
-  const body = $("attachmentViewerBody");
-  const status = $("attachmentViewerStatus");
-  const download = $("attachmentViewerDownload");
-  const open = $("attachmentViewerOpen");
-
-  $("attachmentViewerTitle").textContent = name || "Xem tài liệu";
-  status.textContent = "Đang tải bản xem trước...";
-  download.href = url;
-  open.href = url;
-  modal.classList.remove("hidden");
-  body.innerHTML = "";
-
-  if (kind === "image") {
-    const img = document.createElement("img");
-    img.className = "attachment-preview-image";
-    img.alt = name || "Hình ảnh";
-    img.src = url;
-    img.onload = () => { status.textContent = "Xem trực tiếp"; };
-    img.onerror = () => { previewFailed(status, body, url); };
-    body.appendChild(img);
-    return;
-  }
-
-  if (kind === "video" || kind === "audio") {
-    const media = document.createElement(kind);
-    media.controls = true;
-    media.autoplay = false;
-    media.src = url;
-    media.className = "attachment-preview-media";
-    media.onloadeddata = () => { status.textContent = "Xem trực tiếp"; };
-    media.onerror = () => { previewFailed(status, body, url); };
-    body.appendChild(media);
-    return;
-  }
-
-  const frame = document.createElement("iframe");
-  frame.className = "attachment-preview-frame";
-  frame.src = url;
-  frame.loading = "eager";
-  frame.referrerPolicy = "no-referrer";
-  frame.title = name || "Xem nội dung";
-  frame.onload = () => { status.textContent = "Nếu nội dung hiển thị trống, hãy bấm Mở ở tab mới."; };
-  body.appendChild(frame);
-
-  if (kind === "link") {
-    status.textContent = "Đang thử xem nội dung của link...";
-    window.setTimeout(() => {
-      if (!modal.classList.contains("hidden")) {
-        status.textContent = "Một số website chặn xem trong khung. Nếu trống/lỗi, bấm Mở ở tab mới.";
-      }
-    }, 2500);
-  } else {
-    status.textContent = "Đang thử xem trực tiếp... Nếu lỗi, dùng Download hoặc mở tab mới.";
-  }
-}
-
-function previewFailed(status, body, url) {
-  status.textContent = "Không thể xem trực tiếp.";
-  body.innerHTML = `
-    <div class="attachment-preview-error">
-      <div class="attachment-error-icon">⚠️</div>
-      <h3>Không thể xem trực tiếp</h3>
-      <p>Trình duyệt hoặc website không cho phép xem nội dung này. Bạn có thể tải file hoặc mở bằng tab mới.</p>
-      <div class="attachment-actions centered">
-        <a class="attachment-download-btn" href="${esc(url)}" download target="_blank" rel="noopener noreferrer">⬇️ Download</a>
-        <a class="attachment-open-btn" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ Mở tab mới</a>
-      </div>
-    </div>`;
-}
-
-document.addEventListener("click", (event) => {
-  const button = event.target.closest(".attachment-view-btn");
-  if (!button) return;
-  const url = decodeURIComponent(button.dataset.attachmentUrl || "");
-  const kind = button.dataset.attachmentKind || "file";
-  const name = button.dataset.attachmentName || "Xem tài liệu";
-  if (safeUrl(url)) openAttachmentViewer(url, kind, name);
-});
-
-function showUpdateNotice() {
-  const today = dayKey();
-  if (localStorage.getItem("hh_notice_dismissed") === today) return;
-
-  const latest = homework.reduce((max, item) => {
-    const date = item.createdAt?.toDate ? item.createdAt.toDate() : item.createdAt ? new Date(item.createdAt) : null;
-    return date && (!max || date > max) ? date : max;
-  }, null);
-
-  let title = "";
-  let text = "";
-  if (!homework.length) {
-    if (siteSettings.noHomeworkNoticeEnabled === false) return;
-    title = siteSettings.noHomeworkNoticeTitle;
-    text = siteSettings.noHomeworkNoticeMessage;
-  } else {
-    if (!latest) return;
-    const latestKey = dayKey(latest);
-    if (latestKey === today || siteSettings.oldHomeworkNoticeEnabled === false) return;
-    const diff = Math.max(1, Math.round((new Date(`${today}T12:00:00+07:00`) - new Date(`${latestKey}T12:00:00+07:00`)) / DAY));
-    title = siteSettings.oldHomeworkNoticeTitle;
-    text = siteSettings.oldHomeworkNoticeMessage.replaceAll("{days}", String(diff)).replaceAll("{date}", latest.toLocaleDateString("vi-VN"));
-  }
-
-  $("noticeTitle").textContent = title;
-  $("noticeText").textContent = text;
-  $("updateNotice").classList.remove("hidden");
-}
-
-$("noticeClose")?.addEventListener("click", () => {
-  localStorage.setItem("hh_notice_dismissed", dayKey());
-  $("updateNotice").classList.add("hidden");
-});
-
-onSnapshot(query(collection(db, "subjects")), (snapshot) => {
-  tabs = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
-  renderTabs();
-  render();
-}, (error) => console.error("Subjects listener", error));
-
-onSnapshot(query(collection(db, "homework"), orderBy("createdAt", "desc")), (snapshot) => {
-  homework = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
-  render();
-  showUpdateNotice();
-}, (error) => {
-  console.error("Homework listener", error);
-  $("status").textContent = "Không thể tải bài tập. Hãy tải lại trang.";
-});
-
-onSnapshot(doc(db, "settings", "site"), (snapshot) => {
-  if (snapshot.exists()) siteSettings = { ...siteSettings, ...snapshot.data() };
-  showUpdateNotice();
-}, (error) => console.error("Settings listener", error));
-
-function renderTabs() {
-  $("tabs").innerHTML = `<button class="tab ${active === "all" ? "active" : ""}" data-tab="all">✨ Tất cả</button>` +
-    tabs.map((tab) => `<button class="tab ${active === tab.id ? "active" : ""}" data-tab="${esc(tab.id)}">${esc(tab.icon || "📚")} ${esc(tab.name || "Môn học")}</button>`).join("");
-
-  document.querySelectorAll(".tab").forEach((button) => {
-    button.addEventListener("click", () => {
-      active = button.dataset.tab;
-      renderTabs();
-      render();
-    });
-  });
-}
-
-$("search")?.addEventListener("input", (event) => {
-  search = event.target.value.toLowerCase();
-  $("clearSearch")?.classList.toggle("hidden", !search);
-  render();
-});
-
-$("clearSearch")?.addEventListener("click", () => {
-  $("search").value = "";
-  search = "";
-  $("clearSearch").classList.add("hidden");
-  render();
-});
-
-function render() {
-  $("totalCount").textContent = String(homework.length);
-  const list = homework
-    .filter((item) => active === "all" || item.subjectId === active)
-    .filter((item) => !search || `${item.title || ""} ${item.content || ""}`.toLowerCase().includes(search))
-    .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
-
-  $("status").textContent = `${list.length} bài tập${active === "all" ? "" : " trong môn đã chọn"}`;
-  $("empty").classList.toggle("hidden", list.length > 0);
-
-  $("homeworkList").innerHTML = list.map((item, index) => {
-    const subject = tabs.find((tab) => tab.id === item.subjectId);
-    const due = item.dueDate ? new Date(item.dueDate) : null;
-    const state = due && !Number.isNaN(due.getTime()) ? dueState(due) : {};
-    const attachments = normalizeAttachments(item);
-
-    return `
-      <article class="card ${item.pinned ? "pinned" : ""}" style="animation-delay:${Math.min(index, 10) * 45}ms">
-        <div class="card-top"><span class="subject">${esc(subject?.icon || "📚")} ${esc(subject?.name || "Chưa phân loại")}</span><span class="badge ${state.cls || ""}">${item.pinned ? "📌 Ghim" : item.important ? "⭐ Quan trọng" : "Mới"}</span></div>
-        <h2>${esc(item.title || "Bài tập")}</h2>
-        <div class="content">${esc(item.content || "")}</div>
-        ${due ? `<div class="due ${state.cls || ""}">⏰ Hạn nộp: ${due.toLocaleString("vi-VN", { dateStyle: "medium", timeStyle: "short" })} · ${state.text}</div>` : ""}
-        ${attachments.length ? `<div class="attachments"><div class="attachments-title">📎 Tài liệu & liên kết</div>${attachments.map(attachmentCard).join("")}</div>` : ""}
-      </article>`;
-  }).join("");
-}
-
-function dueState(date) {
-  const diff = date - new Date();
-  if (diff < 0) return { cls: "red", text: "Đã hết hạn" };
-  if (diff < 2 * DAY) return { cls: "yellow", text: "Sắp hết hạn" };
-  return { cls: "", text: "Còn hạn" };
-}
-
-const firePet = $("firePet");
-const streakWidget = $("streakWidget");
-function petPlay() {
-  if (!firePet) return;
-  firePet.classList.remove("pet-play");
-  void firePet.offsetWidth;
-  firePet.classList.add("pet-play");
-  const label = $("streakLabel");
-  if (label) {
-    label.textContent = "Hí hí! 🔥";
-    clearTimeout(window.__petTimer);
-    window.__petTimer = setTimeout(() => { label.textContent = "chuỗi học tập"; }, 1400);
-  }
-}
-
-streakWidget?.addEventListener("click", petPlay);
-streakWidget?.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" || event.key === " ") {
-    event.preventDefault();
-    petPlay();
-  }
-});
-setInterval(() => { if (firePet && !document.hidden) petPlay(); }, 17000);
-
-if (localStorage.getItem("hh_theme") === "light") document.body.classList.add("light");
-$("themeBtn")?.addEventListener("click", () => {
-  document.body.classList.toggle("light");
-  localStorage.setItem("hh_theme", document.body.classList.contains("light") ? "light" : "dark");
-});
+function renderStats(){const streak=Math.max(0,num(profile?.currentStreak??profile?.streak));const xp=Math.max(0,num(profile?.totalXP)),points=Math.max(0,num(profile?.points)),level=Math.max(1,num(profile?.level,levelFromXP(xp))),b=levelBounds(level),pct=Math.min(100,Math.max(0,(xp-b.cur)/(b.next-b.cur)*100));$('heroStreak').textContent=user?streak:"—";$('heroLevel').textContent=user?`Lv.${level}`:"—";$('heroPoints').textContent=user?points.toLocaleString("vi-VN"):"—";$('xpLevelText').textContent=user?`⭐ Level ${level}`:"Đăng nhập để bắt đầu";$('xpText').textContent=user?`${xp.toLocaleString("vi-VN")} / ${b.next.toLocaleString("vi-VN")} XP · còn ${Math.max(0,b.next-xp).toLocaleString("vi-VN")} XP lên level`:"XP và tiến độ sẽ được lưu bằng Firebase";$('xpPercent').textContent=user?`${Math.round(pct)}%`:"0%";$('xpBar').style.width=`${user?pct:0}%`;const today=dayKey(),todays=homework.filter(h=>dayKey(parseDate(h.createdAt))===today),done=todays.filter(h=>progress[h.id]?.completed).length;$('dailyProgress').textContent=`☑ ${done} / ${todays.length} bài hôm nay`;if($('userStreak'))$('userStreak').textContent=String(streak);applyPrefs();}
+function renderTabs(){
+ $('tabs').innerHTML=`<button class="tab ${active==='all'?'active':''}" data-tab="all">✨ Tất cả</button>`+tabs.map(t=>`<button class="tab ${active===t.id?'active':''}" data-tab="${esc(t.id)}">${esc(t.icon||'📚')} ${esc(t.name)}</button>`).join('');document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{active=b.dataset.tab;renderTabs();render()});}
+function render(){const list=homework.filter(h=>(active==='all'||h.subjectId===active)&&(!search||`${h.title} ${h.content}`.toLowerCase().includes(search)));$('totalCount')?.textContent;$("status").textContent=`${list.length} bài tập${active==='all'?'':' trong môn đã chọn'}`;$('empty').classList.toggle('hidden',list.length>0);$('homeworkList').innerHTML=list.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)).map((h,i)=>{const t=tabs.find(x=>x.id===h.subjectId),due=h.dueDate?new Date(h.dueDate):null,over=due&&due<new Date(),done=!!progress[h.id]?.completed;return `<article class="card ${h.pinned?'pinned':''} ${done?'completed':''}" style="animation-delay:${Math.min(i,10)*35}ms"><div class="card-top"><span class="subject">${esc(t?.icon||'📚')} ${esc(t?.name||'Chưa phân loại')}</span><span class="badge ${over?'red':''}">${h.pinned?'📌 Ghim':h.important?'⭐ Quan trọng':'Mới'}</span></div><h2>${esc(h.title)}</h2><div class="content">${esc(h.content)}</div>${due?`<div class="due ${over?'red':''}">⏰ Hạn: ${due.toLocaleString('vi-VN',{dateStyle:'medium',timeStyle:'short'})} · ${over?'Đã hết hạn':'Còn hạn'}</div>`:''}<div class="card-footer"><label class="task-check"><input type="checkbox" data-homework="${esc(h.id)}" ${done?'checked':''}><span></span><b>${done?'Đã hoàn thành':'Đã làm'}</b></label><span class="xp-chip">⭐ +${Math.max(0,num(siteSettings.xpPerHomework,30))} XP</span></div></article>`}).join('');document.querySelectorAll('[data-homework]').forEach(c=>c.onchange=e=>completeHomework(e.target.dataset.homework,e.target.checked));renderStats();}
+function showToast(text){const x=document.createElement('div');x.className='toast';x.textContent=text;document.body.appendChild(x);setTimeout(()=>x.classList.add('show'),20);setTimeout(()=>{x.classList.remove('show');setTimeout(()=>x.remove(),250)},2600);}
+function openProfile(){if(!user)return signInWithPopup(auth,provider);const p=profile||{},streak=num(p.streak),longest=num(p.longestStreak),xp=num(p.totalXP),level=num(p.level,levelFromXP(xp)),done=Object.values(progress).filter(x=>x.completed).length;$("profileContent").innerHTML=`<div class="panel-title"><div><p class="eyebrow">YOUR PROGRESS</p><h2>👤 Hồ sơ</h2></div><button class="icon-btn" id="closeProfile">×</button></div><div class="profile-hero"><img src="${esc(user.photoURL||'')}" class="profile-avatar" onerror="this.style.display='none'"><div><h2>${esc(user.displayName||user.email||'Bạn')}</h2><p class="muted">${esc(user.email||'')}</p></div></div><div class="profile-stats"><div>🔥<b>${streak}</b><small>Streak</small></div><div>🏆<b>${longest}</b><small>Cao nhất</small></div><div>⭐<b>${xp}</b><small>XP</small></div><div>💎<b>${num(p.points)}</b><small>Points</small></div></div><div class="achievement-list"><h3>🏆 Thành tựu</h3>${achievementRows(p,done)}</div>`;$("profileDialog").showModal();$('closeProfile').onclick=()=>$("profileDialog").close();}
+function achievementRows(p,done){const s=num(p.streak),xp=num(p.totalXP);return [['🔥 First Flame',s>=1,'Đăng nhập ngày đầu tiên'],['🔥 Week Warrior',s>=7,'7 ngày liên tục'],['🔥 Two Weeks',s>=14,'14 ngày liên tục'],['📚 Homework Hero',done>=50,`${done}/50 bài hoàn thành`],['⚡ XP Hunter',xp>=1000,'Đạt 1.000 XP'],['👑 Legend',s>=100,'100 ngày liên tục']].map(a=>`<div class="achievement ${a[1]?'unlocked':''}"><span>${a[1]?'✓':'🔒'}</span><div><b>${a[0]}</b><small>${a[2]}</small></div></div>`).join('')}
+function openPet(){if(!user)return signInWithPopup(auth,provider);const p=profile||{},s=num(p.streak),skin=p.pet?.skin||'default';$('petContent').innerHTML=`<div class="panel-title"><div><p class="eyebrow">PET COLLECTION</p><h2>🐾 Tủ đồ Pet</h2></div><button class="icon-btn" id="closePet">×</button></div><div class="pet-showcase"><div class="big-pet">🔥<span>•ᴗ•</span></div><div><h2>Flamey · Lv.${num(p.level,1)}</h2><p class="muted">Streak ${s} ngày · Skin hiện tại: ${esc(skin)}</p><div class="pet-grid">${[['default','🔥 Flamey',1],['cap','🧢 School Cap',7],['hoodie','👕 Hoodie',14],['glasses','👓 Glasses',21],['crown','👑 Crown',30],['galaxy','🌌 Galaxy',75]].map(x=>{const unlocked=s>=x[2]||Array.isArray(p.unlockedItems)&&p.unlockedItems.includes(x[0]);return `<button class="pet-item ${skin===x[0]?'equipped':''} ${unlocked?'':'locked'}" data-skin="${x[0]}" ${unlocked?'':'disabled'}>${x[1]}<small>${unlocked?'Đã mở':'🔒 '+x[2]+' ngày'}</small></button>`}).join('')}</div></div></div>`;$('petDialog').showModal();$('closePet').onclick=()=>$('petDialog').close();document.querySelectorAll('[data-skin]').forEach(b=>b.onclick=async()=>{await setDoc(doc(db,'users',user.uid),{pet:{...(profile?.pet||{}),skin:b.dataset.skin},equippedItems:[b.dataset.skin],updatedAt:serverTimestamp()},{merge:true});$('petDialog').close();showToast('🐾 Đã trang bị skin cho Flamey!')});}
+function showUpdateNotice(){const dismissed=localStorage.getItem('hh_notice_dismissed'),today=dayKey();if(dismissed===today)return;const latest=homework.reduce((m,h)=>{const d=parseDate(h.createdAt);return d&&(!m||d>m)?d:m},null);let title='',text='';if(!homework.length){if(siteSettings.noHomeworkNoticeEnabled===false)return;title=siteSettings.noHomeworkNoticeTitle;text=siteSettings.noHomeworkNoticeMessage}else{if(!latest)return;const latestKey=dayKey(latest);if(latestKey===today)return;if(siteSettings.oldHomeworkNoticeEnabled===false)return;const diff=Math.max(1,Math.round((new Date(today+'T12:00:00+07:00')-new Date(latestKey+'T12:00:00+07:00'))/DAY));title=siteSettings.oldHomeworkNoticeTitle;text=(siteSettings.oldHomeworkNoticeMessage||'').replaceAll('{days}',String(diff)).replaceAll('{date}',latest.toLocaleDateString('vi-VN'));}$('noticeTitle').textContent=title;$('noticeText').textContent=text;$('updateNotice').classList.remove('hidden')}
+$('noticeClose').onclick=()=>{$('updateNotice').classList.add('hidden');localStorage.setItem('hh_notice_dismissed',dayKey())};$('search').oninput=e=>{search=e.target.value.toLowerCase();$('clearSearch').classList.toggle('hidden',!search);render()};$('clearSearch').onclick=()=>{$('search').value='';search='';$('clearSearch').classList.add('hidden');render()};$('themeBtn').onclick=()=>{localPrefs.theme=document.body.classList.contains('light')?'dark':'light';localStorage.setItem('hh_theme',localPrefs.theme);applyPrefs()};$('settingsBtn').onclick=()=>{$('settingsDialog').showModal();$('petEnabled').checked=localPrefs.petEnabled};$('closeSettings').onclick=()=>$('settingsDialog').close();$('saveSettings').onclick=()=>{localPrefs.petEnabled=$('petEnabled').checked;localStorage.setItem('hh_pet_enabled',localPrefs.petEnabled?'1':'0');$('settingsDialog').close();applyPrefs()};document.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{localPrefs.theme=b.dataset.theme;localStorage.setItem('hh_theme',localPrefs.theme);applyPrefs()});document.querySelectorAll('[data-accent]').forEach(b=>b.onclick=()=>{localPrefs.accent=b.dataset.accent;localStorage.setItem('hh_accent',localPrefs.accent);applyPrefs()});document.querySelectorAll('[data-bg]').forEach(b=>b.onclick=()=>{localPrefs.background=b.dataset.bg;localStorage.setItem('hh_bg',localPrefs.background);applyPrefs()});$('profileNav').onclick=openProfile;$('petNav').onclick=openPet;$('petNav').onclick=openPet;
+const pet=$('floatingPet');let dragging=false,ox=0,oy=0;function setPetPos(x,y,save=true){x=Math.max(8,Math.min(92,x));y=Math.max(8,Math.min(90,y));pet.style.left=x+'%';pet.style.top=y+'%';if(save&&user)setDoc(doc(db,'users',user.uid),{pet:{...(profile?.pet||{}),position:{x,y}},updatedAt:serverTimestamp()},{merge:true}).catch(console.error)}function loadPet(){const pos=profile?.pet?.position;setPetPos(num(pos?.x,82),num(pos?.y,70),false)}pet.addEventListener('pointerdown',e=>{dragging=true;pet.setPointerCapture(e.pointerId);const r=pet.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;pet.classList.add('dragging')});pet.addEventListener('pointermove',e=>{if(!dragging)return;setPetPos((e.clientX-ox)/innerWidth*100,(e.clientY-oy)/innerHeight*100,false)});pet.addEventListener('pointerup',()=>{if(dragging){dragging=false;pet.classList.remove('dragging');setPetPos(parseFloat(pet.style.left),parseFloat(pet.style.top),true)}});pet.onclick=()=>{if(!dragging){pet.classList.remove('pet-play');void pet.offsetWidth;pet.classList.add('pet-play');showToast(profile?.streak>=7?'🔥 Flamey: Giữ chuỗi thôi!':'🔥 Flamey: Đi làm bài nào!')}};
+function cleanup(){unsubs.forEach(u=>u&&u());unsubs=[];progress={};profile=null}
+onAuthStateChanged(auth,async u=>{cleanup();user=u;renderAuth();renderStats();if(!u)return;try{await ensureProfile(u)}catch(e){console.error(e)}unsubs.push(onSnapshot(doc(db,'users',u.uid),s=>{profile=s.exists()?s.data():{};renderAuth();renderStats();loadPet();}));unsubs.push(onSnapshot(collection(db,'users',u.uid,'homeworkProgress'),s=>{progress={};s.docs.forEach(d=>progress[d.id]=d.data());render();}));loadPet()});
+globalUnsubs.push(onSnapshot(query(collection(db,'subjects'),orderBy('order','asc')),
+ s=>{tabs=s.docs.map(d=>({id:d.id,...d.data()}));renderTabs();render()},e=>console.error(e)));
+globalUnsubs.push(onSnapshot(query(collection(db,'homework'),orderBy('createdAt','desc')),s=>{homework=s.docs.map(d=>({id:d.id,...d.data()}));render();showUpdateNotice()},e=>console.error(e)));
+globalUnsubs.push(onSnapshot(doc(db,'settings','site'),s=>{if(s.exists())siteSettings={...siteSettings,...s.data()};showUpdateNotice()}));
+$('today').textContent=new Intl.DateTimeFormat('vi-VN',{dateStyle:'full',timeZone:TZ}).format(new Date());applyPrefs();render();
