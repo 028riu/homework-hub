@@ -3,6 +3,8 @@ import {
   getFirestore,
   collection,
   doc,
+  setDoc,
+  serverTimestamp,
   onSnapshot,
   query,
   orderBy
@@ -126,9 +128,29 @@ function renderUser(user) {
   }
 }
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   renderUser(user);
-  if (user) updateStreak();
+  if (!user) return;
+
+  updateStreak();
+
+  // Tạo/cập nhật hồ sơ Firestore để Admin nhìn thấy mọi tài khoản đã đăng nhập.
+  try {
+    await setDoc(doc(db, "users", user.uid), {
+      email: user.email || "",
+      displayName: user.displayName || "",
+      name: user.displayName || "",
+      username: user.email ? user.email.split("@")[0] : "",
+      lastVisitAt: serverTimestamp(),
+      lastAccess: serverTimestamp(),
+      lastLoginAt: serverTimestamp(),
+      lastVisitDate: dayKey(),
+      lastLoginDate: dayKey(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.error("Không thể lưu hồ sơ người dùng:", error);
+  }
 });
 updateStreak();
 
