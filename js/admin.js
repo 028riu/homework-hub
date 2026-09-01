@@ -8,7 +8,61 @@ function setHidden(id,x){$(id)?.classList.toggle("hidden",x)}function err(t){if(
 $("googleLoginBtn").onclick=async()=>{err("");try{await signInWithPopup(auth,provider)}catch(e){err(`Không thể đăng nhập: ${e.code||e.message}`)}};$("logoutBtn").onclick=()=>signOut(auth);
 onAuthStateChanged(auth,user=>{if(!user){setHidden("loginView",false);setHidden("dashboard",true);stop();return}if(!isAdmin(user.email)){err(`Tài khoản ${user.email||"này"} không có quyền quản trị.`);signOut(auth);return}setHidden("loginView",true);setHidden("dashboard",false);$("adminUser").textContent=`${user.displayName||"Admin"} · ${user.email}`;start()});function stop(){unsub.forEach(f=>f&&f());unsub=[]}
 async function loadUsersNow(){try{const s=await getDocs(collection(db,"users"));users=s.docs.map(d=>({id:d.id,...d.data()}));renderUsers();renderOverview();renderStats();console.log("Homework Hub Admin: loaded users",users.length)}catch(e){console.error("Homework Hub Admin: cannot read users",e)}}
-function start(){if(unsub.length)return;unsub.push(onSnapshot(collection(db,"users"),s=>{users=s.docs.map(d=>({id:d.id,...d.data()}));renderUsers();renderOverview();renderStats();console.log("Homework Hub Admin: realtime users",users.length)},e=>{console.error("Homework Hub Admin: users listener error",e);loadUsersNow();setTimeout(()=>{if(unsub.length)try{unsub[0]?.();}catch(_){ } start();},3000)}));unsub.push(onSnapshot(query(collection(db,"subjects"),orderBy("order","asc")),s=>{subjects=s.docs.map(d=>({id:d.id,...d.data()}));renderSubjects();fillSubjectSelect();renderCalendar()}));unsub.push(onSnapshot(query(collection(db,"homework"),orderBy("createdAt","desc")),s=>{homeworks=s.docs.map(d=>({id:d.id,...d.data()}));renderHomework();renderOverview();renderStats();renderCalendar()}));unsub.push(onSnapshot(collection(db,"settings"),s=>{settings={};s.docs.forEach(d=>settings[d.id]=d.data());renderSettings()}));}
+function start(){
+  if(unsub.length)return;
+  console.log("Homework Hub Admin: starting Firestore listeners");
+
+  const safeSnapshot=(label,source,onData)=>onSnapshot(source,onData,e=>{
+    console.error(`Homework Hub Admin: ${label} listener error`,e);
+    const msg=e?.code?`${e.code}: ${e.message}`:e?.message||String(e);
+    console.warn(`Homework Hub Admin: ${label} could not load:`,msg);
+  });
+
+  // USERS: read the whole collection and sort client-side. This avoids
+  // composite/index/query problems and ensures newly registered Google users appear.
+  unsub.push(safeSnapshot("users",collection(db,"users"),s=>{
+    users=s.docs.map(d=>({id:d.id,...d.data()}));
+    renderUsers();renderOverview();renderStats();
+    console.log("Homework Hub Admin: realtime users",users.length);
+  }));
+
+  // SUBJECTS: do not require an orderBy index; sort locally.
+  unsub.push(safeSnapshot("subjects",collection(db,"subjects"),s=>{
+    subjects=s.docs.map(d=>({id:d.id,...d.data()}));
+    subjects.sort((a,b)=>num(a.order,999999)-num(b.order,999999));
+    renderSubjects();fillSubjectSelect();renderCalendar();fillBmeSubject();
+  }));
+
+  // HOMEWORK: do not require a Firestore orderBy/index; sort locally.
+  unsub.push(safeSnapshot("homework",collection(db,"homework"),s=>{
+    homeworks=s.docs.map(d=>({id:d.id,...d.data()}));
+    homeworks.sort((a,b)=>{
+      const av=a.createdAt?.toMillis?a.createdAt.toMillis():a.createdAt?.seconds?Number(a.createdAt.seconds)*1000:new Date(a.createdAt||0).getTime()||0;
+      const bv=b.createdAt?.toMillis?b.createdAt.toMillis():b.createdAt?.seconds?Number(b.createdAt.seconds)*1000:new Date(b.createdAt||0).getTime()||0;
+      return bv-av;
+    });
+    renderHomework();renderOverview();renderStats();renderCalendar();
+  }));
+
+  // SETTINGS: keep the existing settings/site document format.
+  unsub.push(safeSnapshot("settings",collection(db,"settings"),s=>{
+    settings={};s.docs.forEach(d=>settings[d.id]=d.data());renderSettings();
+  }));
+
+  // BME: same robust client-side sorting; no index dependency.
+  const bmeUnsub=safeSnapshot("bme_homework",collection(db,"bme_homework"),s=>{
+    bmeHomeworks=s.docs.map(d=>({id:d.id,...d.data()}));
+    bmeHomeworks.sort((a,b)=>{
+      const av=a.createdAt?.toMillis?a.createdAt.toMillis():a.createdAt?.seconds?Number(a.createdAt.seconds)*1000:new Date(a.createdAt||0).getTime()||0;
+      const bv=b.createdAt?.toMillis?b.createdAt.toMillis():b.createdAt?.seconds?Number(b.createdAt.seconds)*1000:new Date(b.createdAt||0).getTime()||0;
+      return bv-av;
+    });
+    renderBmeHomework();
+    console.log("Homework Hub Admin: realtime BME",bmeHomeworks.length);
+  });
+  bmeUnsub.__bmeListener=true;
+  unsub.push(bmeUnsub);
+}
 function renderStats(){const active=users.filter(u=>dateKey(u.lastVisitAt||u.lastVisitDate||u.lastLoginAt)===new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(new Date())).length;const xp=users.reduce((a,u)=>a+num(u.totalXP),0),points=users.reduce((a,u)=>a+num(u.points),0),completed=users.reduce((a,u)=>a+num(u.completedHomeworkCount),0);$("statUsers").textContent=users.length;$("statHomework").textContent=homeworks.length;$("statActive").textContent=active;$("statXP").textContent=xp.toLocaleString("vi-VN");$("statPoints").textContent=points.toLocaleString("vi-VN");$("statCompleted").textContent=completed.toLocaleString("vi-VN")}
 function renderOverview(){const total=users.length,avg=total?users.reduce((a,u)=>a+num(u.currentStreak??u.streak),0)/total:0,best=users.length?Math.max(...users.map(u=>num(u.longestStreak??u.streak))):0;$("overviewCards").innerHTML=[["👥","Users",total],["🔥","Streak TB",avg.toFixed(1)],["🏆","Streak cao nhất",best],["📚","Môn học",subjects.length],["📝","Bài tập",homeworks.length],["💎","Points",users.reduce((a,u)=>a+num(u.points),0).toLocaleString("vi-VN")]].map(x=>`<div class="overview-card"><span>${x[0]}</span><b>${x[2]}</b><small>${x[1]}</small></div>`).join("");const ranked=[...users].sort((a,b)=>num(b.currentStreak??b.streak)-num(a.currentStreak??a.streak)).slice(0,8);$("topUsers").innerHTML=ranked.length?ranked.map((u,i)=>`<div class="rank-row"><b>#${i+1}</b><span>${esc(u.displayName||u.name||u.email||u.id)}</span><small>🔥 ${num(u.currentStreak??u.streak)} · ⭐ ${num(u.totalXP)}</small></div>`).join(""):"<p class='muted'>Chưa có người dùng.</p>";$("recentHomework").innerHTML=homeworks.slice(0,6).map(h=>`<div class="admin-item"><b>${h.pinned?'📌 ':''}${h.important?'⭐ ':''}${esc(h.title)}</b><small>${esc(subjects.find(s=>s.id===h.subjectId)?.name||'Môn chưa rõ')} · ${fmt(h.createdAt)}</small></div>`).join("")||"<p class='muted'>Chưa có bài.</p>"}
 function renderUsers(){const c=$("adminUsers");if(!c)return;let list=[...users];const q=($("userSearch")?.value||"").trim().toLowerCase();if(q)list=list.filter(u=>[u.id,u.email,u.displayName,u.name,u.username].some(v=>String(v||"").toLowerCase().includes(q)));list.sort((a,b)=>sort==="streak"?num(b.currentStreak??b.streak)-num(a.currentStreak??a.streak):sort==="xp"?num(b.totalXP)-num(a.totalXP):sort==="points"?num(b.points)-num(a.points):String(b.lastVisitAt||b.lastLoginAt||b.lastVisitDate||"").localeCompare(String(a.lastVisitAt||a.lastLoginAt||a.lastVisitDate||"")));c.innerHTML=list.length?list.map(u=>{const st=num(u.currentStreak??u.streak),long=num(u.longestStreak??u.streak),xp=num(u.totalXP),points=num(u.points),name=u.displayName||u.name||u.email||u.id;return `<div class="admin-item user-admin-item"><div class="user-main"><span class="avatar">${esc((name[0]||"U").toUpperCase())}</span><div><b>${esc(name)}</b><small>${esc(u.email||"Không có email")}</small><small>UID: ${esc(u.id||u.uid||"")}</small><small>🔥 ${st} · 🏆 ${long} · ⭐ ${xp} XP · 💎 ${points} · 📅 ${esc(u.lastVisitDate||"Chưa có")}</small></div></div><div class="actions"><button data-user-edit="${esc(u.id)}">Sửa</button></div></div>`}).join(""):"<p class='muted'>Chưa có người dùng.</p>";}$("userSearch").oninput=renderUsers;$("userSort").onchange=e=>{sort=e.target.value;renderUsers()};$("refreshUsers").onclick=loadUsersNow;document.addEventListener("click",e=>{const b=e.target.closest("[data-user-edit]");if(b)editUser(b.dataset.userEdit)});
@@ -220,27 +274,3 @@ $("bmeHomeworkForm")?.addEventListener("submit", async (event) => {
     error.textContent = saveError.message;
   }
 });
-
-// BME listener is attached after the existing admin bootstrap has loaded.
-if (Array.isArray(unsub)) {
-  const attachBmeListener = () => {
-    if (!unsub.some((fn) => fn?.__bmeListener)) {
-      const unsubscribeBme = onSnapshot(
-        query(collection(db, "bme_homework"), orderBy("createdAt", "desc")),
-        (snapshot) => {
-          bmeHomeworks = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
-          renderBmeHomework();
-        },
-        (error) => {
-          console.error("BME listener error:", error);
-          const c = $("bmeHomeworkList");
-          if (c) c.innerHTML = `<p class="error">Không thể tải bài BME: ${esc(error.message)}</p>`;
-        }
-      );
-      unsubscribeBme.__bmeListener = true;
-      unsub.push(unsubscribeBme);
-    }
-  };
-  setTimeout(attachBmeListener, 0);
-}
-
