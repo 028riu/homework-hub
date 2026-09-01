@@ -1,41 +1,165 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // =====================================================
+    // KIỂM TRA ADMIN
+    // =====================================================
+
     function isAdmin() {
-      return request.auth != null && request.auth.token.email != null && (
-        request.auth.token.email == "028riu@gmail.com" ||
-        request.auth.token.email == "tu0ngtun2gsahur8@gmail.com" ||
-        request.auth.token.email == "linh085760@gmail.com" ||
-        request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
-      );
+      return request.auth != null
+        && request.auth.token.email != null
+        && (
+          request.auth.token.email == "028riu@gmail.com"
+          || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
+          || request.auth.token.email == "linh085760@gmail.com"
+          || request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
+        );
     }
-    function signedInUser(userId) { return request.auth != null && request.auth.uid == userId; }
+
+
+    // =====================================================
+    // USERS
+    // =====================================================
+
     match /users/{userId} {
-      allow read: if isAdmin() || signedInUser(userId);
-      allow create, update: if isAdmin() || signedInUser(userId);
+
+      // Admin xem tất cả.
+      // User chỉ xem chính mình.
+      allow read: if isAdmin()
+        || (
+          request.auth != null
+          && request.auth.uid == userId
+        );
+
+      // Admin tạo user.
+      // User có thể tạo hồ sơ của chính mình.
+      allow create: if isAdmin()
+        || (
+          request.auth != null
+          && request.auth.uid == userId
+        );
+
+      // Admin sửa tất cả.
+      // User chỉ sửa hồ sơ của mình.
+      allow update: if isAdmin()
+        || (
+          request.auth != null
+          && request.auth.uid == userId
+        );
+
+      // Chỉ admin được xóa.
       allow delete: if isAdmin();
-      match /homeworkProgress/{homeworkId} {
-        allow read, create, update: if isAdmin() || signedInUser(userId);
-        allow delete: if isAdmin() || signedInUser(userId);
-      }
-      match /achievements/{achievementId} {
-        allow read: if isAdmin() || signedInUser(userId);
-        allow create, update: if isAdmin() || signedInUser(userId);
-        allow delete: if isAdmin() || signedInUser(userId);
-      }
-      match /inventory/{itemId} {
-        allow read: if isAdmin() || signedInUser(userId);
-        allow create, update: if isAdmin() || signedInUser(userId);
-        allow delete: if isAdmin() || signedInUser(userId);
-      }
     }
-    match /subjects/{subjectId} { allow read: if true; allow create, update, delete: if isAdmin(); }
-    match /homework/{homeworkId} { allow read: if true; allow create, update, delete: if isAdmin(); }
-    match /settings/{settingId} { allow read: if true; allow write: if isAdmin(); }
-    match /achievements/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /items/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /pets/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /themes/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /{document=**} { allow read, write: if false; }
+
+
+    // =====================================================
+    // SUBJECTS
+    // =====================================================
+
+    match /subjects/{subjectId} {
+
+      // Mọi người được xem môn học.
+      allow read: if true;
+
+      // Chỉ admin quản lý môn học.
+      allow create, update, delete: if isAdmin();
+    }
+
+
+    // =====================================================
+    // HOMEWORK
+    // =====================================================
+
+    match /homework/{homeworkId} {
+
+      // ===================================================
+      // VIEW
+      // ===================================================
+      // Mọi người có thể xem bài tập.
+      //
+      // Document homework có thể chứa:
+      // - title
+      // - description
+      // - subject
+      // - createdAt
+      // - links
+      // - files
+      // - url
+      // - các trường khác của bài tập
+      //
+      // Firestore không giới hạn các field này vì admin
+      // là người duy nhất được ghi dữ liệu.
+      allow read: if true;
+
+
+      // ===================================================
+      // CREATE
+      // ===================================================
+      // Chỉ admin được đăng bài.
+      //
+      // Có thể đăng:
+      // - Chỉ nội dung
+      // - Nội dung + link
+      // - Nội dung + file
+      // - Nội dung + nhiều link
+      // - Nội dung + nhiều file
+      // - Nội dung + nhiều link + nhiều file
+      //
+      // Link và file đều không bắt buộc.
+      allow create: if isAdmin();
+
+
+      // ===================================================
+      // UPDATE
+      // ===================================================
+      // Chỉ admin được sửa bài.
+      //
+      // Cho phép cập nhật:
+      // - Nội dung
+      // - Link
+      // - File
+      // - Nhiều link
+      // - Nhiều file
+      // - Các thông tin khác của bài.
+      allow update: if isAdmin();
+
+
+      // ===================================================
+      // DELETE
+      // ===================================================
+      // Chỉ admin được xóa bài.
+      allow delete: if isAdmin();
+    }
+
+
+    // =====================================================
+    // SETTINGS
+    // =====================================================
+
+    match /settings/{settingId} {
+
+      // Chỉ admin xem được cài đặt hệ thống.
+      allow read: if isAdmin();
+
+      // Chỉ admin chỉnh sửa.
+      allow create, update, delete: if isAdmin();
+    }
+
+
+    // =====================================================
+    // KHÓA MẶC ĐỊNH
+    // =====================================================
+    //
+    // Những collection khác không được phép truy cập.
+    //
+    // Điều này giúp tránh trường hợp vô tình tạo ra
+    // collection mới nhưng quên viết security rules.
+    //
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }
