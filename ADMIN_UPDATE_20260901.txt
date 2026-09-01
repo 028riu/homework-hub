@@ -10,3 +10,109 @@ This full ZIP keeps the existing project and adds these admin emails to the exis
 
 Updated both JS admin allowlists and Firestore/Storage rules.
 After publishing, hard-refresh /admin/ and publish the Firebase rules.
+
+
+# Homework Hub V3
+
+Mô hình: 1 GitHub + 1 Netlify + 1 Firebase.
+
+## Tính năng
+- Trang xem bài `/`
+- Mọi người có thể đăng nhập Google ở trang xem bài để dùng chuỗi; không đăng nhập vẫn xem bình thường
+- Admin `/admin/` đăng nhập bằng Google
+- Admin tạo/sửa/xóa môn học (tab)
+- Admin tạo/sửa/xóa bài tập
+- Ghim/quan trọng + hạn nộp
+- Firestore realtime
+- Cảnh báo nếu hôm nay chưa có bài mới: hiển thị tối đa 1 lần/ngày trên mỗi trình duyệt
+- Hiển thị ngày hiện tại
+- Chuỗi truy cập hằng ngày (lưu trên trình duyệt, không cần tài khoản)
+- Tìm kiếm, lọc theo môn
+- Dark/light mode
+- Responsive cho điện thoại/tablet/PC
+
+## Firebase
+1. Bật Authentication → Sign-in method → Google.
+2. Dán Web config vào `js/firebase-config.js`.
+3. Tạo Firestore (Standard, Production).
+4. Trong `firebase/firestore.rules`, thay `YOUR_GOOGLE_EMAIL` bằng email Google Admin của bạn rồi publish Rules.
+5. Authentication → Settings → Authorized domains: sau này thêm domain Netlify của bạn.
+
+## Lưu ý về chuỗi
+Chuỗi chỉ hiển thị cho người đã đăng nhập Google. Hiện chuỗi được lưu theo trình duyệt/thiết bị bằng localStorage; nếu xóa dữ liệu trình duyệt hoặc đổi thiết bị, chuỗi sẽ reset. Có thể nâng cấp sang lưu streak theo UID trên Firestore.
+
+
+## Bản sửa hiện tại
+- Bài tập thường có thể đăng mà không cần tạo môn học trước; môn học là tùy chọn.
+- View BME dùng collection `bme_homework`, độc lập với `homework`.
+- Admin BME có thể đăng, sửa, xóa trực tiếp bằng nút `＋ Đăng bài tập`.
+- Mỗi bài có thể có nhiều link, mỗi link một ô; trang View có Xem trước, Mở link và Download.
+- Người dùng Google được tạo/cập nhật hồ sơ theo UID trong `users`.
+
+HOMEWORK HUB — ADMIN LOGIN FIX
+
+Ghi đè:
+1. js/admin.js <- admin.js
+2. admin/index.html <- index.html
+
+Sau đó GitHub Pages deploy xong, mở /admin/ và Ctrl+Shift+R.
+Bản này sửa lỗi JS module khiến nút Google không chạy và thêm log rõ ràng.
+
+
+
+HOMEWORK HUB — BẢN ĐÃ CẬP NHẬT
+
+Tính năng mới:
+1. Admin tạo/sửa bài tập có ô URL, không bắt buộc.
+2. Admin có thể chọn file từ máy, tối đa 50 MB.
+3. File được upload lên Firebase Storage.
+4. Firestore lưu attachments[] cho từng bài tập.
+5. Trang người xem có nút Xem trực tiếp + Download cho file.
+6. Link được thử hiển thị trực tiếp trong cửa sổ xem.
+7. Nếu website chặn iframe/không hiển thị, người dùng có nút Mở link ở tab mới.
+8. Dữ liệu cũ dùng linkUrl/fileUrl/fileName/fileType vẫn được tương thích.
+
+QUAN TRỌNG — FIREBASE STORAGE RULES:
+File firebase/storage.rules cần được publish lên Firebase Storage Rules.
+Trong Firebase Console:
+Storage → Rules → thay rules hiện tại bằng nội dung file firebase/storage.rules → Publish.
+
+Nếu Storage chưa được bật trong Firebase project, hãy bật Firebase Storage trước khi upload.
+
+GitHub Pages:
+Không cần Netlify để chạy phần frontend. Push toàn bộ thư mục lên GitHub branch main.
+URL dự kiến:
+https://028riu.github.io/homework-hub/
+
+Các admin vẫn giữ nguyên:
+- 028riu@gmail.com
+- tu0ngtun2gsahur8@gmail.com
+- linh085760@gmail.com
+- phuong026443@stu.vinschool.edu.vn
+
+
+
+
+HOMEWORK HUB — UPDATE CLASS SCHEDULE
+
+Đây là ZIP cập nhật nhỏ, chỉ chứa các file cần ghi đè để thêm tính năng Nội dung học trên lớp.
+
+Ghi đè đúng đường dẫn tương ứng trong repository:
+- index.html
+- admin/index.html
+- view-bme/index.html
+- js/schedule-admin.js
+- js/class-schedule.js
+- css/class-schedule.css
+- firebase/firestore.rules
+
+Không xóa hoặc thay thế các file khác.
+
+Sau khi upload:
+1. Publish Firestore Rules mới.
+2. Chờ GitHub Pages deploy.
+3. Ctrl+Shift+R ở Admin và View.
+
+Collection mới: class_schedule
+- read: public
+- create/update/delete: admin
