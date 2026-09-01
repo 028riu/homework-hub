@@ -1,83 +1,14 @@
-<!doctype html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#080b16">
-<title>Homework Hub — Admin Control Center</title>
-<link rel="stylesheet" href="../css/style.css">
-</head>
-<body>
-<div class="bg"></div>
-<main class="admin-wrap">
-<section id="loginView" class="auth-card">
-  <div class="hero-icon">🔐</div>
-  <p class="eyebrow">HOMEWORK ADMIN</p>
-  <h1>Control Center</h1>
-  <p class="muted">Quản lý bài tập, người dùng, Streak, XP, Points, Pet và hệ thống.</p>
-  <button id="googleLoginBtn" class="google-btn"><span>G</span> Tiếp tục với Google</button>
-  <p id="loginError" class="error" aria-live="polite"></p>
-  <div class="security-note">🔒 Chỉ tài khoản Admin được phép truy cập.</div>
-  <a href="../" class="back">← Xem trang bài tập</a>
-</section>
-
-<section id="dashboard" class="hidden">
-  <header class="admin-head">
-    <div>
-      <p class="eyebrow">HOMEWORK HUB ADMIN</p>
-      <h1>Control Center</h1>
-      <p class="muted" id="adminUser"></p>
-    </div>
-    <div class="top-actions"><a href="../" class="ghost">🏠 Trang chủ</a><button id="logoutBtn" class="ghost">Đăng xuất</button></div>
-  </header>
-
-  <div class="stats admin-main-stats">
-    <div><b id="statUsers">0</b><span>👥 Users</span></div>
-    <div><b id="statHomework">0</b><span>📚 Homework</span></div>
-    <div><b id="statActive">0</b><span>🔥 Active hôm nay</span></div>
-    <div><b id="statXP">0</b><span>⭐ XP tổng</span></div>
-    <div><b id="statCompleted">0</b><span>☑ Bài hoàn thành</span></div>
-    <div><b id="statPoints">0</b><span>💎 Points</span></div>
-  </div>
-
-  <nav class="admin-tabs" aria-label="Điều hướng quản trị">
-    <button class="admin-tab active" data-admin-tab="overview">📊 Tổng quan</button>
-    <button class="admin-tab" data-admin-tab="users">👥 Người dùng</button>
-    <button class="admin-tab" data-admin-tab="homework">📚 Bài tập</button>
-    <button class="admin-tab" data-admin-tab="calendar">📅 Lịch</button>
-    <button class="admin-tab" data-admin-tab="settings">⚙️ Cài đặt</button>
-  </nav>
-
-  <section class="admin-page" data-page="overview">
-    <div class="admin-grid">
-      <section class="panel"><div class="panel-title"><h2>📈 Tổng quan hoạt động</h2></div><div id="overviewCards" class="overview-cards"></div><div id="streakBars" class="bar-list"></div></section>
-      <section class="panel"><div class="panel-title"><h2>🏆 Top Streak / XP</h2></div><div id="topUsers"></div></section>
-    </div>
-    <section class="panel" style="margin-top:18px"><div class="panel-title"><h2>📅 Bài tập gần đây</h2></div><div id="recentHomework"></div></section>
-  </section>
-
-  <section class="admin-page hidden" data-page="users">
-    <section class="panel">
-      <div class="panel-title"><div><h2>👥 Quản lý người dùng</h2><p class="muted">Sửa profile, Streak, XP, Points và Flamey.</p></div><button id="refreshUsers" class="ghost small">↻ Làm mới</button></div>
-      <div class="user-tools"><input id="userSearch" class="admin-search" type="search" placeholder="🔎 Tìm tên, Gmail hoặc UID..."><select id="userSort"><option value="activity">Mới hoạt động</option><option value="streak">Streak cao</option><option value="xp">XP cao</option><option value="points">Points cao</option></select></div>
-      <div id="adminUsers" class="admin-list"><p class="muted">Đang tải người dùng...</p></div>
-    </section>
-  </section>
-
-  <section class="admin-page hidden" data-page="homework">
-    <div class="admin-grid">
-      <section class="panel"><div class="panel-title"><h2>📝 Bài tập</h2><button id="newHomework" class="primary small">+ Tạo bài</button></div><div class="bulk-actions"><button data-bulk="pin">📌 Ghim đã chọn</button><button data-bulk="unpin">Bỏ ghim</button><button data-bulk="delete" class="danger">🗑 Xóa đã chọn</button></div><div id="adminHomework"></div></section>
-      <section class="panel"><div class="panel-title"><h2>📂 Môn học</h2><button id="newTab" class="primary small">+ Tạo</button></div><div id="adminTabs"></div></section>
-    </div>
-  </section>
-
-  <section class="admin-page hidden" data-page="calendar"><section class="panel"><div class="calendar-head"><button id="prevMonth" class="ghost">‹</button><h2 id="calendarTitle"></h2><button id="nextMonth" class="ghost">›</button></div><div class="calendar" id="calendar"></div><div id="calendarDetails" class="calendar-details muted">Chọn một ngày để xem bài tập.</div></section></section>
-  <section class="admin-page hidden" data-page="settings"><section class="panel"><div class="panel-title"><div><h2>⚙️ System Settings</h2><p class="muted">Cài đặt được lưu trong <code>settings/site</code>.</p></div><button id="saveAllSettings" class="primary small">💾 Lưu</button></div><div id="adminSettings" class="settings-admin-grid"></div></section></section>
-</section>
-</main>
-
-<dialog id="homeworkDialog"><form method="dialog" id="homeworkForm" class="modal"><div class="panel-title"><h2 id="hwDialogTitle">Tạo bài tập</h2><button value="cancel" class="icon-btn" aria-label="Đóng">×</button></div><input type="hidden" id="hwId"><label>Môn học<select id="hwTab" required></select></label><label>Tiêu đề<input id="hwTitle" required maxlength="120"></label><label>Nội dung<textarea id="hwContent" required rows="7"></textarea></label><div class="link-manager"><div class="link-manager-head"><b>🔗 Link bài tập</b><button type="button" id="addHomeworkLink" class="ghost small">＋ Thêm link</button></div><div id="hwLinksList" class="hw-links-list"></div><small class="muted">Mỗi ô là 1 link. Link không bắt buộc.</small></div><label>Hạn nộp<input id="hwDue" type="datetime-local"></label><div class="checks"><label><input id="hwPinned" type="checkbox"> 📌 Ghim</label><label><input id="hwImportant" type="checkbox"> ⭐ Quan trọng</label></div><button class="primary" id="saveHomeworkBtn" value="submit">Lưu bài tập</button><p id="hwError" class="error"></p></form></dialog>
-<dialog id="tabDialog"><form method="dialog" id="tabForm" class="modal"><div class="panel-title"><h2 id="tabDialogTitle">Tạo môn học</h2><button value="cancel" class="icon-btn" aria-label="Đóng">×</button></div><input type="hidden" id="tabId"><label>Tên môn<input id="tabName" required maxlength="40"></label><label>Biểu tượng<input id="tabIcon" maxlength="4" placeholder="📐"></label><button class="primary" value="submit">Lưu môn</button><p id="tabError" class="error"></p></form></dialog>
-<script type="module" src="../js/admin.js?v=20260901-v5"></script>
-</body>
-</html>
+<!doctype html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#080a16"><title>Homework Hub — Admin Control Center</title><link rel="stylesheet" href="../css/style.css"></head><body><div class="bg"></div>
+<main class="admin-wrap"><section id="loginView" class="auth-card"><div class="hero-icon">🔐</div><p class="eyebrow">HOMEWORK ADMIN</p><h1>Control Center</h1><p class="muted">Quản lý bài tập, người dùng, Streak, XP, Pet, phần thưởng và cài đặt.</p><button id="googleLoginBtn" class="google-btn"><span>G</span> Tiếp tục với Google</button><p id="loginError" class="error"></p><div class="security-note">🔒 Chỉ 4 tài khoản Admin được phép truy cập.</div><a href="../" class="back">← Xem trang bài tập</a></section>
+<section id="dashboard" class="hidden"><header class="admin-head"><div><p class="eyebrow">HOMEWORK HUB ADMIN</p><h1>Control Center</h1><p class="muted" id="adminUser"></p></div><div class="top-actions"><a href="../" class="ghost">🏠 Trang chủ</a><button id="logoutBtn" class="ghost">Đăng xuất</button></div></header>
+<div class="stats admin-main-stats"><div><b id="statUsers">0</b><span>👥 Users</span></div><div><b id="statHomework">0</b><span>📚 Homework</span></div><div><b id="statActive">0</b><span>🔥 Active hôm nay</span></div><div><b id="statXP">0</b><span>⭐ XP tổng</span></div><div><b id="statCompleted">0</b><span>☑ Bài đã hoàn thành</span></div><div><b id="statPoints">0</b><span>💎 Points</span></div></div>
+<nav class="admin-tabs"><button class="admin-tab active" data-admin-tab="overview">📊 Tổng quan</button><button class="admin-tab" data-admin-tab="users">👥 Người dùng</button><button class="admin-tab" data-admin-tab="homework">📚 Bài tập</button><button class="admin-tab" data-admin-tab="calendar">📅 Lịch</button><button class="admin-tab" data-admin-tab="settings">⚙️ Cài đặt</button></nav>
+<section class="admin-page" data-page="overview"><div class="admin-grid"><section class="panel"><div class="panel-title"><h2>📈 Tổng quan hoạt động</h2></div><div id="overviewCards" class="overview-cards"></div><div id="streakBars" class="bar-list"></div></section><section class="panel"><div class="panel-title"><h2>🏆 Top Streak / XP</h2></div><div id="topUsers"></div></section></div><section class="panel"><div class="panel-title"><h2>📅 Bài tập gần đây</h2></div><div id="recentHomework"></div></section></section>
+<section class="admin-page hidden" data-page="users"><section class="panel"><div class="panel-title"><div><h2>👥 Quản lý người dùng</h2><p class="muted">Chỉnh Streak, XP, Points, Pet, inventory và profile.</p></div><button id="refreshUsers" class="ghost small">↻ Làm mới</button></div><div class="user-tools"><input id="userSearch" class="admin-search" type="search" placeholder="🔎 Tìm tên, username, Gmail hoặc UID..."><select id="userSort"><option value="activity">Mới hoạt động</option><option value="streak">Streak cao</option><option value="xp">XP cao</option><option value="points">Points cao</option></select></div><div id="adminUsers" class="admin-list"></div></section></section>
+<section class="admin-page hidden" data-page="homework"><div class="admin-grid"><section class="panel"><div class="panel-title"><h2>📝 Bài tập</h2><button id="newHomework" class="primary small">+ Tạo bài</button></div><div class="bulk-actions"><button data-bulk="pin">📌 Ghim đã chọn</button><button data-bulk="unpin">Bỏ ghim</button><button data-bulk="delete" class="danger">🗑 Xóa đã chọn</button></div><div id="adminHomework"></div></section><section class="panel"><div class="panel-title"><h2>📂 Môn học</h2><button id="newTab" class="primary small">+ Tạo</button></div><div id="adminTabs"></div></section></div></section>
+<section class="admin-page hidden" data-page="calendar"><section class="panel"><div class="calendar-head"><button id="prevMonth" class="ghost">‹</button><h2 id="calendarTitle"></h2><button id="nextMonth" class="ghost">›</button></div><div class="calendar" id="calendar"></div><div id="calendarDetails" class="calendar-details muted">Chọn một ngày để xem bài tập.</div></section></section>
+<section class="admin-page hidden" data-page="settings"><section class="panel"><div class="panel-title"><div><h2>⚙️ System Settings</h2><p class="muted">Cài đặt được lưu trong <code>settings/site</code>.</p></div><button id="saveAllSettings" class="primary small">💾 Lưu</button></div><div id="adminSettings" class="settings-admin-grid"></div></section></section>
+</section></main>
+<dialog id="homeworkDialog"><form method="dialog" id="homeworkForm" class="modal"><div class="panel-title"><h2 id="hwDialogTitle">Tạo bài tập</h2><button value="cancel" class="icon-btn">×</button></div><input type="hidden" id="hwId"><label>Môn học<select id="hwTab" required></select></label><label>Tiêu đề<input id="hwTitle" required maxlength="120"></label><label>Nội dung<textarea id="hwContent" required rows="7"></textarea></label><div class="link-manager"><div class="link-manager-head"><label>🔗 Link bài tập</label><button type="button" id="addHomeworkLink" class="ghost small">＋ Thêm link</button></div><div id="hwLinksList" class="hw-links-list"></div><small class="muted">Mỗi ô là 1 link. Bấm ＋ Thêm link để thêm link tiếp theo.</small></div><label>Hạn nộp<input id="hwDue" type="datetime-local"></label><div class="checks"><label><input id="hwPinned" type="checkbox"> 📌 Ghim</label><label><input id="hwImportant" type="checkbox"> ⭐ Quan trọng</label></div><button class="primary" value="submit">Lưu bài tập</button><p id="hwError" class="error"></p></form></dialog>
+<dialog id="tabDialog"><form method="dialog" id="tabForm" class="modal"><div class="panel-title"><h2 id="tabDialogTitle">Tạo môn học</h2><button value="cancel" class="icon-btn">×</button></div><input type="hidden" id="tabId"><label>Tên môn<input id="tabName" required maxlength="40"></label><label>Biểu tượng<input id="tabIcon" maxlength="4" placeholder="📐"></label><button class="primary" value="submit">Lưu môn</button><p id="tabError" class="error"></p></form></dialog>
+<script type="module" src="../js/admin.js?v=20260901-final"></script></body></html>
