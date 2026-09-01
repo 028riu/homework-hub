@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#080a16"><title>Homework Hub — Bài tập + Streak + Pet</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/class-schedule.css">
 </head>
 <body>
 <div class="bg"></div>
@@ -26,8 +26,10 @@
 <footer>Homework Hub · Firebase realtime · Gamified learning</footer>
 <nav class="mobile-nav"><a class="active" href="#">🏠<span>Home</span></a><a href="#homeworkList">📚<span>Bài</span></a><button id="petNav">🐾<span>Pet</span></button><button id="profileNav">👤<span>Profile</span></button></nav>
 <div id="floatingPet" class="floating-pet hidden" aria-label="Pet có thể kéo">🔥<span class="pet-face">•ᴗ•</span><i>✦</i></div>
+<button id="classScheduleLauncher" class="class-schedule-launcher" type="button" aria-label="Xem nội dung học trên lớp">🏫<span>LỚP HỌC</span></button><dialog id="classScheduleDialog" class="class-schedule-dialog"><div class="schedule-dialog-inner"><div class="panel-title"><div><p class="eyebrow">CLASSROOM</p><h2>🏫 Hôm nay trên lớp</h2><p class="muted" id="classScheduleDate">Nội dung học hôm nay</p></div><button id="closeClassSchedule" class="icon-btn" type="button" aria-label="Đóng">×</button></div><div id="classScheduleTodayList"></div></div></dialog>
+
 <dialog id="settingsDialog"><div class="modal modal-wide"><div class="panel-title"><div><p class="eyebrow">PERSONALIZE</p><h2>⚙️ Cài đặt</h2></div><button id="closeSettings" class="icon-btn">×</button></div><div class="settings-grid"><section><h3>🎨 Giao diện</h3><div class="choice-row" id="themeChoices"><button data-theme="dark">🌙 Dark</button><button data-theme="light">☀️ Light</button><button data-theme="system">🖥 System</button></div><h3>🌈 Chủ đề</h3><div class="swatches" id="themeSwatches"><button data-accent="purple">🟣 Purple</button><button data-accent="ocean">🔵 Ocean</button><button data-accent="emerald">🟢 Emerald</button><button data-accent="sunset">🟠 Sunset</button><button data-accent="sakura">🌸 Sakura</button><button data-accent="galaxy">🌌 Galaxy</button></div></section><section><h3>🖼 Background</h3><div class="choice-row" id="bgChoices"><button data-bg="default">Default</button><button data-bg="grid">Grid</button><button data-bg="gradient">Gradient</button><button data-bg="aurora">Aurora</button></div><h3>🐾 Pet</h3><label class="setting-line"><span>Floating Pet</span><input id="petEnabled" type="checkbox" checked></label><p class="muted">Kéo Pet đến vị trí bạn thích. Vị trí được lưu theo tài khoản.</p></section></div><div class="modal-actions"><button id="saveSettings" class="primary">💾 Lưu cài đặt</button></div></div></dialog>
 <dialog id="profileDialog"><div class="modal modal-wide" id="profileContent"></div></dialog>
 <dialog id="petDialog"><div class="modal modal-wide" id="petContent"></div></dialog>
-<script type="module" src="js/viewer.js?v=20260901-v2"></script>
+<script type="module" src="js/viewer.js?v=20260901-v2"></script><script type="module" src="js/class-schedule.js?v=20260901-classes1"></script>
 </body></html>

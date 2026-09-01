@@ -1,0 +1,23 @@
+HOMEWORK HUB — UPDATE CLASS SCHEDULE
+
+Đây là ZIP cập nhật nhỏ, chỉ chứa các file cần ghi đè để thêm tính năng Nội dung học trên lớp.
+
+Ghi đè đúng đường dẫn tương ứng trong repository:
+- index.html
+- admin/index.html
+- view-bme/index.html
+- js/schedule-admin.js
+- js/class-schedule.js
+- css/class-schedule.css
+- firebase/firestore.rules
+
+Không xóa hoặc thay thế các file khác.
+
+Sau khi upload:
+1. Publish Firestore Rules mới.
+2. Chờ GitHub Pages deploy.
+3. Ctrl+Shift+R ở Admin và View.
+
+Collection mới: class_schedule
+- read: public
+- create/update/delete: admin

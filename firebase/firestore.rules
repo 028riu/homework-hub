@@ -166,6 +166,16 @@ service cloud.firestore {
     // Collection/subcollection mới không tự động được mở quyền.
     // ============================================================
     // =====================================================
+    // CLASS SCHEDULE — NỘI DUNG HỌC TRÊN LỚP
+    // View học sinh và View BME chỉ đọc.
+    // Admin được tạo, sửa và xóa từng ô lịch.
+    // =====================================================
+    match /class_schedule/{scheduleId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // =====================================================
     // VIEW BME — BÀI DÀNH CHO PHỤ HUYNH
     // =====================================================
 
