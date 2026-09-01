@@ -16,12 +16,19 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn()
         && request.auth.token.email != null
-        && (
-          request.auth.token.email == "028riu@gmail.com"
-          || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
-          || request.auth.token.email == "linh085760@gmail.com"
-          || request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
-        );
+        && (request.auth.token.email == "028riu@gmail.com"
+          ||
+          request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
+          ||
+          request.auth.token.email == "linh085760@gmail.com"
+          ||
+          request.auth.token.email == "linh085760@stu.vinschool.edu.vn"
+          ||
+          request.auth.token.email == "minh037199@stu.vinschool.edu.vn"
+          ||
+          request.auth.token.email == "tran034866@stu.vinschool.edu.vn"
+          ||
+          request.auth.token.email == "phuong026443@stu.vinschool.edu.vn");
     }
 
     function isOwner(userId) {
@@ -177,6 +184,20 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+
+    // ============================================================
+    // CLASS SCHEDULE — NỘI DUNG HỌC TRÊN LỚP
+    // ============================================================
+    // Mỗi ô lịch là một document:
+    // class_schedule/{YYYY-MM-DD}_{slot}
+    //
+    // Học sinh và phụ huynh được đọc.
+    // Chỉ Admin được tạo, sửa, xóa.
+    // ============================================================
+    match /class_schedule/{scheduleId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
 
     match /{document=**} {
       allow read, write: if false;

@@ -109,3 +109,16 @@ input,textarea,select{width:100%;border:1px solid #ffffff14;border-radius:12px;p
 @media(max-width:900px){.desktop-nav{display:none}.pet-home-card{display:block!important}.pet-stage{min-height:260px;margin-bottom:15px}.pet-info{padding:0}.wardrobe-head{align-items:flex-start}.pet-grid{grid-template-columns:1fr 1fr}}
 
 .bme-info-strip{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0 16px;padding:12px 14px;border:1px solid #ffffff10;background:#ffffff05;border-radius:14px;color:#8d96af;font-size:12px}.bme-info-strip a{color:#a9a1ff;text-decoration:none;font-weight:800}.bme-admin-item{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.bme-admin-item>div:first-child{min-width:0;flex:1}.hw-links-list{display:grid;gap:8px}.hw-link-row{display:grid;grid-template-columns:1fr auto;gap:8px}.bme-setting-note{padding:10px 12px;border-radius:12px;background:#ffffff05;border:1px solid #ffffff0d;color:#8d96af;font-size:12px}@media(max-width:760px){.bme-admin-item{display:block}.bme-admin-item .actions{margin-top:10px}}
+
+/* ===== Class schedule ===== */
+.class-schedule-launcher{position:fixed;left:82%;top:70%;right:auto;bottom:auto;z-index:55;width:66px;height:66px;border:1px solid #ffffff18;border-radius:22px;background:linear-gradient(145deg,var(--accent),var(--accent2));color:#fff;font-size:30px;box-shadow:0 18px 45px #0008;cursor:grab;touch-action:none;user-select:none;display:grid;place-items:center;transition:.2s}
+.class-schedule-launcher:hover{transform:translateY(-3px) scale(1.03)}
+.class-schedule-launcher span{position:absolute;font-size:15px;right:7px;bottom:6px}
+.schedule-today-card{display:grid;grid-template-columns:90px 1fr;gap:14px;padding:14px 0;border-bottom:1px solid #ffffff10}
+.schedule-slot{font-weight:900;color:var(--accent2)}
+.schedule-body b{font-size:15px}.schedule-body p{margin:5px 0;white-space:pre-wrap}.schedule-body small{display:block;color:#8b95ad;margin-top:4px}
+.schedule-no-data{padding:30px;text-align:center;color:#8b95ad}
+.bme-class-row{display:grid;grid-template-columns:110px 1fr;gap:14px;padding:14px 0;border-bottom:1px solid #e5e7eb}
+.bme-class-row>div b,.bme-class-row>div span{display:block}.bme-class-row>div span{margin-top:4px;font-weight:800}
+.bme-class-row p{margin:4px 0}
+@media(max-width:700px){.class-schedule-launcher{right:14px;bottom:88px}.schedule-today-card{grid-template-columns:70px 1fr}.admin-tabs{padding-bottom:8px}}
