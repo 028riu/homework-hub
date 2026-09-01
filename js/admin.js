@@ -10,22 +10,9 @@ onAuthStateChanged(auth,user=>{if(!user){setHidden("loginView",false);setHidden(
 async function loadUsersNow(){try{const s=await getDocs(collection(db,"users"));users=s.docs.map(d=>({id:d.id,...d.data()}));renderUsers();renderOverview();renderStats();console.log("Homework Hub Admin: loaded users",users.length)}catch(e){console.error("Homework Hub Admin: cannot read users",e)}}
 function start(){if(unsub.length)return;unsub.push(onSnapshot(collection(db,"users"),s=>{users=s.docs.map(d=>({id:d.id,...d.data()}));renderUsers();renderOverview();renderStats();console.log("Homework Hub Admin: realtime users",users.length)},e=>{console.error("Homework Hub Admin: users listener error",e);loadUsersNow();setTimeout(()=>{if(unsub.length)try{unsub[0]?.();}catch(_){ } start();},3000)}));unsub.push(onSnapshot(query(collection(db,"subjects"),orderBy("order","asc")),s=>{subjects=s.docs.map(d=>({id:d.id,...d.data()}));renderSubjects();fillSubjectSelect();renderCalendar()}));unsub.push(onSnapshot(query(collection(db,"homework"),orderBy("createdAt","desc")),s=>{homeworks=s.docs.map(d=>({id:d.id,...d.data()}));renderHomework();renderOverview();renderStats();renderCalendar()}));unsub.push(onSnapshot(collection(db,"settings"),s=>{settings={};s.docs.forEach(d=>settings[d.id]=d.data());renderSettings()}));
   // BME listener: chỉ chạy khi Admin đã đăng nhập, và được dọn cùng các listener khác.
-  unsub.push(onSnapshot(collection(db,"bme_homework"),s=>{
-    // BME KHÔNG dùng orderBy() để tránh việc một bài cũ thiếu
-    // createdAt hoặc yêu cầu composite/index làm listener thất bại.
+  unsub.push(onSnapshot(query(collection(db,"bme_homework"),orderBy("createdAt","desc")),s=>{
     bmeHomeworks=s.docs.map(d=>({id:d.id,...d.data()}));
-    bmeHomeworks.sort((a,b)=>{
-      const getMs=v=>{
-        if(!v)return 0;
-        if(v?.toMillis)return v.toMillis();
-        if(v?.seconds)return Number(v.seconds)*1000;
-        const t=new Date(v).getTime();
-        return Number.isFinite(t)?t:0;
-      };
-      return getMs(b.createdAt||b.updatedAt)-getMs(a.createdAt||a.updatedAt);
-    });
     renderBmeHomework();
-    console.log("Homework Hub Admin: realtime BME",bmeHomeworks.length);
   },e=>{
     console.error("Homework Hub Admin: BME listener error",e);
     const c=$("bmeHomeworkList");
