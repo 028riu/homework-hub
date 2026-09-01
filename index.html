@@ -9,7 +9,7 @@
 <div class="bg"></div>
 <header class="topbar">
   <a class="brand" href="./"><span>📚</span><div><b>Homework Hub</b><small>Bài tập · Streak · Pet</small></div></a>
-  <div class="top-actions"><span id="userArea" class="user-area"><button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button></span><button id="settingsBtn" class="icon-button" aria-label="Cài đặt">⚙️</button><button id="themeBtn" class="icon-button" aria-label="Đổi giao diện">☼</button></div>
+  <nav class="desktop-nav" aria-label="Điều hướng chính"><button class="main-nav active" data-main-nav="home">🏠 Home</button><button class="main-nav" data-main-nav="homework">📚 Bài</button><button class="main-nav" data-main-nav="pet">🐾 Pet</button><button class="main-nav" data-main-nav="profile">👤 Profile</button></nav><div class="top-actions"><span id="userArea" class="user-area"><button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button></span><button id="settingsBtn" class="icon-button" aria-label="Cài đặt">⚙️</button><button id="themeBtn" class="icon-button" aria-label="Đổi giao diện">☼</button></div>
 </header>
 <main class="container">
 <section class="hero hero-gamified">
@@ -18,10 +18,10 @@
 </section>
 <section class="progress-panel" id="progressPanel"><div class="progress-head"><div><b id="xpLevelText">Đăng nhập để bắt đầu</b><small id="xpText">XP và tiến độ sẽ được lưu bằng Firebase</small></div><strong id="xpPercent">0%</strong></div><div class="xp-bar"><span id="xpBar"></span></div></section>
 <section id="updateNotice" class="notice hidden" role="status"><div class="notice-icon">⚠️</div><div><b id="noticeTitle">Chưa có bài mới hôm nay</b><p id="noticeText"></p></div><button id="noticeClose" class="icon-button">×</button></section>
-<div class="daily-strip"><span id="dailyProgress">☑ 0 / 0 bài hôm nay</span><span id="dailyReward">🎁 Hoàn thành tất cả: +100 XP · +50 Points</span></div>
+<div id="homeworkSection" class="daily-strip"><span id="dailyProgress">☑ 0 / 0 bài hôm nay</span><span id="dailyReward">🎁 Hoàn thành tất cả: +100 XP · +50 Points</span></div>
 <div class="toolbar"><div id="tabs" class="tabs"><button class="tab active" data-tab="all">✨ Tất cả</button></div><label class="search">🔎 <input id="search" placeholder="Tìm bài tập..." autocomplete="off"></label></div>
 <div class="quick-row"><span id="status" class="status">Đang tải bài tập...</span><button id="clearSearch" class="ghost small hidden">Xóa tìm kiếm</button></div>
-<section id="homeworkList" class="grid"></section><div id="empty" class="empty hidden">📭 Chưa có bài tập phù hợp.</div>
+<section id="homeworkList" class="grid" aria-label="Danh sách bài tập"></section><div id="empty" class="empty hidden">📭 Chưa có bài tập phù hợp.</div>
 </main>
 <footer>Homework Hub · Firebase realtime · Gamified learning</footer>
 <nav class="mobile-nav"><a class="active" href="#">🏠<span>Home</span></a><a href="#homeworkList">📚<span>Bài</span></a><button id="petNav">🐾<span>Pet</span></button><button id="profileNav">👤<span>Profile</span></button></nav>
