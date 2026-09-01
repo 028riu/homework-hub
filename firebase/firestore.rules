@@ -6,7 +6,7 @@ service cloud.firestore {
     // ============================================================
     // ADMIN
     // ============================================================
-    // Chỉ 4 tài khoản này được quản trị hệ thống.
+    // Các tài khoản trong allowlist dưới đây được quản trị hệ thống.
     // Email được lấy từ Firebase Authentication token.
     // ============================================================
     function isSignedIn() {
@@ -21,6 +21,8 @@ service cloud.firestore {
           || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
           || request.auth.token.email == "linh085760@gmail.com"
           || request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
+          || request.auth.token.email == "minh037199@stu.vinschool.edu.vn"
+          || request.auth.token.email == "tran034866@stu.vinschool.edu.vn"
         );
     }
 
@@ -165,16 +167,6 @@ service cloud.firestore {
     // KHÓA MẶC ĐỊNH
     // Collection/subcollection mới không tự động được mở quyền.
     // ============================================================
-    // =====================================================
-    // CLASS SCHEDULE — NỘI DUNG HỌC TRÊN LỚP
-    // View học sinh và View BME chỉ đọc.
-    // Admin được tạo, sửa và xóa từng ô lịch.
-    // =====================================================
-    match /class_schedule/{scheduleId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
     // =====================================================
     // VIEW BME — BÀI DÀNH CHO PHỤ HUYNH
     // =====================================================

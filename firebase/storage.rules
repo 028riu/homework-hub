@@ -10,6 +10,8 @@ service firebase.storage {
           || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
           || request.auth.token.email == "linh085760@gmail.com"
           || request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
+          || request.auth.token.email == "minh037199@stu.vinschool.edu.vn"
+          || request.auth.token.email == "tran034866@stu.vinschool.edu.vn"
         );
     }
 

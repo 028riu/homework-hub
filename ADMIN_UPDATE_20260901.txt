@@ -1,0 +1,12 @@
+Homework Hub — Admin allowlist update
+
+This full ZIP keeps the existing project and adds these admin emails to the existing allowlist:
+- 028riu@gmail.com
+- tu0ngtun2gsahur8@gmail.com (existing admin retained)
+- linh085760@gmail.com
+- phuong026443@stu.vinschool.edu.vn
+- minh037199@stu.vinschool.edu.vn
+- tran034866@stu.vinschool.edu.vn
+
+Updated both JS admin allowlists and Firestore/Storage rules.
+After publishing, hard-refresh /admin/ and publish the Firebase rules.
