@@ -20,7 +20,7 @@ function addHomeworkLink(value=""){const list=$("hwLinksList");if(!list)return;c
 function setHomeworkLinks(values){const list=$("hwLinksList");if(!list)return;list.innerHTML="";const links=Array.isArray(values)?values.filter(Boolean):[];(links.length?links:[""]).forEach(addHomeworkLink)}
 function getHomeworkLinks(){return [...document.querySelectorAll("#hwLinksList .hw-link-input")].map(x=>x.value.trim()).filter(Boolean)}
 $("addHomeworkLink")?.addEventListener("click",()=>addHomeworkLink());
-$("newHomework").onclick=()=>{if(!subjects.length)return alert('Hãy tạo môn trước.');$("homeworkForm").reset();$("hwId").value='';setHomeworkLinks([]);fillSubjectSelect();open('homeworkDialog')};$("newTab").onclick=()=>{$("tabForm").reset();$("tabId").value='';open('tabDialog')};
+$("newHomework").onclick=()=>{$("homeworkForm").reset();$("hwId").value='';setHomeworkLinks([]);fillSubjectSelect();open('homeworkDialog')};$("newTab").onclick=()=>{$("tabForm").reset();$("tabId").value='';open('tabDialog')};
 $("homeworkForm").onsubmit=async e=>{e.preventDefault();const id=$("hwId").value.trim(),old=homeworks.find(h=>h.id===id),links=getHomeworkLinks();const data={subjectId:$("hwTab").value,title:$("hwTitle").value.trim(),content:$("hwContent").value.trim(),links,url:links[0]||"",dueDate:$("hwDue").value||null,pinned:$("hwPinned").checked,important:$("hwImportant").checked,createdAt:old?.createdAt||serverTimestamp(),updatedAt:serverTimestamp()};try{await setDoc(doc(db,'homework',id||crypto.randomUUID()),data);close('homeworkDialog')}catch(x){$("hwError").textContent=x.message}};
 $("tabForm").onsubmit=async e=>{e.preventDefault();const id=$("tabId").value.trim(),old=subjects.find(s=>s.id===id),order=old?num(old.order):subjects.length+1;try{await setDoc(doc(db,'subjects',id||crypto.randomUUID()),{name:$("tabName").value.trim(),icon:$("tabIcon").value.trim()||'📚',order,updatedAt:serverTimestamp()});close('tabDialog')}catch(x){$("tabError").textContent=x.message}};
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id;try{if(b.dataset.action==='edit-homework'){const h=homeworks.find(x=>x.id===id);$("hwId").value=id;$("hwTitle").value=h.title||'';$("hwContent").value=h.content||'';$("hwLinks").value=Array.isArray(h.links)?h.links.join("\\n"):(h.url||"");$("hwDue").value=h.dueDate||'';$("hwPinned").checked=!!h.pinned;$("hwImportant").checked=!!h.important;fillSubjectSelect(h.subjectId);open('homeworkDialog')}if(b.dataset.action==='delete-homework'&&confirm('Xóa bài này?'))await deleteDoc(doc(db,'homework',id));if(b.dataset.action==='edit-subject'){const s=subjects.find(x=>x.id===id);$("tabId").value=id;$("tabName").value=s.name||'';$("tabIcon").value=s.icon||'';open('tabDialog')}if(b.dataset.action==='delete-subject'){if(homeworks.some(h=>h.subjectId===id))return alert('Môn đang có bài tập.');if(confirm('Xóa môn?'))await deleteDoc(doc(db,'subjects',id))}}catch(x){alert(x.message)}});
@@ -30,3 +30,217 @@ $("prevMonth").onclick=()=>{month.setMonth(month.getMonth()-1);renderCalendar()}
 function renderSettings(){const s=settings.site||{};$("adminSettings").innerHTML=`<label class="setting-card"><span><b>🔔 Thông báo không có bài mới</b><small>Bật cảnh báo khi hôm nay chưa có bài mới.</small></span><input id="setNo" type="checkbox" ${s.noHomeworkNoticeEnabled!==false?'checked':''}></label><label class="setting-card"><span><b>📢 Thông báo bài cũ</b><small>Bật cảnh báo khi danh sách chưa cập nhật.</small></span><input id="setOld" type="checkbox" ${s.oldHomeworkNoticeEnabled!==false?'checked':''}></label><label class="setting-card"><span><b>🎁 XP hoàn thành bài</b><small>Số XP mặc định hiển thị trên card.</small></span><input id="setXP" type="number" min="0" value="${num(s.xpPerHomework,30)}"></label><label class="setting-card"><span><b>💎 Points hoàn thành bài</b><small>Số Points mặc định.</small></span><input id="setPoints" type="number" min="0" value="${num(s.pointsPerHomework,20)}"></label><label>Tiêu đề thông báo<textarea id="setTitle" rows="2">${esc(s.noHomeworkNoticeTitle||'📚 Hôm nay không có bài tập mới')}</textarea></label><label>Nội dung thông báo<textarea id="setMsg" rows="3">${esc(s.noHomeworkNoticeMessage||'Hôm nay chưa có bài tập mới được cập nhật.')}</textarea></label>`}$("saveAllSettings").onclick=async()=>{try{await setDoc(doc(db,'settings','site'),{noHomeworkNoticeEnabled:$("setNo").checked,oldHomeworkNoticeEnabled:$("setOld").checked,xpPerHomework:num($("setXP").value,30),pointsPerHomework:num($("setPoints").value,20),noHomeworkNoticeTitle:$("setTitle").value.trim(),noHomeworkNoticeMessage:$("setMsg").value.trim(),updatedAt:serverTimestamp()},{merge:true});showToast('Đã lưu cài đặt')}catch(e){alert(e.message)}};
 document.querySelectorAll('.admin-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.admin-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.admin-page').forEach(p=>p.classList.toggle('hidden',p.dataset.page!==b.dataset.adminTab));if(b.dataset.adminTab==='calendar')renderCalendar()});
 function showToast(t){const x=document.createElement('div');x.className='toast';x.textContent=t;document.body.appendChild(x);requestAnimationFrame(()=>x.classList.add('show'));setTimeout(()=>x.remove(),2300)}window.HomeworkAdmin={get state(){return{users,homeworks,subjects,settings}},editUser,rewardUser};
+window.__HOMEWORK_HUB_ADMIN__={auth,db,isAdmin,get currentUser(){return auth.currentUser}};
+
+// ============================================================
+// BME — PARENT VIEW MANAGEMENT
+// ============================================================
+
+let bmeHomeworks = [];
+
+function getBmeLinks(item) {
+  if (Array.isArray(item?.links)) return item.links.filter(Boolean).map(String);
+  if (item?.link) return [String(item.link)];
+  if (item?.url) return [String(item.url)];
+  return [];
+}
+
+function addBmeLinkRow(value = "") {
+  const list = $("bmeLinksList");
+  if (!list) return;
+  const row = document.createElement("div");
+  row.className = "hw-link-row";
+  row.innerHTML = `
+    <input class="bme-link-input" type="url" placeholder="https://..." value="${esc(value)}">
+    <button type="button" class="ghost small remove-bme-link" aria-label="Xóa link">×</button>
+  `;
+  row.querySelector(".remove-bme-link").onclick = () => {
+    if (list.children.length === 1) {
+      row.querySelector(".bme-link-input").value = "";
+    } else {
+      row.remove();
+    }
+  };
+  list.appendChild(row);
+}
+
+function setBmeLinks(values = []) {
+  const list = $("bmeLinksList");
+  if (!list) return;
+  list.innerHTML = "";
+  const clean = Array.isArray(values) ? values.filter(Boolean) : [];
+  (clean.length ? clean : [""]).forEach(addBmeLinkRow);
+}
+
+function getBmeLinksFromForm() {
+  return [...document.querySelectorAll("#bmeLinksList .bme-link-input")]
+    .map((input) => input.value.trim())
+    .filter(Boolean);
+}
+
+function fillBmeSubject(selected = "") {
+  const select = $("bmeSubject");
+  if (!select) return;
+  select.innerHTML = subjects.length
+    ? subjects.map((subject) => `
+        <option value="${esc(subject.id)}">
+          ${esc(subject.icon || "📚")} ${esc(subject.name || "Môn học")}
+        </option>
+      `).join("")
+    : `<option value="">Chưa có môn học</option>`;
+  if (selected) select.value = selected;
+}
+
+function renderBmeHomework() {
+  const container = $("bmeHomeworkList");
+  if (!container) return;
+
+  if (!bmeHomeworks.length) {
+    container.innerHTML = `
+      <div class="empty">
+        👨‍👩‍👧<br><br>
+        Chưa có bài tập cho phụ huynh.<br><br>
+        <button type="button" class="primary small" id="emptyBmeCreate">＋ Đăng bài tập đầu tiên</button>
+      </div>
+    `;
+    $("emptyBmeCreate")?.addEventListener("click", openBmeCreate, { once: true });
+    return;
+  }
+
+  container.innerHTML = bmeHomeworks.map((item) => {
+    const subject = subjects.find((s) => s.id === item.subjectId);
+    const links = getBmeLinks(item);
+    return `
+      <article class="admin-item bme-admin-item">
+        <div>
+          <b>${esc(subject?.icon || "📚")} ${esc(item.title || "Bài tập")}</b>
+          <small>${esc(subject?.name || "Chưa phân loại")}</small>
+          ${item.dueDate ? `<small>⏰ Hạn: ${esc(fmt(item.dueDate))}</small>` : ""}
+          <small>${esc(item.content || "").slice(0, 260)}</small>
+          ${links.length ? `<small>🔗 ${links.length} link</small>` : ""}
+        </div>
+        <div class="actions">
+          <button type="button" data-bme-edit="${esc(item.id)}">✏️ Sửa</button>
+          <button type="button" class="danger" data-bme-delete="${esc(item.id)}">🗑 Xóa</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function openBmeCreate() {
+  $("bmeHomeworkForm")?.reset();
+  $("bmeId").value = "";
+  $("bmeDialogTitle").textContent = "Đăng bài tập BME";
+  $("bmeError").textContent = "";
+  fillBmeSubject();
+  setBmeLinks([]);
+  open("bmeHomeworkDialog");
+}
+
+function openBmeEdit(id) {
+  const item = bmeHomeworks.find((x) => x.id === id);
+  if (!item) return;
+  $("bmeDialogTitle").textContent = "Sửa bài tập BME";
+  $("bmeId").value = item.id;
+  fillBmeSubject(item.subjectId || "");
+  $("bmeTitle").value = item.title || "";
+  $("bmeContent").value = item.content || "";
+  $("bmeDue").value = item.dueDate || "";
+  $("bmeError").textContent = "";
+  setBmeLinks(getBmeLinks(item));
+  open("bmeHomeworkDialog");
+}
+
+async function deleteBmeHomework(id) {
+  const item = bmeHomeworks.find((x) => x.id === id);
+  if (!item) return;
+  if (!confirm(`Xóa bài BME "${item.title || "Bài tập"}"?`)) return;
+  try {
+    await deleteDoc(doc(db, "bme_homework", id));
+    showToast("🗑️ Đã xóa bài BME");
+  } catch (error) {
+    alert(`Không thể xóa: ${error.message}`);
+  }
+}
+
+$("newBmeHomework")?.addEventListener("click", openBmeCreate);
+$("addBmeLink")?.addEventListener("click", () => addBmeLinkRow(""));
+
+document.addEventListener("click", (event) => {
+  const edit = event.target.closest("[data-bme-edit]");
+  const del = event.target.closest("[data-bme-delete]");
+  if (edit) openBmeEdit(edit.dataset.bmeEdit);
+  if (del) deleteBmeHomework(del.dataset.bmeDelete);
+});
+
+$("bmeHomeworkForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const error = $("bmeError");
+  error.textContent = "";
+
+  const id = $("bmeId").value.trim();
+  const subjectId = $("bmeSubject").value;
+  const title = $("bmeTitle").value.trim();
+  const content = $("bmeContent").value.trim();
+  const dueDate = $("bmeDue").value || null;
+  const links = getBmeLinksFromForm();
+
+  if (!title) return void (error.textContent = "Vui lòng nhập tiêu đề.");
+  if (!content) return void (error.textContent = "Vui lòng nhập nội dung.");
+
+  for (const link of links) {
+    try {
+      const url = new URL(link);
+      if (!['http:', 'https:'].includes(url.protocol)) throw new Error();
+    } catch {
+      error.textContent = "Có link không hợp lệ.";
+      return;
+    }
+  }
+
+  try {
+    const old = bmeHomeworks.find((x) => x.id === id);
+    await setDoc(
+      doc(db, "bme_homework", id || crypto.randomUUID()),
+      {
+        subjectId,
+        title,
+        content,
+        dueDate,
+        links,
+        link: links[0] || "",
+        createdAt: old?.createdAt || serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+    );
+    close("bmeHomeworkDialog");
+    showToast(id ? "✅ Đã cập nhật bài BME" : "✅ Đã đăng bài BME");
+  } catch (saveError) {
+    error.textContent = saveError.message;
+  }
+});
+
+// BME listener is attached after the existing admin bootstrap has loaded.
+if (Array.isArray(unsub)) {
+  const attachBmeListener = () => {
+    if (!unsub.some((fn) => fn?.__bmeListener)) {
+      const unsubscribeBme = onSnapshot(
+        query(collection(db, "bme_homework"), orderBy("createdAt", "desc")),
+        (snapshot) => {
+          bmeHomeworks = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+          renderBmeHomework();
+        },
+        (error) => {
+          console.error("BME listener error:", error);
+          const c = $("bmeHomeworkList");
+          if (c) c.innerHTML = `<p class="error">Không thể tải bài BME: ${esc(error.message)}</p>`;
+        }
+      );
+      unsubscribeBme.__bmeListener = true;
+      unsub.push(unsubscribeBme);
+    }
+  };
+  setTimeout(attachBmeListener, 0);
+}
+

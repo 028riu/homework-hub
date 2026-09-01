@@ -165,6 +165,19 @@ service cloud.firestore {
     // KHÓA MẶC ĐỊNH
     // Collection/subcollection mới không tự động được mở quyền.
     // ============================================================
+    // =====================================================
+    // VIEW BME — BÀI DÀNH CHO PHỤ HUYNH
+    // =====================================================
+
+    match /bme_homework/{homeworkId} {
+      // Trang phụ huynh được phép xem bài.
+      allow read: if true;
+
+      // Chỉ Admin được đăng, sửa và xóa bài BME.
+      allow create, update, delete: if isAdmin();
+    }
+
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -26,3 +26,11 @@ Mô hình: 1 GitHub + 1 Netlify + 1 Firebase.
 
 ## Lưu ý về chuỗi
 Chuỗi chỉ hiển thị cho người đã đăng nhập Google. Hiện chuỗi được lưu theo trình duyệt/thiết bị bằng localStorage; nếu xóa dữ liệu trình duyệt hoặc đổi thiết bị, chuỗi sẽ reset. Có thể nâng cấp sang lưu streak theo UID trên Firestore.
+
+
+## Bản sửa hiện tại
+- Bài tập thường có thể đăng mà không cần tạo môn học trước; môn học là tùy chọn.
+- View BME dùng collection `bme_homework`, độc lập với `homework`.
+- Admin BME có thể đăng, sửa, xóa trực tiếp bằng nút `＋ Đăng bài tập`.
+- Mỗi bài có thể có nhiều link, mỗi link một ô; trang View có Xem trước, Mở link và Download.
+- Người dùng Google được tạo/cập nhật hồ sơ theo UID trong `users`.
