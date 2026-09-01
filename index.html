@@ -1,33 +1,107 @@
 <!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#080a16"><title>Homework Hub — Bài tập + Streak + Pet</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080b16">
+<title>Homework Hub — Học tập cùng Flamey</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="bg"></div>
 <header class="topbar">
-  <a class="brand" href="./"><span>📚</span><div><b>Homework Hub</b><small>Bài tập · Streak · Pet</small></div></a>
-  <nav class="desktop-nav" aria-label="Điều hướng chính"><button class="main-nav active" data-main-nav="home">🏠 Home</button><button class="main-nav" data-main-nav="homework">📚 Bài</button><button class="main-nav" data-main-nav="pet">🐾 Pet</button><button class="main-nav" data-main-nav="profile">👤 Profile</button></nav><div class="top-actions"><span id="userArea" class="user-area"><button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button></span><button id="settingsBtn" class="icon-button" aria-label="Cài đặt">⚙️</button><button id="themeBtn" class="icon-button" aria-label="Đổi giao diện">☼</button></div>
+  <a class="brand" href="./" aria-label="Homework Hub - Trang chủ">
+    <span class="brand-mark">📚</span>
+    <div><b>Homework Hub</b><small>Bài tập · Streak · Flamey</small></div>
+  </a>
+  <nav class="desktop-nav" aria-label="Điều hướng chính">
+    <button class="main-nav active" data-main-nav="home">🏠 <span>Home</span></button>
+    <button class="main-nav" data-main-nav="homework">📚 <span>Bài</span></button>
+    <button class="main-nav" data-main-nav="pet">🐾 <span>Pet</span></button>
+    <button class="main-nav" data-main-nav="profile">👤 <span>Profile</span></button>
+  </nav>
+  <div class="top-actions">
+    <span id="userArea" class="user-area"><button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập</button></span>
+    <button id="settingsBtn" class="icon-button" aria-label="Cài đặt">⚙️</button>
+    <button id="themeBtn" class="icon-button" aria-label="Đổi giao diện">☼</button>
+  </div>
 </header>
+
 <main class="container">
-<section class="hero hero-gamified">
-  <div class="hero-icon">📚</div><div class="hero-copy"><p class="eyebrow">HOMEWORK CENTER</p><h1>Bài tập về nhà</h1><p class="muted" id="today"></p><p class="muted" id="greeting">Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.</p></div>
-  <div class="hero-metrics"><div><b id="heroStreak">—</b><small>🔥 STREAK</small></div><div><b id="heroLevel">—</b><small>⭐ LEVEL</small></div><div><b id="heroPoints">—</b><small>💎 POINTS</small></div></div>
-</section>
-<section class="progress-panel" id="progressPanel"><div class="progress-head"><div><b id="xpLevelText">Đăng nhập để bắt đầu</b><small id="xpText">XP và tiến độ sẽ được lưu bằng Firebase</small></div><strong id="xpPercent">0%</strong></div><div class="xp-bar"><span id="xpBar"></span></div></section>
-<section id="updateNotice" class="notice hidden" role="status"><div class="notice-icon">⚠️</div><div><b id="noticeTitle">Chưa có bài mới hôm nay</b><p id="noticeText"></p></div><button id="noticeClose" class="icon-button">×</button></section>
-<div id="homeworkSection" class="daily-strip"><span id="dailyProgress">☑ 0 / 0 bài hôm nay</span><span id="dailyReward">🎁 Hoàn thành tất cả: +100 XP · +50 Points</span></div>
-<div class="toolbar"><div id="tabs" class="tabs"><button class="tab active" data-tab="all">✨ Tất cả</button></div><label class="search">🔎 <input id="search" placeholder="Tìm bài tập..." autocomplete="off"></label></div>
-<div class="quick-row"><span id="status" class="status">Đang tải bài tập...</span><button id="clearSearch" class="ghost small hidden">Xóa tìm kiếm</button></div>
-<section id="homeworkList" class="grid" aria-label="Danh sách bài tập"></section><div id="empty" class="empty hidden">📭 Chưa có bài tập phù hợp.</div>
+  <section class="hero hero-premium" id="homeSection">
+    <div class="hero-main">
+      <div class="hero-icon">📚</div>
+      <div class="hero-copy">
+        <p class="eyebrow">HOMEWORK CENTER</p>
+        <h1>Học xong, giữ streak, nuôi Flamey.</h1>
+        <p class="muted" id="today"></p>
+        <p class="hero-greeting" id="greeting">Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.</p>
+        <div class="hero-actions">
+          <button class="primary" data-main-nav="homework">📚 Xem bài tập</button>
+          <button class="ghost" data-main-nav="pet">🐾 Gặp Flamey</button>
+        </div>
+      </div>
+    </div>
+    <div class="hero-side">
+      <div class="metric-card"><span>🔥</span><b id="heroStreak">—</b><small>STREAK</small></div>
+      <div class="metric-card"><span>⭐</span><b id="heroLevel">—</b><small>LEVEL</small></div>
+      <div class="metric-card"><span>💎</span><b id="heroPoints">—</b><small>POINTS</small></div>
+    </div>
+  </section>
+
+  <section class="progress-panel" aria-label="Tiến độ XP">
+    <div class="progress-head">
+      <div><b id="xpLevelText">Đăng nhập để bắt đầu</b><small id="xpText">XP và tiến độ sẽ được lưu bằng Firebase</small></div>
+      <strong id="xpPercent">0%</strong>
+    </div>
+    <div class="xp-bar"><span id="xpBar"></span></div>
+    <div class="daily-progress"><span id="dailyProgress">☑ 0 / 0 bài hôm nay</span><span id="dailyReward">🎁 Hoàn thành tất cả: +100 XP · +50 Points</span></div>
+  </section>
+
+  <section id="updateNotice" class="notice hidden" role="status">
+    <div class="notice-icon">⚠️</div><div><b id="noticeTitle">Chưa có bài mới hôm nay</b><p id="noticeText"></p></div>
+    <button id="noticeClose" class="icon-button" aria-label="Đóng thông báo">×</button>
+  </section>
+
+  <section class="content-section" id="homeworkSection">
+    <div class="section-header">
+      <div><p class="eyebrow">YOUR HOMEWORK</p><h2>📚 Bài tập</h2><p class="muted">Tìm, lọc và đánh dấu bài đã hoàn thành.</p></div>
+      <div class="section-tools"><span id="status" class="status">Đang tải bài tập...</span><button id="clearSearch" class="ghost small hidden">Xóa tìm kiếm</button></div>
+    </div>
+    <div class="filter-shell">
+      <div id="tabs" class="tabs" aria-label="Lọc theo môn"><button class="tab active" data-tab="all">✨ Tất cả</button></div>
+      <label class="search">🔎 <input id="search" placeholder="Tìm bài tập..." autocomplete="off"></label>
+    </div>
+    <section id="homeworkList" class="grid" aria-label="Danh sách bài tập"></section>
+    <div id="empty" class="empty hidden">📭 Chưa có bài tập phù hợp.</div>
+  </section>
 </main>
-<footer>Homework Hub · Firebase realtime · Gamified learning</footer>
-<nav class="mobile-nav"><a class="active" href="#">🏠<span>Home</span></a><a href="#homeworkList">📚<span>Bài</span></a><button id="petNav">🐾<span>Pet</span></button><button id="profileNav">👤<span>Profile</span></button></nav>
-<div id="floatingPet" class="floating-pet hidden" aria-label="Pet có thể kéo">🔥<span class="pet-face">•ᴗ•</span><i>✦</i></div>
-<dialog id="settingsDialog"><div class="modal modal-wide"><div class="panel-title"><div><p class="eyebrow">PERSONALIZE</p><h2>⚙️ Cài đặt</h2></div><button id="closeSettings" class="icon-btn">×</button></div><div class="settings-grid"><section><h3>🎨 Giao diện</h3><div class="choice-row" id="themeChoices"><button data-theme="dark">🌙 Dark</button><button data-theme="light">☀️ Light</button><button data-theme="system">🖥 System</button></div><h3>🌈 Chủ đề</h3><div class="swatches" id="themeSwatches"><button data-accent="purple">🟣 Purple</button><button data-accent="ocean">🔵 Ocean</button><button data-accent="emerald">🟢 Emerald</button><button data-accent="sunset">🟠 Sunset</button><button data-accent="sakura">🌸 Sakura</button><button data-accent="galaxy">🌌 Galaxy</button></div></section><section><h3>🖼 Background</h3><div class="choice-row" id="bgChoices"><button data-bg="default">Default</button><button data-bg="grid">Grid</button><button data-bg="gradient">Gradient</button><button data-bg="aurora">Aurora</button></div><h3>🐾 Pet</h3><label class="setting-line"><span>Floating Pet</span><input id="petEnabled" type="checkbox" checked></label><p class="muted">Kéo Pet đến vị trí bạn thích. Vị trí được lưu theo tài khoản.</p></section></div><div class="modal-actions"><button id="saveSettings" class="primary">💾 Lưu cài đặt</button></div></div></dialog>
+
+<footer>Homework Hub · Học tập realtime · Flamey luôn ở đây 🔥</footer>
+
+<nav class="mobile-nav" aria-label="Điều hướng trên điện thoại">
+  <button class="active" data-main-nav="home">🏠<span>Home</span></button>
+  <button data-main-nav="homework">📚<span>Bài</span></button>
+  <button data-main-nav="pet">🐾<span>Pet</span></button>
+  <button data-main-nav="profile">👤<span>Profile</span></button>
+</nav>
+
+<div id="floatingPet" class="floating-pet hidden" aria-label="Flamey, có thể kéo">🔥<span class="pet-face">•ᴗ•</span><i>✦</i></div>
+<div id="toastHost" class="toast-host" aria-live="polite" aria-atomic="true"></div>
+
+<dialog id="settingsDialog"><div class="modal modal-wide">
+  <div class="panel-title"><div><p class="eyebrow">PERSONALIZE</p><h2>⚙️ Cài đặt</h2></div><button id="closeSettings" class="icon-btn" aria-label="Đóng">×</button></div>
+  <div class="settings-grid">
+    <section><h3>🎨 Giao diện</h3><div class="choice-row"><button data-theme="dark">🌙 Dark</button><button data-theme="light">☀️ Light</button><button data-theme="system">🖥 System</button></div>
+      <h3>🌈 Màu chủ đạo</h3><div class="swatches"><button data-accent="purple">🟣 Purple</button><button data-accent="ocean">🔵 Ocean</button><button data-accent="emerald">🟢 Emerald</button><button data-accent="sunset">🟠 Sunset</button><button data-accent="sakura">🌸 Sakura</button><button data-accent="galaxy">🌌 Galaxy</button></div></section>
+    <section><h3>🖼 Background</h3><div class="choice-row"><button data-bg="default">Default</button><button data-bg="grid">Grid</button><button data-bg="gradient">Gradient</button><button data-bg="aurora">Aurora</button></div>
+      <h3>🐾 Pet</h3><label class="setting-line"><span>Hiện Floating Pet</span><input id="petEnabled" type="checkbox" checked></label><p class="muted">Kéo Flamey đến vị trí bạn thích. Vị trí được lưu theo tài khoản.</p></section>
+  </div>
+  <div class="modal-actions"><button id="saveSettings" class="primary">💾 Lưu cài đặt</button></div>
+</div></dialog>
 <dialog id="profileDialog"><div class="modal modal-wide" id="profileContent"></div></dialog>
 <dialog id="petDialog"><div class="modal modal-wide" id="petContent"></div></dialog>
-<script type="module" src="js/viewer.js?v=20260901-v2"></script>
-</body></html>
+<dialog id="linkPreviewDialog"><div class="modal modal-preview" id="linkPreviewContent"></div></dialog>
+<script type="module" src="js/viewer.js?v=20260901-v5"></script>
+</body>
+</html>
