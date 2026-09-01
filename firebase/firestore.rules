@@ -4,105 +4,55 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ============================================================
-    // HOMEWORK HUB - FIRESTORE SECURITY RULES
+    // ADMIN
     // ============================================================
-    //
-    // Mô hình quyền:
-    // 1. Khách chưa đăng nhập:
-    //    - Được đọc các dữ liệu công khai của trang View.
-    //    - Không được ghi dữ liệu.
-    //
-    // 2. Người dùng đã đăng nhập Google:
-    //    - Được đọc/sửa hồ sơ USERS của chính UID đó.
-    //    - Được quản lý tiến độ bài tập, thành tựu và inventory
-    //      nằm bên trong USERS/{uid}.
-    //
-    // 3. Admin:
-    //    - Được quản lý USERS của tất cả mọi người.
-    //    - Được quản lý homework, subjects và dữ liệu hệ thống.
-    //
-    // QUAN TRỌNG:
-    // Document users/{uid} phải dùng chính UID Firebase Authentication
-    // làm ID. Nhờ vậy dữ liệu của mỗi người luôn nằm ở đúng hồ sơ:
-    // users/{uid_của_người_đó}
+    // Chỉ 4 tài khoản này được quản trị hệ thống.
+    // Email được lấy từ Firebase Authentication token.
     // ============================================================
-
-    // ------------------------------------------------------------
-    // DANH SÁCH ADMIN
-    // ------------------------------------------------------------
-    function isAdmin() {
-      return request.auth != null
-        && request.auth.token.email != null
-        && (
-          request.auth.token.email == "028riu@gmail.com" ||
-          request.auth.token.email == "tu0ngtun2gsahur8@gmail.com" ||
-          request.auth.token.email == "linh085760@gmail.com" ||
-          request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
-        );
-    }
-
-    // ------------------------------------------------------------
-    // KIỂM TRA ĐÃ ĐĂNG NHẬP
-    // ------------------------------------------------------------
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // ------------------------------------------------------------
-    // KIỂM TRA USER ĐANG TRUY CẬP ĐÚNG HỒ SƠ CỦA MÌNH
-    // ------------------------------------------------------------
-    function isOwner(userId) {
+    function isAdmin() {
       return isSignedIn()
-        && request.auth.uid == userId;
+        && request.auth.token.email != null
+        && (
+          request.auth.token.email == "028riu@gmail.com"
+          || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
+          || request.auth.token.email == "linh085760@gmail.com"
+          || request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
+        );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     // ============================================================
     // USERS
-    // ============================================================
-    //
-    // Mỗi tài khoản Google có một document riêng:
-    //
+    // Mỗi tài khoản Google có đúng một hồ sơ:
     // users/{uid}
-    //
-    // Ví dụ:
-    // users/AJ6FlnKZzYhuTVd12lto2a8hupz2
-    //
-    // Document có thể lưu:
-    // - uid
-    // - email
-    // - displayName / name / username
-    // - photoURL
-    // - provider
-    // - streak / currentStreak / longestStreak
-    // - highestStreak / maxStreak
-    // - totalXP / points / level
-    // - completedHomeworkCount
-    // - lastVisitDate / lastVisitAt / lastLoginAt
-    // - pet
-    // - unlockedItems / equippedItems
-    // - các thông tin tiến độ khác của riêng người dùng
-    //
-    // Không dùng email làm document ID vì UID Firebase ổn định hơn.
     // ============================================================
     match /users/{userId} {
 
-      // Admin xem tất cả user.
-      // User chỉ xem hồ sơ của chính mình.
+      // Admin xem tất cả người dùng.
+      // Người dùng chỉ xem hồ sơ của chính mình.
       allow read: if isAdmin() || isOwner(userId);
 
       // Khi đăng nhập lần đầu, trang View tự tạo users/{uid}.
-      // Admin cũng có thể tạo hồ sơ nếu cần quản trị dữ liệu.
+      // Người dùng chỉ được tạo chính hồ sơ của mình.
+      // Admin có thể tạo hồ sơ cho người dùng.
       allow create: if isAdmin() || isOwner(userId);
 
       // Người dùng có thể cập nhật hồ sơ của chính mình.
-      // Admin có thể cập nhật hồ sơ của mọi người.
+      // Admin có thể chỉnh sửa toàn bộ hồ sơ.
       allow update: if isAdmin() || isOwner(userId);
 
-      // Chỉ admin được xóa hồ sơ người dùng.
+      // Không cho người dùng tự xóa hồ sơ.
       allow delete: if isAdmin();
 
       // ----------------------------------------------------------
-      // TIẾN ĐỘ BÀI TẬP CỦA TỪNG NGƯỜI
+      // TIẾN ĐỘ BÀI TẬP RIÊNG CỦA USER
       // users/{uid}/homeworkProgress/{homeworkId}
       // ----------------------------------------------------------
       match /homeworkProgress/{homeworkId} {
@@ -113,7 +63,7 @@ service cloud.firestore {
       }
 
       // ----------------------------------------------------------
-      // THÀNH TỰU CỦA TỪNG NGƯỜI
+      // THÀNH TỰU RIÊNG
       // users/{uid}/achievements/{achievementId}
       // ----------------------------------------------------------
       match /achievements/{achievementId} {
@@ -124,7 +74,7 @@ service cloud.firestore {
       }
 
       // ----------------------------------------------------------
-      // INVENTORY CỦA TỪNG NGƯỜI
+      // KHO ĐỒ RIÊNG
       // users/{uid}/inventory/{itemId}
       // ----------------------------------------------------------
       match /inventory/{itemId} {
@@ -135,11 +85,9 @@ service cloud.firestore {
       }
 
       // ----------------------------------------------------------
-      // SETTINGS RIÊNG CỦA TỪNG NGƯỜI
+      // CÀI ĐẶT RIÊNG
       // users/{uid}/settings/{settingId}
       // ----------------------------------------------------------
-      // Dành cho các thiết lập cá nhân trong tương lai.
-      // Không ảnh hưởng đến settings hệ thống ở bên ngoài.
       match /settings/{settingId} {
         allow read: if isAdmin() || isOwner(userId);
         allow create: if isAdmin() || isOwner(userId);
@@ -149,10 +97,10 @@ service cloud.firestore {
     }
 
     // ============================================================
-    // SUBJECTS
+    // SUBJECTS / TAB MÔN HỌC
     // ============================================================
-    // Mọi người được đọc danh sách môn học.
-    // Chỉ admin được tạo/sửa/xóa môn.
+    // Trang View được đọc công khai.
+    // Chỉ Admin được tạo, sửa, xóa.
     // ============================================================
     match /subjects/{subjectId} {
       allow read: if true;
@@ -162,11 +110,12 @@ service cloud.firestore {
     }
 
     // ============================================================
-    // HOMEWORK
+    // HOMEWORK / BÀI TẬP
     // ============================================================
-    // Bài tập là dữ liệu công khai của trang View.
-    // Người chưa đăng nhập vẫn xem được.
-    // Chỉ admin được quản lý bài tập.
+    // Không cần đăng nhập vẫn xem được bài.
+    // Chỉ Admin được quản lý bài.
+    // Có thể chứa title, content, links, url, dueDate,
+    // pinned, important, createdAt, updatedAt...
     // ============================================================
     match /homework/{homeworkId} {
       allow read: if true;
@@ -176,70 +125,45 @@ service cloud.firestore {
     }
 
     // ============================================================
-    // SETTINGS HỆ THỐNG
+    // SYSTEM SETTINGS
     // ============================================================
-    // Ví dụ: settings/site chứa thông báo, XP mặc định, Points...
+    // View cần đọc settings/site để lấy XP, Points và thông báo.
+    // Vì vậy cho phép đọc công khai.
+    // Chỉ Admin được thay đổi.
     // ============================================================
     match /settings/{settingId} {
-      allow read: if isAdmin() || settingId == "site";
+      allow read: if true;
       allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
     // ============================================================
-    // ACHIEVEMENTS CÔNG KHAI
-    // ============================================================
-    // Danh sách định nghĩa thành tựu dùng chung cho toàn website.
+    // CÁC DỮ LIỆU CẤU HÌNH / GAME
     // ============================================================
     match /achievements/{achievementId} {
       allow read: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    // ============================================================
-    // ITEMS
-    // ============================================================
-    // Danh sách vật phẩm chung.
-    // ============================================================
     match /items/{itemId} {
       allow read: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    // ============================================================
-    // PETS
-    // ============================================================
-    // Danh sách Pet dùng chung.
-    // ============================================================
     match /pets/{petId} {
       allow read: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    // ============================================================
-    // THEMES
-    // ============================================================
-    // Theme giao diện dùng chung.
-    // ============================================================
     match /themes/{themeId} {
       allow read: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     // ============================================================
-    // KHÓA TẤT CẢ COLLECTION KHÁC
-    // ============================================================
-    // Nếu sau này tạo collection mới mà quên viết rule,
-    // collection đó mặc định sẽ bị khóa.
+    // KHÓA MẶC ĐỊNH
+    // Collection/subcollection mới không tự động được mở quyền.
     // ============================================================
     match /{document=**} {
       allow read, write: if false;
