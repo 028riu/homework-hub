@@ -6,7 +6,7 @@ service cloud.firestore {
     // ============================================================
     // ADMIN
     // ============================================================
-    // Các tài khoản trong allowlist dưới đây được quản trị hệ thống.
+    // Chỉ 4 tài khoản này được quản trị hệ thống.
     // Email được lấy từ Firebase Authentication token.
     // ============================================================
     function isSignedIn() {
@@ -21,8 +21,6 @@ service cloud.firestore {
           || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
           || request.auth.token.email == "linh085760@gmail.com"
           || request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
-          || request.auth.token.email == "minh037199@stu.vinschool.edu.vn"
-          || request.auth.token.email == "tran034866@stu.vinschool.edu.vn"
         );
     }
 

@@ -37,9 +37,7 @@ const ADMIN_EMAILS = [
   "028riu@gmail.com",
   "tu0ngtun2gsahur8@gmail.com",
   "linh085760@gmail.com",
-  "phuong026443@stu.vinschool.edu.vn",
-  "minh037199@stu.vinschool.edu.vn",
-  "tran034866@stu.vinschool.edu.vn"
+  "phuong026443@stu.vinschool.edu.vn"
 ].map((email) => email.toLowerCase());
 
 let subjects = [];
