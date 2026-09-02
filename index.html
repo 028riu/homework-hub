@@ -9,7 +9,7 @@
 <div class="bg"></div>
 <header class="topbar">
   <a class="brand" href="./"><span>📚</span><div><b>Homework Hub</b><small>Bài tập · Streak · Pet</small></div></a>
-  <nav class="desktop-nav" aria-label="Điều hướng chính"><button class="main-nav active" data-main-nav="home">🏠 Home</button><button class="main-nav" data-main-nav="homework">📚 Bài</button><button class="main-nav" data-main-nav="pet">🐾 Pet</button><button class="main-nav" data-main-nav="profile">👤 Profile</button><a class="main-nav schedule-link" href="schedule.html">📅 Thời khóa biểu</a></nav><div class="top-actions"><span id="userArea" class="user-area"><button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button></span><button id="settingsBtn" class="icon-button" aria-label="Cài đặt">⚙️</button><button id="themeBtn" class="icon-button" aria-label="Đổi giao diện">☼</button></div>
+  <nav class="desktop-nav" aria-label="Điều hướng chính"><button class="main-nav active" data-main-nav="home">🏠 Home</button><button class="main-nav" data-main-nav="homework">📚 Bài</button><button class="main-nav" data-main-nav="pet">🐾 Pet</button><button class="main-nav" data-main-nav="profile">👤 Profile</button></nav><div class="top-actions"><span id="userArea" class="user-area"><button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button></span><button id="settingsBtn" class="icon-button" aria-label="Cài đặt">⚙️</button><button id="themeBtn" class="icon-button" aria-label="Đổi giao diện">☼</button></div>
 </header>
 <main class="container">
 <section class="hero hero-gamified">
@@ -23,13 +23,40 @@
 <div class="quick-row"><span id="status" class="status">Đang tải bài tập...</span><button id="clearSearch" class="ghost small hidden">Xóa tìm kiếm</button></div>
 <section id="homeworkList" class="grid" aria-label="Danh sách bài tập"></section><div id="empty" class="empty hidden">📭 Chưa có bài tập phù hợp.</div>
 </main>
+<section id="onlineSection" class="online-section">
+  <div class="online-head"><div><p class="eyebrow">AI ĐANG ONLINE</p><h2>🟢 Ai đang online</h2></div><span id="onlineCount" class="online-count">0</span></div>
+  <div id="onlineList" class="online-list"><span class="muted">Đang kiểm tra...</span></div>
+</section>
 <footer>Homework Hub · Firebase realtime · Gamified learning</footer>
 <nav class="mobile-nav"><a class="active" href="#">🏠<span>Home</span></a><a href="#homeworkList">📚<span>Bài</span></a><button id="petNav">🐾<span>Pet</span></button><button id="profileNav">👤<span>Profile</span></button></nav>
-<button id="classScheduleLauncher" class="class-schedule-launcher" type="button" aria-label="Mở nội dung học trên lớp" title="Nội dung học trên lớp">🏫<span>📚</span></button>
+
 <dialog id="classScheduleDialog"><div class="modal modal-wide"><div class="panel-title"><div><p class="eyebrow">CLASS SCHEDULE</p><h2>🏫 Hôm nay trên lớp</h2><p class="muted">Nội dung được cập nhật realtime từ Admin.</p></div><button id="closeClassSchedule" class="icon-btn" type="button" aria-label="Đóng">×</button></div><div id="classScheduleTodayList"></div></div></dialog>
 <div id="floatingPet" class="floating-pet hidden" aria-label="Pet có thể kéo">🔥<span class="pet-face">•ᴗ•</span><i>✦</i></div>
 <dialog id="settingsDialog"><div class="modal modal-wide"><div class="panel-title"><div><p class="eyebrow">PERSONALIZE</p><h2>⚙️ Cài đặt</h2></div><button id="closeSettings" class="icon-btn">×</button></div><div class="settings-grid"><section><h3>🎨 Giao diện</h3><div class="choice-row" id="themeChoices"><button data-theme="dark">🌙 Dark</button><button data-theme="light">☀️ Light</button><button data-theme="system">🖥 System</button></div><h3>🌈 Chủ đề</h3><div class="swatches" id="themeSwatches"><button data-accent="purple">🟣 Purple</button><button data-accent="ocean">🔵 Ocean</button><button data-accent="emerald">🟢 Emerald</button><button data-accent="sunset">🟠 Sunset</button><button data-accent="sakura">🌸 Sakura</button><button data-accent="galaxy">🌌 Galaxy</button></div></section><section><h3>🖼 Background</h3><div class="choice-row" id="bgChoices"><button data-bg="default">Default</button><button data-bg="grid">Grid</button><button data-bg="gradient">Gradient</button><button data-bg="aurora">Aurora</button></div><h3>🐾 Pet</h3><label class="setting-line"><span>Floating Pet</span><input id="petEnabled" type="checkbox" checked></label><p class="muted">Kéo Pet đến vị trí bạn thích. Vị trí được lưu theo tài khoản.</p></section></div><div class="modal-actions"><button id="saveSettings" class="primary">💾 Lưu cài đặt</button></div></div></dialog>
 <dialog id="profileDialog"><div class="modal modal-wide" id="profileContent"></div></dialog>
 <dialog id="petDialog"><div class="modal modal-wide" id="petContent"></div></dialog>
-<script type="module" src="js/viewer.js?v=20260901-stable4"></script><script type="module" src="js/class-schedule.js?v=20260902-weekly2"></script>
+<script type="module" src="js/viewer.js?v=20260902-direct-online1"></script><script type="module" src="js/class-schedule.js?v=20260901-subject-fix1"></script>
+<div id="loginGate" class="login-gate" hidden>
+  <div class="login-gate-card">
+    <div class="login-gate-badge">HOMEWORK HUB</div>
+    <div class="login-gate-icon">🔐</div>
+    <h2>Vui lòng đăng nhập</h2>
+    <p>Đăng nhập để sử dụng đầy đủ Homework Hub, lưu tiến độ, Streak, XP và Pet.</p>
+    <button id="gateLogin" class="gate-login">G&nbsp; Đăng nhập Google</button>
+    <button id="gateClose" class="gate-close" type="button" hidden>×</button>
+    <small id="gateTimer">Có thể đóng sau 5 giây...</small>
+  </div>
+</div>
+<div id="directNoticeOverlay" class="direct-notice-overlay" hidden>
+  <div class="direct-notice-card">
+    <button id="directNoticeX" class="direct-notice-x" aria-label="Đóng">×</button>
+    <div class="direct-notice-badge">📢 THÔNG BÁO TRỰC TIẾP</div>
+    <h2 id="directNoticeTitle">Thông báo</h2>
+    <div id="directNoticeMessage" class="direct-notice-message"></div>
+    <div class="direct-notice-actions">
+      <button id="directNoticeNoReplay" class="ghost">Không phát lại</button>
+      <button id="directNoticeLater" class="primary">🔔 Nhắc sau</button>
+    </div>
+  </div>
+</div>
 </body></html>
