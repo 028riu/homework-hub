@@ -7,7 +7,7 @@
 <title>Homework Hub — View BME</title>
 <style>
 *{box-sizing:border-box}body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f6f7fb;color:#202534;margin:0}.wrap{max-width:980px;margin:auto;padding:28px 18px}.head,.card,.empty{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:20px;margin-bottom:14px;box-shadow:0 4px 18px rgba(16,24,40,.04)}.head h1{margin:5px 0}.muted,.date{color:#667085}.search{width:100%;padding:12px 14px;border:1px solid #dfe3ea;border-radius:12px;font:inherit;margin-top:14px;outline:none}.search:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.12)}.top{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.subject{font-weight:800;color:#4f46e5}.card h2{font-size:21px;margin:12px 0}.content{white-space:pre-wrap;line-height:1.7}.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.link-btn{display:inline-flex;align-items:center;padding:9px 12px;border:1px solid #dfe3ea;border-radius:10px;text-decoration:none;color:#344054;background:#fff;font:inherit;cursor:pointer}.link-btn:hover{background:#f8fafc}.error{color:#b42318;background:#fef3f2;border:1px solid #fecdca;border-radius:12px;padding:14px}.loading{color:#667085;text-align:center;padding:28px}.count{font-size:13px;color:#667085;margin-top:8px}.due{color:#475467}.modal{width:min(900px,calc(100vw - 28px));padding:20px;background:#fff;border:0;border-radius:18px}.modal::backdrop{background:#0008}.icon-btn{border:0;background:#eef0f4;border-radius:10px;width:38px;height:38px;font-size:20px;cursor:pointer}
-.bme-tagline{margin:0;color:#475467;font-size:15px;line-height:1.5}.bme-schedule-card{margin-top:18px}.bme-schedule-card h2{margin-bottom:12px}@media(max-width:600px){.wrap{padding:18px 12px}.head,.card,.empty{border-radius:15px;padding:16px}.head h1{font-size:27px}}
+.bme-tagline{margin:0;color:#475467;font-size:15px;line-height:1.5}.bme-schedule-card{margin-top:18px}.bme-schedule-card h2{margin-bottom:12px}.bme-schedule-card{max-width:100%;overflow:hidden}.schedule-week-wrap{width:100%}.schedule-week-table{min-width:900px}.schedule-week-section{margin-top:20px}@media(max-width:600px){.wrap{padding:18px 12px}.head,.card,.empty{border-radius:15px;padding:16px}.head h1{font-size:27px}}
 </style>
 </head>
 <body>
@@ -22,9 +22,9 @@
 <section id="status" class="loading">⏳ Đang tải bài tập...</section>
 <section id="list"></section>
 <div id="empty" class="empty" hidden>📭 Chưa có bài tập.</div>
-<section class="head bme-schedule-card"><div class="muted">CLASS SCHEDULE</div><h2>🏫 Hôm nay trên lớp</h2><div id="bmeClassScheduleList"><div class="loading">⏳ Đang tải...</div></div></section>
+<section class="head bme-schedule-card"><div class="muted">CLASS SCHEDULE</div><h2>🏫 Hôm nay trên lớp</h2><div id="bmeClassScheduleList"><div class="loading">⏳ Đang tải...</div></div><div class="schedule-week-section"><div class="schedule-section-title"><p class="eyebrow">WEEKLY SCHEDULE</p><h3>📋 Thời khóa biểu</h3><p class="muted">Xem đầy đủ từng ngày và chuyển tuần.</p></div><div id="classScheduleWeekly"></div></div></section>
 
 </main>
-<script type="module" src="./view-bme.js?v=20260901-stable5"></script><script type="module" src="../js/class-schedule.js?v=20260902-weekly1"></script>
+<script type="module" src="./view-bme.js?v=20260901-stable5"></script><script type="module" src="../js/class-schedule.js?v=20260902-weekly2"></script>
 </body>
 </html>

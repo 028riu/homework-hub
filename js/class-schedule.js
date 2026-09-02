@@ -49,6 +49,7 @@ function renderBmeToday(){
   box.innerHTML=items.length?items.map(x=>`<article class="bme-class-row"><div class="bme-class-meta"><b>${esc(slotLabel(x.slot))}</b><span>📚 ${esc(x.subject||"Chưa ghi tên môn")}</span></div><section>${x.lesson?`<p><strong>📖 Nội dung:</strong> ${esc(x.lesson)}</p>`:""}${x.teacher?`<p><strong>👨‍🏫 Thầy cô:</strong> ${esc(x.teacher)}</p>`:""}${x.note?`<p><strong>💬 Dặn dò:</strong> ${esc(x.note)}</p>`:""}</section></article>`).join(""):"<div class=\"schedule-no-data\">📭 Chưa có dữ liệu học trên lớp hôm nay.</div>";
 }
 function ensureWeeklyUI(){
+  if($("classScheduleWeekly")) renderWeekly();
   const dialog=$("classScheduleDialog");
   if(dialog&&!$("classScheduleWeekly")){
     const inner=dialog.querySelector(".modal")||dialog;
@@ -76,4 +77,5 @@ onSnapshot(collection(db,"class_schedule"),snap=>{
   if($("classScheduleTodayList"))$("classScheduleTodayList").innerHTML=html;
   if($("bmeClassScheduleList"))$("bmeClassScheduleList").innerHTML=html;
 });
+ensureWeeklyUI();
 initStudent();

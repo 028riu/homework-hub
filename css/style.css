@@ -122,3 +122,7 @@ input,textarea,select{width:100%;border:1px solid #ffffff14;border-radius:12px;p
 .bme-class-row>div b,.bme-class-row>div span{display:block}.bme-class-row>div span{margin-top:4px;font-weight:800}
 .bme-class-row p{margin:4px 0}
 @media(max-width:700px){.class-schedule-launcher{right:14px;bottom:88px}.schedule-today-card{grid-template-columns:70px 1fr}.admin-tabs{padding-bottom:8px}}
+
+/* UI sizing fixes */
+.avatar-img{width:30px!important;height:30px!important;min-width:30px;min-height:30px;max-width:30px;max-height:30px;border-radius:50%;object-fit:cover;display:block}.profile-avatar{width:64px;height:64px;max-width:64px;max-height:64px;border-radius:18px;object-fit:cover}.schedule-link{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+@media(max-width:760px){.profile-avatar{width:58px;height:58px;max-width:58px;max-height:58px}.user-pill{max-width:220px}.user-pill b{max-width:90px}}
