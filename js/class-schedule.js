@@ -15,5 +15,22 @@ function todayList(map){const today=keyDate(new Date());const arr=[...map.values
 function bmeWeekTable(map,weekStart){const c=$("bmeScheduleTable");if(!c)return;let html='<div class="schedule-table-wrap"><table class="class-schedule-table"><thead><tr><th>Ngày</th>'+slots.map(s=>`<th>${esc(s.label)}</th>`).join("")+'</tr></thead><tbody>';for(let i=0;i<5;i++){const d=addDays(weekStart,i),date=keyDate(d);html+=`<tr><th><b>${days[i]}</b><small>${esc(d.toLocaleDateString("vi-VN",{day:"2-digit",month:"2-digit"}))}</small></th>`;for(const sl of slots){const x=map.get(`${date}_${sl.key}`);html+=`<td>${x&&(x.subject||x.lesson||x.teacher||x.note)?`<div class="bme-schedule-cell"><b>${esc(x.subject||"Chưa ghi môn")}</b>${x.lesson?`<span>${esc(x.lesson)}</span>`:""}${x.teacher?`<small>👨‍🏫 ${esc(x.teacher)}</small>`:""}${x.note?`<small>💬 ${esc(x.note)}</small>`:""}</div>`:'<span class="schedule-empty">—</span>'}</td>`}html+='</tr>'}html+='</tbody></table></div>';c.innerHTML=html}
 const map=new Map();let bmeWeek=monday(new Date());
 function render(){todayList(map);bmeWeekTable(map,bmeWeek);const label=$("bmeScheduleWeekLabel");if(label)label.textContent=`${bmeWeek.toLocaleDateString("vi-VN",{day:"2-digit",month:"2-digit"})} – ${addDays(bmeWeek,4).toLocaleDateString("vi-VN",{day:"2-digit",month:"2-digit",year:"numeric"})}`}
-onSnapshot(collection(db,"class_schedule"),snap=>{map.clear();snap.docs.forEach(d=>map.set(d.id,normalize(d.data(),d.id)));render()},err=>{console.error("Homework Hub class schedule:",err);$("classScheduleTodayList")?.replaceChildren(Object.assign(document.createElement("div"),{className:"schedule-no-data",textContent:"❌ Không thể tải thời khóa biểu."}));});
+onSnapshot(collection(db,"class_schedule"),snap=>{
+  map.clear();
+  snap.docs.forEach(d=>map.set(d.id,normalize(d.data(),d.id)));
+  render();
+  console.log("Homework Hub class schedule: realtime",map.size);
+},err=>{
+  console.error("Homework Hub class schedule:",err);
+  const msg = `❌ Không thể tải thời khóa biểu${err?.code ? ` (${err.code})` : ""}.`;
+  const make = () => { const el=document.createElement("div"); el.className="schedule-no-data"; el.textContent=msg; return el; };
+  const today=$("classScheduleTodayList");
+  const bmeToday=$("bmeClassScheduleList");
+  const bmeTable=$("bmeScheduleTable");
+  if(today) today.replaceChildren(make());
+  if(bmeToday) bmeToday.replaceChildren(make());
+  if(bmeTable) bmeTable.replaceChildren(make());
+  const label=$("bmeScheduleWeekLabel");
+  if(label) label.textContent="";
+});
 $("bmeSchedulePrev")?.addEventListener("click",()=>{bmeWeek=addDays(bmeWeek,-7);render()});$("bmeScheduleNext")?.addEventListener("click",()=>{bmeWeek=addDays(bmeWeek,7);render()});$("bmeScheduleToday")?.addEventListener("click",()=>{bmeWeek=monday(new Date());render()});render();
