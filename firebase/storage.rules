@@ -1,34 +1,13 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
-    function isAdmin() {
-      return request.auth != null
-        && request.auth.token.email != null
-        && (request.auth.token.email == "028riu@gmail.com"
-          ||
-          request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
-          ||
-          request.auth.token.email == "linh085760@gmail.com"
-          ||
-          request.auth.token.email == "linh085760@stu.vinschool.edu.vn"
-          ||
-          request.auth.token.email == "minh037199@stu.vinschool.edu.vn"
-          ||
-          request.auth.token.email == "tran034866@stu.vinschool.edu.vn"
-          ||
-          request.auth.token.email == "phuong026443@stu.vinschool.edu.vn");
+    function isAdmin(){return request.auth!=null&&request.auth.token.email!=null&&(request.auth.token.email=="028riu@gmail.com"||request.auth.token.email=="tu0ngtun2gsahur@gmail.com"||request.auth.token.email=="linh085760@gmail.com"||request.auth.token.email=="linh085760@stu.vinschool.edu.vn"||request.auth.token.email=="minh037199@stu.vinschool.edu.vn"||request.auth.token.email=="tran034866@stu.vinschool.edu.vn"||request.auth.token.email=="phuong026443@stu.vinschool.edu.vn");}
+    match /homework/{homeworkId}/{fileName=**}{allow read:if true;allow write:if isAdmin()&&request.resource.size<50*1024*1024;allow delete:if isAdmin();}
+    match /chat/{chatId}/{uid}/{fileName=**} {
+      allow read: if request.auth!=null && (chatId=="all_members" || (firestore.get(/databases/(default)/documents/chats/$(chatId)).data.members.hasAny([request.auth.uid])));
+      allow write: if request.auth!=null && request.auth.uid==uid && request.resource.size<50*1024*1024;
+      allow delete: if request.auth!=null && request.auth.uid==uid;
     }
-
-    match /homework/{homeworkId}/{fileName=**} {
-      allow read: if true;
-      allow write: if isAdmin()
-        && request.resource.size < 50 * 1024 * 1024;
-      allow delete: if isAdmin();
-    }
-
-    match /{allPaths=**} {
-      allow read, write: if false;
-    }
+    match /{allPaths=**}{allow read,write:if false;}
   }
 }
