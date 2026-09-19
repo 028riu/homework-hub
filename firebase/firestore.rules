@@ -1,142 +1,46 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isSignedIn()
-        && request.auth.token.email != null
-        && (request.auth.token.email == "028riu@gmail.com"
-          || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
-          || request.auth.token.email == "linh085760@gmail.com"
-          || request.auth.token.email == "linh085760@stu.vinschool.edu.vn"
-          || request.auth.token.email == "minh037199@stu.vinschool.edu.vn"
-          || request.auth.token.email == "tran034866@stu.vinschool.edu.vn"
-          || request.auth.token.email == "phuong026443@stu.vinschool.edu.vn");
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
+    function isSignedIn(){return request.auth!=null;}
+    function isAdmin(){return isSignedIn() && request.auth.token.email!=null && (request.auth.token.email=="028riu@gmail.com"||request.auth.token.email=="tu0ngtun2gsahur@gmail.com"||request.auth.token.email=="linh085760@gmail.com"||request.auth.token.email=="linh085760@stu.vinschool.edu.vn"||request.auth.token.email=="minh037199@stu.vinschool.edu.vn"||request.auth.token.email=="tran034866@stu.vinschool.edu.vn"||request.auth.token.email=="phuong026443@stu.vinschool.edu.vn");}
+    function isOwner(userId){return isSignedIn()&&request.auth.uid==userId;}
     match /users/{userId} {
-      allow read: if isAdmin() || isOwner(userId);
-      allow create, update: if isAdmin() || isOwner(userId);
-      allow delete: if isAdmin();
-
-      match /homeworkProgress/{homeworkId} {
-        allow read, create, update, delete: if isAdmin() || isOwner(userId);
-      }
-      match /achievements/{achievementId} {
-        allow read, create, update, delete: if isAdmin() || isOwner(userId);
-      }
-      match /inventory/{itemId} {
-        allow read, create, update, delete: if isAdmin() || isOwner(userId);
-      }
-      match /settings/{settingId} {
-        allow read, create, update, delete: if isAdmin() || isOwner(userId);
-      }
-    }
-
-    match /subjects/{subjectId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /homework/{homeworkId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /settings/{settingId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /achievements/{achievementId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /items/{itemId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /pets/{petId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /themes/{themeId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /bme_homework/{homeworkId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /presence/{uid} {
-      allow read: if true;
-      allow create, update: if isSignedIn() && request.auth.uid == uid;
-      allow delete: if isSignedIn() && request.auth.uid == uid;
-    }
-
-    match /settings/directNotification {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /class_schedule/{scheduleId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    // ============================================================
-    // CHAT PROFILES
-    // Chỉ tài khoản đã đăng nhập mới xem được danh sách người dùng.
-    // Mỗi user chỉ được ghi hồ sơ chat của chính mình.
-    // ============================================================
-    match /chat_profiles/{userId} {
       allow read: if isSignedIn();
-      allow create, update: if isOwner(userId);
-      allow delete: if isAdmin() || isOwner(userId);
+      allow create,update: if isAdmin()||isOwner(userId);
+      allow delete: if isAdmin();
+      match /homeworkProgress/{homeworkId}{allow read,create,update,delete:if isAdmin()||isOwner(userId);}
+      match /achievements/{achievementId}{allow read,create,update,delete:if isAdmin()||isOwner(userId);}
+      match /inventory/{itemId}{allow read,create,update,delete:if isAdmin()||isOwner(userId);}
+      match /settings/{settingId}{allow read,create,update,delete:if isAdmin()||isOwner(userId);}
     }
-
-    // ============================================================
-    // PRIVATE 1-1 CHAT
-    // chats/{chatId} chứa members = [uidA, uidB]
-    // Chỉ thành viên của cuộc trò chuyện mới được đọc/ghi.
-    // ============================================================
+    match /subjects/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
+    match /homework/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
+    match /settings/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
+    match /achievements/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
+    match /items/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
+    match /pets/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
+    match /themes/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
+    match /bme_homework/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
+    match /presence/{uid}{allow read:if isSignedIn();allow create,update:if isOwner(uid);allow delete:if isOwner(uid);}
+    match /settings/directNotification{allow read:if true;allow create,update,delete:if isAdmin();}
+    match /class_schedule/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
+    match /chat_profiles/{userId}{allow read:if isSignedIn();allow create,update:if isOwner(userId);allow delete:if isAdmin()||isOwner(userId);}
     match /chats/{chatId} {
-      allow read: if isSignedIn() && request.auth.uid in resource.data.members;
-      allow create: if isSignedIn()
-        && request.auth.uid in request.resource.data.members
-        && request.resource.data.members.size() == 2;
-      allow update: if isSignedIn()
-        && request.auth.uid in resource.data.members
-        && request.resource.data.members == resource.data.members;
+      allow read: if isSignedIn() && (chatId=="all_members" || request.auth.uid in resource.data.members);
+      allow create: if isSignedIn() && (chatId=="all_members" || (request.auth.uid in request.resource.data.members && request.resource.data.members.size()==2));
+      allow update: if isSignedIn() && (chatId=="all_members" || (request.auth.uid in resource.data.members && request.resource.data.members==resource.data.members));
       allow delete: if false;
-
       match /messages/{messageId} {
-        allow read: if isSignedIn()
-          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members;
+        allow read: if isSignedIn() && (chatId=="all_members" || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members);
         allow create: if isSignedIn()
-          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members
-          && request.resource.data.senderId == request.auth.uid
-          && request.resource.data.receiverId in get(/databases/$(database)/documents/chats/$(chatId)).data.members
+          && (chatId=="all_members" || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members)
+          && request.resource.data.senderId==request.auth.uid
           && request.resource.data.text is string
-          && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 2000;
-        allow update, delete: if false;
+          && request.resource.data.text.size()<=2000
+          && (request.resource.data.receiverId == null || request.resource.data.receiverId in get(/databases/$(database)/documents/chats/$(chatId)).data.members);
+        allow update,delete:if false;
       }
     }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    match /{document=**}{allow read,write:if false;}
   }
 }
