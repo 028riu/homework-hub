@@ -3,12 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ============================================================
-    // ADMIN
-    // ============================================================
-    // Chỉ 4 tài khoản này được quản trị hệ thống.
-    // Email được lấy từ Firebase Authentication token.
-    // ============================================================
     function isSignedIn() {
       return request.auth != null;
     }
@@ -17,187 +11,78 @@ service cloud.firestore {
       return isSignedIn()
         && request.auth.token.email != null
         && (request.auth.token.email == "028riu@gmail.com"
-          ||
-          request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
-          ||
-          request.auth.token.email == "linh085760@gmail.com"
-          ||
-          request.auth.token.email == "linh085760@stu.vinschool.edu.vn"
-          ||
-          request.auth.token.email == "minh037199@stu.vinschool.edu.vn"
-          ||
-          request.auth.token.email == "tran034866@stu.vinschool.edu.vn"
-          ||
-          request.auth.token.email == "phuong026443@stu.vinschool.edu.vn");
+          || request.auth.token.email == "tu0ngtun2gsahur8@gmail.com"
+          || request.auth.token.email == "linh085760@gmail.com"
+          || request.auth.token.email == "linh085760@stu.vinschool.edu.vn"
+          || request.auth.token.email == "minh037199@stu.vinschool.edu.vn"
+          || request.auth.token.email == "tran034866@stu.vinschool.edu.vn"
+          || request.auth.token.email == "phuong026443@stu.vinschool.edu.vn");
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // ============================================================
-    // USERS
-    // Mỗi tài khoản Google có đúng một hồ sơ:
-    // users/{uid}
-    // ============================================================
     match /users/{userId} {
-
-      // Admin xem tất cả người dùng.
-      // Người dùng chỉ xem hồ sơ của chính mình.
       allow read: if isAdmin() || isOwner(userId);
-
-      // Khi đăng nhập lần đầu, trang View tự tạo users/{uid}.
-      // Người dùng chỉ được tạo chính hồ sơ của mình.
-      // Admin có thể tạo hồ sơ cho người dùng.
-      allow create: if isAdmin() || isOwner(userId);
-
-      // Người dùng có thể cập nhật hồ sơ của chính mình.
-      // Admin có thể chỉnh sửa toàn bộ hồ sơ.
-      allow update: if isAdmin() || isOwner(userId);
-
-      // Không cho người dùng tự xóa hồ sơ.
+      allow create, update: if isAdmin() || isOwner(userId);
       allow delete: if isAdmin();
 
-      // ----------------------------------------------------------
-      // TIẾN ĐỘ BÀI TẬP RIÊNG CỦA USER
-      // users/{uid}/homeworkProgress/{homeworkId}
-      // ----------------------------------------------------------
       match /homeworkProgress/{homeworkId} {
-        allow read: if isAdmin() || isOwner(userId);
-        allow create: if isAdmin() || isOwner(userId);
-        allow update: if isAdmin() || isOwner(userId);
-        allow delete: if isAdmin() || isOwner(userId);
+        allow read, create, update, delete: if isAdmin() || isOwner(userId);
       }
-
-      // ----------------------------------------------------------
-      // THÀNH TỰU RIÊNG
-      // users/{uid}/achievements/{achievementId}
-      // ----------------------------------------------------------
       match /achievements/{achievementId} {
-        allow read: if isAdmin() || isOwner(userId);
-        allow create: if isAdmin() || isOwner(userId);
-        allow update: if isAdmin() || isOwner(userId);
-        allow delete: if isAdmin() || isOwner(userId);
+        allow read, create, update, delete: if isAdmin() || isOwner(userId);
       }
-
-      // ----------------------------------------------------------
-      // KHO ĐỒ RIÊNG
-      // users/{uid}/inventory/{itemId}
-      // ----------------------------------------------------------
       match /inventory/{itemId} {
-        allow read: if isAdmin() || isOwner(userId);
-        allow create: if isAdmin() || isOwner(userId);
-        allow update: if isAdmin() || isOwner(userId);
-        allow delete: if isAdmin() || isOwner(userId);
+        allow read, create, update, delete: if isAdmin() || isOwner(userId);
       }
-
-      // ----------------------------------------------------------
-      // CÀI ĐẶT RIÊNG
-      // users/{uid}/settings/{settingId}
-      // ----------------------------------------------------------
       match /settings/{settingId} {
-        allow read: if isAdmin() || isOwner(userId);
-        allow create: if isAdmin() || isOwner(userId);
-        allow update: if isAdmin() || isOwner(userId);
-        allow delete: if isAdmin() || isOwner(userId);
+        allow read, create, update, delete: if isAdmin() || isOwner(userId);
       }
     }
 
-    // ============================================================
-    // SUBJECTS / TAB MÔN HỌC
-    // ============================================================
-    // Trang View được đọc công khai.
-    // Chỉ Admin được tạo, sửa, xóa.
-    // ============================================================
     match /subjects/{subjectId} {
       allow read: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    // ============================================================
-    // HOMEWORK / BÀI TẬP
-    // ============================================================
-    // Không cần đăng nhập vẫn xem được bài.
-    // Chỉ Admin được quản lý bài.
-    // Có thể chứa title, content, links, url, dueDate,
-    // pinned, important, createdAt, updatedAt...
-    // ============================================================
     match /homework/{homeworkId} {
       allow read: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    // ============================================================
-    // SYSTEM SETTINGS
-    // ============================================================
-    // View cần đọc settings/site để lấy XP, Points và thông báo.
-    // Vì vậy cho phép đọc công khai.
-    // Chỉ Admin được thay đổi.
-    // ============================================================
     match /settings/{settingId} {
       allow read: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    // ============================================================
-    // CÁC DỮ LIỆU CẤU HÌNH / GAME
-    // ============================================================
     match /achievements/{achievementId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
-
     match /items/{itemId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
-
     match /pets/{petId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
-
     match /themes/{themeId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
-    // ============================================================
-    // KHÓA MẶC ĐỊNH
-    // Collection/subcollection mới không tự động được mở quyền.
-    // ============================================================
-    // =====================================================
-    // VIEW BME — BÀI DÀNH CHO PHỤ HUYNH
-    // =====================================================
-
     match /bme_homework/{homeworkId} {
-      // Trang phụ huynh được phép xem bài.
       allow read: if true;
-
-      // Chỉ Admin được đăng, sửa và xóa bài BME.
       allow create, update, delete: if isAdmin();
     }
 
-
-    // ============================================================
-    // CLASS SCHEDULE — NỘI DUNG HỌC TRÊN LỚP
-    // ============================================================
-    // Mỗi ô lịch là một document:
-    // class_schedule/{YYYY-MM-DD}_{slot}
-    //
-    // Học sinh và phụ huynh được đọc.
-    // Chỉ Admin được tạo, sửa, xóa.
-    // ============================================================
     match /presence/{uid} {
       allow read: if true;
-      allow create, update: if request.auth != null && request.auth.uid == uid;
-      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if isSignedIn() && request.auth.uid == uid;
+      allow delete: if isSignedIn() && request.auth.uid == uid;
     }
 
     match /settings/directNotification {
@@ -208,6 +93,46 @@ service cloud.firestore {
     match /class_schedule/{scheduleId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================================
+    // CHAT PROFILES
+    // Chỉ tài khoản đã đăng nhập mới xem được danh sách người dùng.
+    // Mỗi user chỉ được ghi hồ sơ chat của chính mình.
+    // ============================================================
+    match /chat_profiles/{userId} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(userId);
+      allow delete: if isAdmin() || isOwner(userId);
+    }
+
+    // ============================================================
+    // PRIVATE 1-1 CHAT
+    // chats/{chatId} chứa members = [uidA, uidB]
+    // Chỉ thành viên của cuộc trò chuyện mới được đọc/ghi.
+    // ============================================================
+    match /chats/{chatId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.members;
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.members
+        && request.resource.data.members.size() == 2;
+      allow update: if isSignedIn()
+        && request.auth.uid in resource.data.members
+        && request.resource.data.members == resource.data.members;
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members;
+        allow create: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.receiverId in get(/databases/$(database)/documents/chats/$(chatId)).data.members
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000;
+        allow update, delete: if false;
+      }
     }
 
     match /{document=**} {
