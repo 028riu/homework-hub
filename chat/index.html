@@ -1,35 +1,28 @@
 <!doctype html>
 <html lang="vi">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#080a16">
-<title>Homework Hub — Chat</title>
-<link rel="stylesheet" href="chat.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a16"><title>Homework Hub — Chat</title><link rel="stylesheet" href="chat.css">
 </head>
 <body>
 <div class="app-shell">
-  <header class="topbar">
-    <a href="../" class="brand">📚 <span>Homework Hub</span></a>
-    <div id="me" class="me"></div>
-  </header>
-  <main class="chat-layout">
-    <aside id="usersPanel" class="users-panel">
-      <div class="panel-head"><div><p>HOMEWORK HUB</p><h1>Chat</h1></div><button id="logout" class="icon" title="Đăng xuất">↪</button></div>
-      <div id="loginBox" class="login-box" hidden><p>Đăng nhập Google để chat với các thành viên Homework Hub.</p><button id="login" class="google">G&nbsp; Đăng nhập Google</button></div>
-      <label class="search">🔎 <input id="userSearch" placeholder="Tìm người dùng..." autocomplete="off"></label>
-      <div id="users" class="users"><span class="muted">Đang tải...</span></div>
-    </aside>
-    <section class="conversation">
-      <div id="emptyChat" class="empty-chat"><div>💬</div><h2>Chọn một người để bắt đầu</h2><p>Tin nhắn riêng tư, realtime và lưu lịch sử.</p></div>
-      <div id="chatPanel" class="chat-panel" hidden>
-        <header class="chat-head"><button id="backUsers" class="back">←</button><img id="chatAvatar" alt=""><div><h2 id="chatName">—</h2><p id="chatStatus">offline</p></div></header>
-        <div id="messages" class="messages"></div>
-        <form id="composer" class="composer"><input id="messageInput" maxlength="2000" placeholder="Nhập tin nhắn..." autocomplete="off"><button>Gửi</button></form>
-      </div>
-    </section>
-  </main>
-</div>
-<script type="module" src="chat.js?v=20260919-1"></script>
-</body>
-</html>
+<header class="topbar"><a href="../" class="brand">📚 <span>Homework Hub</span></a><div id="me" class="me"></div></header>
+<main class="chat-layout">
+<aside id="usersPanel" class="users-panel">
+<div class="panel-head"><div><p>HOMEWORK HUB</p><h1>Chat</h1></div><button id="logout" class="icon" title="Đăng xuất">↪</button></div>
+<div id="loginBox" class="login-box" hidden><p>Đăng nhập Google để chat với các thành viên Homework Hub.</p><button id="login" class="google">G&nbsp; Đăng nhập Google</button></div>
+<div class="chat-tabs"><button id="peopleTab" class="tab active">Người dùng</button><button id="groupTab" class="tab">👥 Nhóm chung</button></div>
+<label class="search">🔎 <input id="userSearch" placeholder="Tìm người dùng..." autocomplete="off"></label>
+<div id="users" class="users"><span class="muted">Đang tải...</span></div>
+</aside>
+<section class="conversation">
+<div id="emptyChat" class="empty-chat"><div>💬</div><h2>Chọn một người để bắt đầu</h2><p>Chat riêng, nhóm chung, realtime và gửi tệp.</p></div>
+<div id="chatPanel" class="chat-panel" hidden>
+<header class="chat-head"><button id="backUsers" class="back">←</button><img id="chatAvatar" alt=""><div class="chat-title"><h2 id="chatName">—</h2><p id="chatStatus">offline</p></div><span id="typing" class="typing"></span></header>
+<div id="messages" class="messages"></div>
+<form id="composer" class="composer"><input id="messageInput" maxlength="2000" placeholder="Nhập tin nhắn..." autocomplete="off"><input id="fileInput" type="file" accept="image/*,video/*,audio/*,.pdf,.txt,.zip,.doc,.docx,.xls,.xlsx,.ppt,.pptx" multiple hidden><button type="button" id="attach" class="attach" title="Gửi ảnh, video hoặc tệp">＋</button><button type="submit">Gửi</button></form>
+<div id="uploadStatus" class="upload-status"></div>
+</div></section>
+</main></div>
+<script type="module" src="chat.js?v=20260919-2"></script>
+</body></html>
