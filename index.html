@@ -4,12 +4,17 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#080a16"><title>Homework Hub — Bài tập + Streak + Pet</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+.hh-chat-btn{display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:#fff;background:linear-gradient(135deg,#635bff,#8b5cf6);border:0;border-radius:12px;padding:9px 13px;font-weight:800;box-shadow:0 8px 24px #635bff30}.hh-chat-btn:hover{transform:translateY(-1px)}
+.hh-welcome{position:fixed;inset:0;background:#050610aa;backdrop-filter:blur(9px);z-index:9999;display:grid;place-items:center;padding:18px}.hh-welcome[hidden]{display:none}.hh-card{position:relative;width:min(520px,100%);border:1px solid #ffffff18;border-radius:24px;padding:28px;background:linear-gradient(145deg,#171a31,#0c0e1b);box-shadow:0 30px 90px #0009;color:#fff;text-align:center}.hh-card .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#635bff22;color:#b8b3ff;font-size:11px;font-weight:900;letter-spacing:.12em}.hh-card h2{font-size:27px;margin:13px 0 8px}.hh-card p{color:#aeb3c8;line-height:1.55}.hh-card .chat-launch{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;padding:13px;border-radius:13px;background:#fff;color:#111;text-decoration:none;font-weight:900}.hh-card .later{margin-top:10px;border:0;background:#ffffff0b;color:#b9bed0;border-radius:11px;padding:9px 14px}.hh-x{position:absolute;right:10px;top:10px;width:28px;height:28px;border:0;border-radius:8px;background:#ffffff0b;color:#fff;font-size:19px}.hh-feature-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:16px}.hh-feature{padding:7px 10px;border-radius:999px;background:#ffffff08;color:#dfe2ef;font-size:12px}
+@media(max-width:700px){.hh-chat-btn{padding:8px 10px;font-size:12px}.hh-chat-btn span.label{display:none}.hh-card{padding:23px 18px}.hh-card h2{font-size:23px}}
+</style>
 </head>
 <body>
 <div class="bg"></div>
 <header class="topbar">
   <a class="brand" href="./"><span>📚</span><div><b>Homework Hub</b><small>Bài tập · Streak · Pet</small></div></a>
-  <nav class="desktop-nav" aria-label="Điều hướng chính"><button class="main-nav active" data-main-nav="home">🏠 Home</button><button class="main-nav" data-main-nav="homework">📚 Bài</button><button class="main-nav" data-main-nav="schedule">📝 Dặn dò</button><button class="main-nav" data-main-nav="pet">🐾 Pet</button><button class="main-nav" data-main-nav="profile">👤 Profile</button></nav><div class="top-actions"><span id="userArea" class="user-area"><button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button></span><button id="settingsBtn" class="icon-button" aria-label="Cài đặt">⚙️</button><button id="themeBtn" class="icon-button" aria-label="Đổi giao diện">☼</button></div>
+  <nav class="desktop-nav" aria-label="Điều hướng chính"><button class="main-nav active" data-main-nav="home">🏠 Home</button><button class="main-nav" data-main-nav="homework">📚 Bài</button><button class="main-nav" data-main-nav="schedule">📝 Dặn dò</button><button class="main-nav" data-main-nav="pet">🐾 Pet</button><button class="main-nav" data-main-nav="profile">👤 Profile</button></nav><div class="top-actions"><a class="hh-chat-btn" href="chat/" aria-label="Mở Chat">💬 <span class="label">Chat</span></a><span id="userArea" class="user-area"><button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button></span><button id="settingsBtn" class="icon-button" aria-label="Cài đặt">⚙️</button><button id="themeBtn" class="icon-button" aria-label="Đổi giao diện">☼</button></div>
 </header>
 <main class="container">
 <section class="hero hero-gamified">
@@ -24,38 +29,15 @@
 <section id="homeworkList" class="grid" aria-label="Danh sách bài tập"></section><div id="empty" class="empty hidden">📭 Chưa có bài tập phù hợp.</div>
 </main>
 <section id="classScheduleToday" class="class-schedule-today-home"><div class="schedule-home-head"><div><p class="eyebrow">CLASS SCHEDULE</p><h2>🏫 Hôm nay trên lớp</h2></div><a class="schedule-open-link" href="schedule.html">Xem đầy đủ →</a></div><div id="classScheduleTodayList"><div class="schedule-no-data">⏳ Đang tải...</div></div></section>
-<section id="onlineSection" class="online-section">
-  <div class="online-head"><div><p class="eyebrow">AI ĐANG ONLINE</p><h2>🟢 Ai đang online</h2></div><span id="onlineCount" class="online-count">0</span></div>
-  <div id="onlineList" class="online-list"><span class="muted">Đang kiểm tra...</span></div>
-</section>
-<footer>Homework Hub · Firebase realtime · Gamified learning</footer>
-<nav class="mobile-nav"><a class="active" href="#">🏠<span>Home</span></a><a href="#homeworkList">📚<span>Bài</span></a><button id="petNav">🐾<span>Pet</span></button><button id="profileNav">👤<span>Profile</span></button></nav>
+<section id="onlineSection" class="online-section"><div class="online-head"><div><p class="eyebrow">AI ĐANG ONLINE</p><h2>🟢 Ai đang online</h2></div><span id="onlineCount" class="online-count">0</span></div><div id="onlineList" class="online-list"><span class="muted">Đang kiểm tra...</span></div></section>
+<footer>Homework Hub · Firebase realtime · Gamified learning · <a href="chat/" style="color:inherit">💬 Chat</a></footer>
+<nav class="mobile-nav"><a class="active" href="#">🏠<span>Home</span></a><a href="#homeworkList">📚<span>Bài</span></a><a href="chat/">💬<span>Chat</span></a><button id="petNav">🐾<span>Pet</span></button><button id="profileNav">👤<span>Profile</span></button></nav>
 <div id="floatingPet" class="floating-pet hidden" aria-label="Pet có thể kéo">🔥<span class="pet-face">•ᴗ•</span><i>✦</i></div>
 <dialog id="settingsDialog"><div class="modal modal-wide"><div class="panel-title"><div><p class="eyebrow">PERSONALIZE</p><h2>⚙️ Cài đặt</h2></div><button id="closeSettings" class="icon-btn">×</button></div><div class="settings-grid"><section><h3>🎨 Giao diện</h3><div class="choice-row" id="themeChoices"><button data-theme="dark">🌙 Dark</button><button data-theme="light">☀️ Light</button><button data-theme="system">🖥 System</button></div><h3>🌈 Chủ đề</h3><div class="swatches" id="themeSwatches"><button data-accent="purple">🟣 Purple</button><button data-accent="ocean">🔵 Ocean</button><button data-accent="emerald">🟢 Emerald</button><button data-accent="sunset">🟠 Sunset</button><button data-accent="sakura">🌸 Sakura</button><button data-accent="galaxy">🌌 Galaxy</button></div></section><section><h3>🖼 Background</h3><div class="choice-row" id="bgChoices"><button data-bg="default">Default</button><button data-bg="grid">Grid</button><button data-bg="gradient">Gradient</button><button data-bg="aurora">Aurora</button></div><h3>🐾 Pet</h3><label class="setting-line"><span>Floating Pet</span><input id="petEnabled" type="checkbox" checked></label><p class="muted">Kéo Pet đến vị trí bạn thích. Vị trí được lưu theo tài khoản.</p></section></div><div class="modal-actions"><button id="saveSettings" class="primary">💾 Lưu cài đặt</button></div></div></dialog>
-<dialog id="profileDialog"><div class="modal modal-wide" id="profileContent"></div></dialog>
-<dialog id="petDialog"><div class="modal modal-wide" id="petContent"></div></dialog>
+<dialog id="profileDialog"><div class="modal modal-wide" id="profileContent"></div></dialog><dialog id="petDialog"><div class="modal modal-wide" id="petContent"></div></dialog>
+<div id="hhWelcome" class="hh-welcome" hidden><div class="hh-card"><button class="hh-x" id="hhWelcomeX" aria-label="Đóng">×</button><span class="badge">✨ TÍNH NĂNG MỚI</span><h2>Homework Hub Chat đã ra mắt!</h2><p>Giờ bạn có thể trò chuyện realtime với các thành viên Homework Hub, chat riêng hoặc vào nhóm chung.</p><div class="hh-feature-row"><span class="hh-feature">💬 Chat 1–1</span><span class="hh-feature">👥 Nhóm chung</span><span class="hh-feature">🟢 Online</span><span class="hh-feature">😊 Emoji</span></div><a class="chat-launch" href="chat/">💬 Mở Homework Hub Chat</a><button class="later" id="hhWelcomeLater">Để sau</button></div></div>
 <script type="module" src="js/viewer.js?v=20260902-online-fix5"></script><script type="module" src="js/class-schedule.js?v=20260902-clean1"></script>
-<div id="loginGate" class="login-gate" hidden>
-  <div class="login-gate-card">
-    <div class="login-gate-badge">HOMEWORK HUB</div>
-    <div class="login-gate-icon">🔐</div>
-    <h2>Vui lòng đăng nhập</h2>
-    <p>Đăng nhập để sử dụng đầy đủ Homework Hub, lưu tiến độ, Streak, XP và Pet.</p>
-    <button id="gateLogin" class="gate-login">G&nbsp; Đăng nhập Google</button>
-    <button id="gateClose" class="gate-close" type="button" hidden>×</button>
-    <small id="gateTimer">Có thể đóng sau 5 giây...</small>
-  </div>
-</div>
-<div id="directNoticeOverlay" class="direct-notice-overlay" hidden>
-  <div class="direct-notice-card">
-    <button id="directNoticeX" class="direct-notice-x" aria-label="Đóng">×</button>
-    <div class="direct-notice-badge">📢 THÔNG BÁO TRỰC TIẾP</div>
-    <h2 id="directNoticeTitle">Thông báo</h2>
-    <div id="directNoticeMessage" class="direct-notice-message"></div>
-    <div class="direct-notice-actions">
-      <button id="directNoticeNoReplay" class="ghost">Không phát lại</button>
-      <button id="directNoticeLater" class="primary">🔔 Nhắc sau</button>
-    </div>
-  </div>
-</div>
+<div id="loginGate" class="login-gate" hidden><div class="login-gate-card"><div class="login-gate-badge">HOMEWORK HUB</div><div class="login-gate-icon">🔐</div><h2>Vui lòng đăng nhập</h2><p>Đăng nhập để sử dụng đầy đủ Homework Hub, lưu tiến độ, Streak, XP và Pet.</p><button id="gateLogin" class="gate-login">G&nbsp; Đăng nhập Google</button><button id="gateClose" class="gate-close" type="button" hidden>×</button><small id="gateTimer">Có thể đóng sau 5 giây...</small></div></div>
+<div id="directNoticeOverlay" class="direct-notice-overlay" hidden><div class="direct-notice-card"><button id="directNoticeX" class="direct-notice-x" aria-label="Đóng">×</button><div class="direct-notice-badge">📢 THÔNG BÁO TRỰC TIẾP</div><h2 id="directNoticeTitle">Thông báo</h2><div id="directNoticeMessage" class="direct-notice-message"></div><div class="direct-notice-actions"><button id="directNoticeNoReplay" class="ghost">Không phát lại</button><button id="directNoticeLater" class="primary">🔔 Nhắc sau</button></div></div></div>
+<script>(()=>{const k='hh_chat_welcome_seen_v1',box=document.getElementById('hhWelcome'),close=()=>{box.hidden=true;sessionStorage.setItem(k,'1')};if(!sessionStorage.getItem(k))box.hidden=false;document.getElementById('hhWelcomeX').onclick=close;document.getElementById('hhWelcomeLater').onclick=close;})();</script>
 </body></html>
