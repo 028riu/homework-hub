@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#080a16">
 <title>Homework Hub — Chat</title>
-<link rel="stylesheet" href="chat.css?v=20260920-4">
+<link rel="stylesheet" href="chat.css?v=20260920-5">
 </head>
 <body>
 <div class="app-shell">
@@ -21,13 +21,13 @@
 <section class="conversation">
 <div id="emptyChat" class="empty-chat"><div>💬</div><h2>Chọn một người để bắt đầu</h2><p>Chat riêng, nhóm chung, realtime và gửi tệp.</p></div>
 <div id="chatPanel" class="chat-panel" hidden>
-<header class="chat-head"><button id="backUsers" class="back">←</button><img id="chatAvatar" alt=""><div class="chat-title"><h2 id="chatName">—</h2><p id="chatStatus">offline</p></div><span id="typing" class="typing"></span></header>
+<header class="chat-head"><button id="backUsers" class="back">←</button><img id="chatAvatar" alt="Ảnh đại diện cuộc trò chuyện"><div class="chat-title"><h2 id="chatName">—</h2><p id="chatStatus">offline</p></div><span id="typing" class="typing"></span></header>
 <div id="messages" class="messages"></div>
-<form id="composer" class="composer"><input id="messageInput" maxlength="2000" placeholder="Nhập tin nhắn..." autocomplete="off"><input id="fileInput" type="file" accept="image/*,video/*,audio/*,.pdf,.txt,.zip,.doc,.docx,.xls,.xlsx,.ppt,.pptx" multiple hidden><button type="button" id="attach" class="attach" title="Gửi ảnh, video hoặc tệp">＋</button><button type="submit" id="sendBtn">Gửi</button></form>
+<form id="composer" class="composer"><input id="messageInput" maxlength="2000" placeholder="Nhập tin nhắn..." autocomplete="off"><input id="fileInput" aria-label="Chọn ảnh, video hoặc tệp để gửi" title="Chọn ảnh, video hoặc tệp để gửi" type="file" accept="image/*,video/*,audio/*,.pdf,.txt,.zip,.doc,.docx,.xls,.xlsx,.ppt,.pptx" multiple hidden><button type="button" id="attach" class="attach" title="Gửi ảnh, video hoặc tệp" aria-label="Gửi ảnh, video hoặc tệp">＋</button><button type="submit" id="sendBtn">Gửi</button></form>
 <div id="uploadStatus" class="upload-status"></div>
 </div>
 </section>
 </main></div>
-<script type="module" src="chat.js?v=20260920-4"></script>
+<script type="module" src="chat.js?v=20260920-5"></script>
 </body>
 </html>
