@@ -1,46 +1,201 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn(){return request.auth!=null;}
-    function isAdmin(){return isSignedIn() && request.auth.token.email!=null && (request.auth.token.email=="028riu@gmail.com"||request.auth.token.email=="tu0ngtun2gsahur@gmail.com"||request.auth.token.email=="linh085760@gmail.com"||request.auth.token.email=="linh085760@stu.vinschool.edu.vn"||request.auth.token.email=="minh037199@stu.vinschool.edu.vn"||request.auth.token.email=="tran034866@stu.vinschool.edu.vn"||request.auth.token.email=="phuong026443@stu.vinschool.edu.vn");}
-    function isOwner(userId){return isSignedIn()&&request.auth.uid==userId;}
-    match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create,update: if isAdmin()||isOwner(userId);
-      allow delete: if isAdmin();
-      match /homeworkProgress/{homeworkId}{allow read,create,update,delete:if isAdmin()||isOwner(userId);}
-      match /achievements/{achievementId}{allow read,create,update,delete:if isAdmin()||isOwner(userId);}
-      match /inventory/{itemId}{allow read,create,update,delete:if isAdmin()||isOwner(userId);}
-      match /settings/{settingId}{allow read,create,update,delete:if isAdmin()||isOwner(userId);}
+
+    function isSignedIn() {
+      return request.auth != null;
     }
-    match /subjects/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
-    match /homework/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
-    match /settings/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
-    match /achievements/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
-    match /items/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
-    match /pets/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
-    match /themes/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
-    match /bme_homework/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
-    match /presence/{uid}{allow read:if isSignedIn();allow create,update:if isOwner(uid);allow delete:if isOwner(uid);}
-    match /settings/directNotification{allow read:if true;allow create,update,delete:if isAdmin();}
-    match /class_schedule/{id}{allow read:if true;allow create,update,delete:if isAdmin();}
-    match /chat_profiles/{userId}{allow read:if isSignedIn();allow create,update:if isOwner(userId);allow delete:if isAdmin()||isOwner(userId);}
-    match /chats/{chatId} {
-      allow read: if isSignedIn() && (chatId=="all_members" || request.auth.uid in resource.data.members);
-      allow create: if isSignedIn() && (chatId=="all_members" || (request.auth.uid in request.resource.data.members && request.resource.data.members.size()==2));
-      allow update: if isSignedIn() && (chatId=="all_members" || (request.auth.uid in resource.data.members && request.resource.data.members==resource.data.members));
-      allow delete: if false;
-      match /messages/{messageId} {
-        allow read: if isSignedIn() && (chatId=="all_members" || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members);
-        allow create: if isSignedIn()
-          && (chatId=="all_members" || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members)
-          && request.resource.data.senderId==request.auth.uid
-          && request.resource.data.text is string
-          && request.resource.data.text.size()<=2000
-          && (!request.resource.data.keys().hasAny(['receiverId']) || request.resource.data.receiverId in get(/databases/$(database)/documents/chats/$(chatId)).data.members);
-        allow update,delete:if false;
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email != null
+        && (
+          request.auth.token.email == "028riu@gmail.com" ||
+          request.auth.token.email == "tu0ngtun2gsahur@gmail.com" ||
+          request.auth.token.email == "linh085760@gmail.com" ||
+          request.auth.token.email == "linh085760@stu.vinschool.edu.vn" ||
+          request.auth.token.email == "minh037199@stu.vinschool.edu.vn" ||
+          request.auth.token.email == "tran034866@stu.vinschool.edu.vn" ||
+          request.auth.token.email == "phuong026443@stu.vinschool.edu.vn"
+        );
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ============================================================
+    // USERS
+    // ============================================================
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create, update: if isAdmin() || isOwner(uid);
+      allow delete: if isAdmin();
+
+      match /homeworkProgress/{id} {
+        allow read, create, update, delete: if isAdmin() || isOwner(uid);
+      }
+      match /achievements/{id} {
+        allow read, create, update, delete: if isAdmin() || isOwner(uid);
+      }
+      match /inventory/{id} {
+        allow read, create, update, delete: if isAdmin() || isOwner(uid);
+      }
+      match /settings/{id} {
+        allow read, create, update, delete: if isAdmin() || isOwner(uid);
       }
     }
-    match /{document=**}{allow read,write:if false;}
+
+    // ============================================================
+    // CHAT PROFILES
+    // The chat page uses this collection as its public member index.
+    // Only the signed-in user can create/update their own profile.
+    // ============================================================
+    match /chat_profiles/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid);
+      allow delete: if isAdmin() || isOwner(uid);
+    }
+
+    // ============================================================
+    // PRESENCE
+    // ============================================================
+    match /presence/{uid} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(uid);
+      allow delete: if isOwner(uid);
+    }
+
+    // ============================================================
+    // PRIVATE / GROUP CHAT
+    // ============================================================
+    match /chats/{chatId} {
+
+      // all_members is the single common group.
+      // Private chats can only be read by their two members.
+      allow read: if isSignedIn()
+        && (
+          chatId == "all_members" ||
+          (resource.data.members is list && request.auth.uid in resource.data.members)
+        );
+
+      // Private chat: exactly two members and caller must be one of them.
+      // Common group: any signed-in member may create the common document.
+      allow create: if isSignedIn()
+        && (
+          chatId == "all_members" ||
+          (
+            request.resource.data.type == "private" &&
+            request.resource.data.members is list &&
+            request.resource.data.members.size() == 2 &&
+            request.auth.uid in request.resource.data.members
+          )
+        );
+
+      // For private chats, membership cannot be changed by a participant.
+      // For the common group, the member list may be refreshed as users join.
+      allow update: if isSignedIn()
+        && (
+          chatId == "all_members" ||
+          (
+            resource.data.members is list &&
+            request.auth.uid in resource.data.members &&
+            request.resource.data.members == resource.data.members
+          )
+        );
+
+      allow delete: if false;
+
+      // ==========================================================
+      // MESSAGES
+      // ==========================================================
+      match /messages/{messageId} {
+
+        allow read: if isSignedIn()
+          && (
+            chatId == "all_members" ||
+            (
+              get(/databases/$(database)/documents/chats/$(chatId)).data.members is list &&
+              request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members
+            )
+          );
+
+        allow create: if isSignedIn()
+          && (
+            chatId == "all_members" ||
+            (
+              get(/databases/$(database)/documents/chats/$(chatId)).data.members is list &&
+              request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members
+            )
+          )
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 2000;
+
+        allow update, delete: if false;
+      }
+    }
+
+    // ============================================================
+    // EXISTING HOMEWORK HUB DATA
+    // ============================================================
+    match /subjects/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /homework/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /settings/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /achievements/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /items/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /pets/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /themes/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /bme_homework/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /settings/directNotification {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /class_schedule/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================================
+    // DEFAULT DENY
+    // ============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }
