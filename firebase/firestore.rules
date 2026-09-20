@@ -37,7 +37,7 @@ service cloud.firestore {
           && request.resource.data.senderId==request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size()<=2000
-          && (request.resource.data.receiverId == null || request.resource.data.receiverId in get(/databases/$(database)/documents/chats/$(chatId)).data.members);
+          && (!request.resource.data.keys().hasAny(['receiverId']) || request.resource.data.receiverId in get(/databases/$(database)/documents/chats/$(chatId)).data.members);
         allow update,delete:if false;
       }
     }
