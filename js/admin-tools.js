@@ -1,7 +1,6 @@
 import { getApps, getApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js";
 
 const app=getApps().length?getApp():null;
 if(!app){console.warn("Homework Hub Admin Tools: Firebase app chưa sẵn sàng");}else{
@@ -27,6 +26,5 @@ function download(name,text){const a=document.createElement("a");a.href=URL.crea
 $("adminToolsRefresh")?.addEventListener("click",load);
 $("exportUsersCsv")?.addEventListener("click",()=>download("homework-hub-users.csv",csv([["UID","Email","Tên","Streak","Kỷ lục","XP","Points","Last visit"],...users.map(u=>[u.id,u.email,u.displayName||u.name||"",num(u.currentStreak??u.streak),num(u.longestStreak??u.highestStreak??u.maxStreak),num(u.totalXP),num(u.points),u.lastVisitDate||""]) ])));
 $("exportHomeworkCsv")?.addEventListener("click",()=>download("homework-hub-homework.csv",csv([["ID","Tiêu đề","Môn","Hạn nộp","Ghim","Quan trọng"],...homework.map(h=>[h.id,h.title||"",h.subjectId||h.tabId||"",h.dueDate||"",h.pinned?"Có":"Không",h.important?"Có":"Không"]) ])));
-$("copyAdminSummary")?.addEventListener("click',async()=>{});
 onAuthStateChanged(auth,u=>{if(u)load();});
 }
