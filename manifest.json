@@ -1,0 +1,26 @@
+{
+  "name": "Homework Hub",
+  "short_name": "Homework Hub",
+  "description": "Bài tập, Streak, XP, Pet và thời khóa biểu.",
+  "start_url": "./index.html#home",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070914",
+  "theme_color": "#080a16",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
