@@ -1,0 +1,42 @@
+/* Homework Hub — Home UI 2.0 / Step 1: Today-first
+   Keeps existing JS/Firebase behavior intact. UI-only layer. */
+:root{--hh-accent:#6c5cff;--hh-accent2:#27c7ff;--hh-card:#ffffff08;--hh-line:#ffffff12;--hh-muted:#8791aa}
+body{background:#070914}
+/* Make the homework list the visual center */
+.container{padding-top:28px}
+.hero-gamified{min-height:0;padding:26px 28px;border-radius:24px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:18px;background:linear-gradient(135deg,#ffffff0a,#ffffff03);box-shadow:0 18px 55px #0005}
+.hero-gamified .hero-icon{width:62px;height:62px;border-radius:18px;font-size:29px}
+.hero-gamified h1{font-size:clamp(30px,4vw,48px);margin:4px 0 8px}
+.hero-gamified .hero-metrics{display:flex;gap:8px;align-items:stretch}
+.hero-metrics>div{min-width:78px;padding:10px 11px;border:1px solid var(--hh-line);background:#ffffff06;border-radius:14px;text-align:center}
+.hero-metrics b{display:block;font-size:20px;line-height:1.1}.hero-metrics small{display:block;color:var(--hh-muted);font-size:9px;font-weight:800;margin-top:5px}
+.progress-panel{margin-top:14px;padding:13px 16px;border:1px solid var(--hh-line);background:#ffffff06;border-radius:16px}
+.progress-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.progress-head b{font-size:12px}.progress-head small{display:block;color:var(--hh-muted);font-size:10px;margin-top:2px}.progress-head strong{font-size:12px;color:#a9a1ff}
+.xp-bar{height:6px;background:#ffffff0b;border-radius:99px;overflow:hidden;margin-top:9px}.xp-bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--hh-accent),var(--hh-accent2));border-radius:99px;transition:width .5s ease}
+/* Today-first block */
+.daily-strip{margin-top:18px;padding:18px 20px;border:1px solid #7d73ff35;border-radius:20px;background:linear-gradient(135deg,#6c5cff12,#27c7ff08);display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 12px 35px #0003}
+#dailyProgress{font-size:17px;font-weight:900;color:#fff}.daily-strip #dailyReward{font-size:11px;color:#9ca6bf}
+.daily-strip:before{content:"📚";width:40px;height:40px;display:grid;place-items:center;border-radius:13px;background:#6c5cff1c;flex:none}
+.daily-strip{position:relative}.daily-strip>span:first-of-type{margin-left:-8px}
+/* Filter/search row: compact and sticky-friendly */
+.toolbar{margin:16px 0 8px;padding:0}.tabs{max-width:100%;flex:1}.search{min-width:290px}
+.quick-row{margin-bottom:12px}.status{font-size:11px}
+/* Cards: information first, decoration second */
+.grid{gap:12px}.card{padding:17px 18px;border-radius:18px;box-shadow:0 10px 32px #0003;backdrop-filter:blur(10px)}
+.card:hover{transform:translateY(-3px);box-shadow:0 16px 40px #0005}.card h2{font-size:17px;margin:7px 0 5px}.content{font-size:13px;line-height:1.55}.due{margin-top:12px;font-size:11px}
+.card-top .subject{font-size:11px}.badge{font-size:9px;padding:4px 7px}
+/* Keep secondary areas visually secondary */
+.class-schedule-today-home,.online-section{max-width:1240px;margin:0 auto 22px;padding:0 20px}.class-schedule-today-home{margin-top:0}.schedule-home-head,.online-head{padding:15px 0}.schedule-home-head h2,.online-head h2{font-size:18px;margin:3px 0}.online-list{max-height:120px;overflow:auto}
+footer{padding-bottom:30px}
+/* Mobile: dedicated phone layout, never rely on desktop shrinking */
+@media(max-width:760px){
+  .topbar{height:62px;padding:0 11px}.brand{gap:8px}.brand>span{width:36px;height:36px;border-radius:11px;font-size:19px}.brand b{font-size:12px}.top-actions{gap:5px}.hh-chat-btn{font-size:11px;padding:7px 8px}.google-mini{font-size:10px;padding:7px 8px}.top-actions .icon-button{padding:7px 8px;font-size:14px}
+  .container{padding:15px 11px 76px}
+  .hero-gamified{display:block;padding:18px;border-radius:19px}.hero-gamified .hero-icon{width:50px;height:50px;border-radius:15px;font-size:24px;margin:0 0 12px}.hero-gamified h1{font-size:31px;letter-spacing:-.035em}.hero-gamified .muted{font-size:11px}.hero-gamified .hero-metrics{display:grid;grid-template-columns:repeat(3,1fr);margin-top:15px}.hero-metrics>div{min-width:0;padding:9px 5px}.hero-metrics b{font-size:17px}.hero-metrics small{font-size:8px}
+  .progress-panel{padding:11px 13px;margin-top:10px}.progress-head small{font-size:9px}.daily-strip{margin-top:11px;padding:13px;border-radius:16px;display:grid;grid-template-columns:34px 1fr;gap:2px 9px}.daily-strip:before{width:34px;height:34px;grid-row:span 2}.daily-strip>span:first-of-type{margin:0;align-self:end}.daily-strip #dailyReward{grid-column:2;font-size:9px;align-self:start}.toolbar{margin-top:12px}.tabs{padding:2px 1px 5px;gap:6px}.tab{font-size:11px;padding:8px 11px}.search{margin-top:5px;min-width:0;padding:9px 11px;border-radius:12px;font-size:12px}.grid{grid-template-columns:1fr;gap:9px}.card{padding:14px;border-radius:16px}.card h2{font-size:16px}.content{font-size:12px}.quick-row{margin-bottom:8px}.status{font-size:10px}
+  .class-schedule-today-home,.online-section{padding:0 11px;margin-bottom:18px}.schedule-home-head,.online-head{padding:11px 0}.schedule-home-head h2,.online-head h2{font-size:16px}.mobile-nav{z-index:50}
+}
+@media(min-width:761px) and (max-width:1050px){.hero-gamified{grid-template-columns:auto 1fr}.hero-gamified .hero-metrics{grid-column:1/-1}.search{min-width:230px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}}
+/* Light theme compatibility */
+.light .progress-panel,.light .daily-strip{background:#ffffffcc;border-color:#00000010}.light #dailyProgress{color:#182039}.light .hero-metrics>div{background:#fff;border-color:#0000000e}.light .hero-gamified{background:#ffffffaa}.light .xp-bar{background:#0000000b}
