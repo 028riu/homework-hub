@@ -1,0 +1,6 @@
+/* Mobile chat fix: chat.js currently toggles .chat-open on #usersPanel. */
+@media (max-width:700px){
+  .users-panel.chat-open{display:none!important}
+  .users-panel.chat-open + .conversation{display:block!important;position:absolute;inset:0;width:100%;height:100%;background:#0b0d18;z-index:10}
+  .users-panel.chat-open + .conversation .chat-panel{display:flex!important;height:100%;width:100%}
+}
