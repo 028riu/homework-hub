@@ -5,9 +5,9 @@
 <meta name="theme-color" content="#080a16"><title>Homework Hub — Bài tập hôm nay</title>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/home-v2.css">
-<link rel="stylesheet" href="css/leaderboard.css?v=20260921-1"><link rel="stylesheet" href="css/hub-4.css?v=20261016-1">
+<link rel="stylesheet" href="css/leaderboard.css?v=20260921-1">
 
-</head>
+<link rel="stylesheet" href="css/mindmap-entry.css?v=20261016-2"></head>
 <body>
 <div class="bg"></div>
 <header class="topbar">
@@ -16,21 +16,21 @@
 </header>
 <main class="container">
 <section class="hero hero-gamified">
-  <div class="hero-icon">📚</div><div class="hero-copy"><p class="eyebrow">✦ KHÔNG GIAN HỌC TẬP CỦA BẠN</p><h1>Hôm nay học gì?</h1><p class="muted" id="today"></p><p class="muted" id="greeting">Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.</p></div>
+  <div class="hero-icon">📚</div><div class="hero-copy"><p class="eyebrow">HOMEWORK CENTER</p><h1>Bài tập về nhà</h1><p class="muted" id="today"></p><p class="muted" id="greeting">Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.</p></div>
   <div class="hero-metrics"><div><b id="heroStreak">—</b><small>🔥 STREAK</small></div><div><b id="heroLevel">—</b><small>⭐ LEVEL</small></div><div><b id="heroPoints">—</b><small>💎 POINTS</small></div></div>
 </section>
 <section class="progress-panel" id="progressPanel"><div class="progress-head"><div><b id="xpLevelText">Đăng nhập để bắt đầu</b><small id="xpText">XP và tiến độ sẽ được lưu bằng Firebase</small></div><strong id="xpPercent">0%</strong></div><div class="xp-bar"><span id="xpBar"></span></div></section>
 <section id="updateNotice" class="notice hidden" role="status"><div class="notice-icon">⚠️</div><div><b id="noticeTitle">Chưa có bài mới hôm nay</b><p id="noticeText"></p></div><button id="noticeClose" class="icon-button">×</button></section>
-<div class="section-heading"><div><p class="eyebrow">YOUR HOMEWORK</p><h2>Bài tập cần xem <span class="heading-spark">✦</span></h2></div><a href="schedule.html" class="section-shortcut">Lịch học ↗</a></div><div id="homeworkSection" class="daily-strip"><span id="dailyProgress">☑ 0 / 0 bài hôm nay</span><span id="dailyReward">🎁 Hoàn thành tất cả: +100 XP · +50 Points</span></div>
-<div class="toolbar"><div id="tabs" class="tabs"><button class="tab active" data-tab="all">✨ Tất cả</button></div><label class="search">🔎 <input id="search" placeholder="Tìm nhanh bài tập, môn học, nội dung..." autocomplete="off"></label></div>
-<div class="quick-row"><span id="status" class="status">Đang tải bài tập...</span><button id="clearSearch" class="ghost small hidden">Xóa tìm kiếm</button></div>
+<div id="homeworkSection" class="daily-strip"><span id="dailyProgress">☑ 0 / 0 bài hôm nay</span><span id="dailyReward">🎁 Hoàn thành tất cả: +100 XP · +50 Points</span></div>
+<div class="toolbar"><div id="tabs" class="tabs"><button class="tab active" data-tab="all">✨ Tất cả</button></div><label class="search">🔎 <input id="search" placeholder="Tìm bài tập..." autocomplete="off"></label></div>
+<div class="mindmap-entry"><div><b>🧠 Sơ đồ tư duy bài tập</b><small>Kéo thả bài tập lên bảng, sắp xếp ý tưởng theo cách của bạn.</small></div><a href="mindmap.html">Mở sơ đồ →</a></div><div class="quick-row"><span id="status" class="status">Đang tải bài tập...</span><button id="clearSearch" class="ghost small hidden">Xóa tìm kiếm</button></div>
 <section id="homeworkList" class="grid" aria-label="Danh sách bài tập"></section><div id="empty" class="empty hidden">📭 Chưa có bài tập phù hợp.</div>
 </main>
 <section id="classScheduleToday" class="class-schedule-today-home"><div class="schedule-home-head"><div><p class="eyebrow">CLASS SCHEDULE</p><h2>🏫 Hôm nay trên lớp</h2></div><a class="schedule-open-link" href="schedule.html">Xem đầy đủ →</a></div><div id="classScheduleTodayList"><div class="schedule-no-data">⏳ Đang tải...</div></div></section>
 
 <section id="streakLeaderboardSection" class="hh-rank-section" aria-label="Top 10 chuỗi đăng nhập"><div class="hh-rank-panel"><div class="hh-rank-head"><div><p class="eyebrow">COMMUNITY STREAK</p><h2>🏆 Top 10 chuỗi</h2><p>Những thành viên có chuỗi đăng nhập liên tiếp cao nhất.</p></div><span id="streakLeaderboardStatus" class="hh-rank-refresh"></span></div><div id="streakLeaderboard" class="hh-rank-list"><div class="hh-rank-empty">⏳ Đang tải bảng xếp hạng...</div></div></div></section>
-<footer>Homework Hub · Học tập dễ dàng hơn · </footer>
-<nav class="mobile-nav"><a class="active" href="#">🏠<span>Home</span></a><a href="#homeworkList">📚<span>Bài</span></a><a href="#streakLeaderboardSection">🏆<span>Top 10</span></a><button id="petNav">🐾<span>Pet</span></button><button id="profileNav">👤<span>Profile</span></button></nav>
+<footer>Homework Hub · Firebase realtime · Gamified learning</footer>
+<nav class="mobile-nav"><a class="active" href="#">🏠<span>Home</span></a><a href="#homeworkList">📚<span>Bài</span></a><a href="mindmap.html">🧠<span>Sơ đồ</span></a><button id="petNav">🐾<span>Pet</span></button><button id="profileNav">👤<span>Profile</span></button></nav>
 <div id="floatingPet" class="floating-pet hidden" aria-label="Pet có thể kéo">🔥<span class="pet-face">•ᴗ•</span><i>✦</i></div>
 <dialog id="settingsDialog"><div class="modal modal-wide"><div class="panel-title"><div><p class="eyebrow">PERSONALIZE</p><h2>⚙️ Cài đặt</h2></div><button id="closeSettings" class="icon-btn">×</button></div><div class="settings-grid"><section><h3>🎨 Giao diện</h3><div class="choice-row" id="themeChoices"><button data-theme="dark">🌙 Dark</button><button data-theme="light">☀️ Light</button><button data-theme="system">🖥 System</button></div><h3>🌈 Chủ đề</h3><div class="swatches" id="themeSwatches"><button data-accent="purple">🟣 Purple</button><button data-accent="ocean">🔵 Ocean</button><button data-accent="emerald">🟢 Emerald</button><button data-accent="sunset">🟠 Sunset</button><button data-accent="sakura">🌸 Sakura</button><button data-accent="galaxy">🌌 Galaxy</button></div></section><section><h3>🖼 Background</h3><div class="choice-row" id="bgChoices"><button data-bg="default">Default</button><button data-bg="grid">Grid</button><button data-bg="gradient">Gradient</button><button data-bg="aurora">Aurora</button></div><h3>🐾 Pet</h3><label class="setting-line"><span>Floating Pet</span><input id="petEnabled" type="checkbox" checked></label><p class="muted">Kéo Pet đến vị trí bạn thích. Vị trí được lưu theo tài khoản.</p></section></div><div class="modal-actions"><button id="saveSettings" class="primary">💾 Lưu cài đặt</button></div></div></dialog>
 <dialog id="profileDialog"><div class="modal modal-wide" id="profileContent"></div></dialog><dialog id="petDialog"><div class="modal modal-wide" id="petContent"></div></dialog>

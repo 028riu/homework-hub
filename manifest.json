@@ -1,7 +1,7 @@
 {
   "name": "Homework Hub",
   "short_name": "Homework Hub",
-  "description": "Xem bài tập nhanh, lịch học, Streak và Pet.",
+  "description": "Bài tập, Streak, XP, Pet và thời khóa biểu.",
   "start_url": "./index.html#home",
   "scope": "./",
   "display": "standalone",
