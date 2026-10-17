@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="css/home-v2.css">
 <link rel="stylesheet" href="css/leaderboard.css?v=20260921-1">
 
-<link rel="stylesheet" href="css/ui-elements.css?v=20261016-1"></head>
+<link rel="stylesheet" href="css/ui-elements.css?v=20261016-1"><link rel="stylesheet" href="css/auth-v2.css?v=20261017-1"></head>
 <body>
 <div class="bg"></div>
 <header class="topbar">
@@ -35,7 +35,24 @@
 <dialog id="settingsDialog"><div class="modal modal-wide"><div class="panel-title"><div><p class="eyebrow">PERSONALIZE</p><h2>⚙️ Cài đặt</h2></div><button id="closeSettings" class="icon-btn">×</button></div><div class="settings-grid"><section><h3>🎨 Giao diện</h3><div class="choice-row" id="themeChoices"><button data-theme="dark">🌙 Dark</button><button data-theme="light">☀️ Light</button><button data-theme="system">🖥 System</button></div><h3>🌈 Chủ đề</h3><div class="swatches" id="themeSwatches"><button data-accent="purple">🟣 Purple</button><button data-accent="ocean">🔵 Ocean</button><button data-accent="emerald">🟢 Emerald</button><button data-accent="sunset">🟠 Sunset</button><button data-accent="sakura">🌸 Sakura</button><button data-accent="galaxy">🌌 Galaxy</button></div></section><section><h3>🖼 Background</h3><div class="choice-row" id="bgChoices"><button data-bg="default">Default</button><button data-bg="grid">Grid</button><button data-bg="gradient">Gradient</button><button data-bg="aurora">Aurora</button></div><h3>🐾 Pet</h3><label class="setting-line"><span>Floating Pet</span><input id="petEnabled" type="checkbox" checked></label><p class="muted">Kéo Pet đến vị trí bạn thích. Vị trí được lưu theo tài khoản.</p></section></div><div class="modal-actions"><button id="saveSettings" class="primary">💾 Lưu cài đặt</button></div></div></dialog>
 <dialog id="profileDialog"><div class="modal modal-wide" id="profileContent"></div></dialog><dialog id="petDialog"><div class="modal modal-wide" id="petContent"></div></dialog>
 <script type="module" src="js/viewer.js?v=20260902-online-fix5"></script><script type="module" src="js/class-schedule.js?v=20260902-clean1"></script><script type="module" src="js/direct-notice-revoke-fix.js?v=20260921-revoke1"></script><script type="module" src="js/leaderboard.js?v=20260921-1"></script>
-<div id="loginGate" class="login-gate" hidden><div class="login-gate-card"><div class="login-gate-badge">HOMEWORK HUB</div><div class="login-gate-icon">🔐</div><h2>Vui lòng đăng nhập</h2><p>Đăng nhập để sử dụng đầy đủ Homework Hub, lưu tiến độ, Streak, XP và Pet.</p><button id="gateLogin" class="gate-login">G&nbsp; Đăng nhập Google</button><button id="gateClose" class="gate-close" type="button" hidden>×</button><small id="gateTimer">Có thể đóng sau 5 giây...</small></div></div>
+<div id="loginGate" class="login-gate" hidden>
+  <div class="login-gate-card" role="dialog" aria-modal="true" aria-labelledby="loginGateTitle">
+    <button id="gateClose" class="gate-close" type="button" hidden aria-label="Đóng đăng nhập">×</button>
+    <div class="login-brand"><span>📚</span><div><b>Homework Hub</b><small>Học tập · Tiến độ · Streak</small></div></div>
+    <div class="login-copy">
+      <div class="login-gate-badge">WELCOME BACK</div>
+      <h2 id="loginGateTitle">Tiếp tục với Homework Hub</h2>
+      <p>Đăng nhập để đồng bộ bài đã làm, Streak, XP, Points và Pet trên mọi thiết bị.</p>
+    </div>
+    <button id="gateLogin" class="gate-login google-idp" type="button">
+      <span class="google-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>Tiếp tục với Google</span>
+    </button>
+    <div class="login-benefits" aria-label="Lợi ích đăng nhập"><span>☁️ Đồng bộ tiến độ</span><span>🔥 Giữ Streak</span><span>⭐ Lưu XP</span></div>
+    <p class="login-privacy">Homework Hub chỉ sử dụng thông tin tài khoản Google cần thiết để nhận diện tài khoản và lưu tiến độ học tập.</p>
+    <small id="gateTimer" class="gate-timer">Có thể đóng sau 5 giây...</small>
+  </div>
+</div>
 <div id="directNoticeOverlay" class="direct-notice-overlay" hidden><div class="direct-notice-card"><button id="directNoticeX" class="direct-notice-x" aria-label="Đóng">×</button><div class="direct-notice-badge">📢 THÔNG BÁO TRỰC TIẾP</div><h2 id="directNoticeTitle">Thông báo</h2><div id="directNoticeMessage" class="direct-notice-message"></div><div class="direct-notice-actions"><button id="directNoticeNoReplay" class="ghost">Không phát lại</button><button id="directNoticeLater" class="primary">🔔 Nhắc sau</button></div></div></div>
 
 <dialog id="hhCommandDialog" class="hh-command"><div class="hh-command-box"><div class="hh-command-top"><span>⌕</span><input id="hhCommandInput" type="search" placeholder="Tìm bài tập, mở lịch học..." autocomplete="off" aria-label="Tìm nhanh"><button id="hhCommandClose" aria-label="Đóng tìm nhanh" type="button">×</button></div><div id="hhCommandResults" class="hh-command-results"></div><div class="hh-command-hint">↑ ↓ Di chuyển · Enter Chọn · Esc Đóng</div></div></dialog><script type="module" src="js/ui-elements.js?v=20261016-1"></script></body></html>

@@ -14,25 +14,36 @@ const levelFromXP=xp=>Math.max(1,Math.floor(Math.sqrt(Math.max(0,xp)/100))+1);
 const levelBounds=l=>({cur:(l<=1?0:(l-1)**2*100),next:l**2*100});
 function applyPrefs(){document.body.classList.toggle("light",localPrefs.theme==="light"||(localPrefs.theme==="system"&&matchMedia("(prefers-color-scheme:light)").matches));document.documentElement.dataset.accent=localPrefs.accent;document.documentElement.dataset.background=localPrefs.background;$('floatingPet')?.classList.toggle('hidden',!user||!localPrefs.petEnabled);}
 
+function setAuthBusy(busy){
+  ["gateLogin","googleLogin"].forEach(id=>{const b=$(id);if(b){b.disabled=busy;b.classList.toggle("auth-loading",busy);if(id==="gateLogin")b.querySelector("span:last-child").textContent=busy?"Đang mở Google...":"Tiếp tục với Google"}});
+}
+function showAuthError(message){
+  const card=$("loginGate")?.querySelector(".login-gate-card");if(!card)return;
+  card.querySelector(".auth-error")?.remove();const box=document.createElement("div");box.className="auth-error";box.setAttribute("role","alert");box.innerHTML="<span>⚠️</span><span></span>";box.lastElementChild.textContent=message;card.querySelector(".login-benefits")?.before(box);
+}
 async function loginWithGoogle(){
   if(signingIn)return;
-  signingIn=true;
+  signingIn=true;setAuthBusy(true);$("loginGate")?.querySelector(".auth-error")?.remove();
   try{
+    provider.setCustomParameters({prompt:"select_account"});
     await signInWithPopup(auth,provider);
   }catch(e){
     console.error("Homework Hub Google login:",e);
     if(e?.code==="auth/popup-blocked"){
-      try{await signInWithRedirect(auth,provider);return}catch(r){console.error("Homework Hub Google redirect login:",r);alert(`Không thể mở đăng nhập Google: ${r?.message||r?.code||"Lỗi không xác định"}`)}
-    }else if(e?.code!=="auth/popup-closed-by-user"&&e?.code!=="auth/cancelled-popup-request"){
-      alert(e?.message||"Không thể đăng nhập Google.");
+      showAuthError("Trình duyệt đang chặn cửa sổ đăng nhập. Đang chuyển sang trang Google...");
+      try{await signInWithRedirect(auth,provider);return}catch(r){console.error("Homework Hub Google redirect login:",r);showAuthError("Không thể mở Google. Hãy cho phép pop-up rồi thử lại.")}
+    }else if(e?.code==="auth/popup-closed-by-user"){
+      showAuthError("Bạn đã đóng cửa sổ Google trước khi đăng nhập xong.");
+    }else if(e?.code!=="auth/cancelled-popup-request"){
+      showAuthError("Đăng nhập chưa thành công. Kiểm tra kết nối và thử lại.");
     }
   }finally{
-    signingIn=false;
+    signingIn=false;setAuthBusy(false);
   }
 }
 
 async function handleRedirectResult(){
-  try{await getRedirectResult(auth)}catch(e){console.error("Homework Hub Google redirect result:",e);if(e?.code&&e.code!=="auth/popup-closed-by-user")alert(`Đăng nhập Google thất bại: ${e.message||e.code}`)}
+  try{await getRedirectResult(auth)}catch(e){console.error("Homework Hub Google redirect result:",e);if(e?.code&&e.code!=="auth/popup-closed-by-user")showAuthError("Google chưa hoàn tất đăng nhập. Vui lòng thử lại.")}
 }
 
 function hideLoginGate(){const g=$("loginGate");if(g){g.hidden=true;clearInterval(gateTimer)}}
@@ -41,7 +52,7 @@ function setupPresence(){if(presenceUnsub){presenceUnsub();presenceUnsub=null}if
 function setupOnlineList(){if(onlineUnsub){onlineUnsub();onlineUnsub=null}const c=$("onlineList");if(!c)return;onlineUnsub=onSnapshot(collection(db,"presence"),snap=>{const now=Date.now(),arr=snap.docs.map(d=>d.data()).filter(x=>Number(x.onlineUntil||0)>now).sort((a,b)=>String(a.displayName||a.email).localeCompare(String(b.displayName||b.email)));$("onlineCount").textContent=String(arr.length);c.innerHTML=arr.length?arr.map(x=>`<div class="online-user"><span class="online-dot"></span><img src="${esc(x.photoURL||"")}" onerror="this.style.display='none'"><div><b>${esc(x.displayName||x.email||"Bạn")}</b><small>${esc(x.email||"")}</small></div></div>`).join(""):"<span class='muted'>Chưa có ai đang online.</span>"},err=>{console.error("Homework Hub online list:",err);$("onlineCount").textContent="0";c.innerHTML="<span class='muted'>Không thể tải danh sách online.</span>"});}
 function showDirectNotice(d,force=false){const o=$("directNoticeOverlay");if(!o||!d?.message)return;const id=String(d.id||d.sentAt?.seconds||d.updatedAt?.seconds||"");if(!force&&localStorage.getItem("hh_notice_done")===id)return;directNotice={...d,id};$("directNoticeTitle").textContent=d.title||"Thông báo trực tiếp";$("directNoticeMessage").textContent=d.message;o.hidden=false;}
 function setupDirectNotice(){onSnapshot(doc(db,"settings","directNotification"),snap=>{if(!snap.exists())return;const d=snap.data();showDirectNotice(d);});$("directNoticeX")?.addEventListener("click",()=>$("directNoticeOverlay").hidden=true);$("directNoticeNoReplay")?.addEventListener("click",()=>{if(directNotice?.id)localStorage.setItem("hh_notice_done",directNotice.id);$("directNoticeOverlay").hidden=true});$("directNoticeLater")?.addEventListener("click",()=>{const d=directNotice;$("directNoticeOverlay").hidden=true;if(d?.id){localStorage.setItem("hh_notice_done",d.id);setTimeout(()=>{if(!user) return;localStorage.removeItem("hh_notice_done");showDirectNotice(d,true)},10*60*1000)}});}
-function renderAuth(){const area=$("userArea");if(!user){showLoginGate();area.innerHTML='<button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button>';$('googleLogin').onclick=loginWithGoogle;$('greeting').textContent="Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.";return}hideLoginGate();setupPresence();const name=user.displayName||user.email||"Bạn";area.innerHTML=`<div class="user-pill"><img class="avatar-img" src="${esc(user.photoURL||"")}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="avatar" style="display:none">${esc((name[0]||"U").toUpperCase())}</span><div><b>${esc(name)}</b><small>🔥 <span id="userStreak">${num(profile?.streak)}</span> ngày</small></div><button id="logoutGoogle" class="logout-mini">Thoát</button></div>`;const img=area.querySelector('.avatar-img');if(img?.src)img.onload=()=>area.querySelector('.avatar').style.display='none';$('logoutGoogle').onclick=()=>signOut(auth);$('greeting').textContent=`Chào ${name} 👋 Hôm nay mình làm bài nhé!`}
+function renderAuth(){const area=$("userArea");if(!user){showLoginGate();area.innerHTML='<button id="googleLogin" class="google-mini" type="button">Đăng nhập</button>';$('googleLogin').onclick=loginWithGoogle;$('greeting').textContent="Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.";return}hideLoginGate();setupPresence();const name=user.displayName||user.email||"Bạn";area.innerHTML=`<div class="user-pill"><img class="avatar-img" src="${esc(user.photoURL||"")}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="avatar" style="display:none">${esc((name[0]||"U").toUpperCase())}</span><div><b>${esc(name)}</b><small>🔥 <span id="userStreak">${num(profile?.streak)}</span> ngày</small></div><button id="logoutGoogle" class="logout-mini">Thoát</button></div>`;const img=area.querySelector('.avatar-img');if(img?.src)img.onload=()=>area.querySelector('.avatar').style.display='none';$('logoutGoogle').onclick=()=>signOut(auth);$('greeting').textContent=`Chào ${name} 👋 Hôm nay mình làm bài nhé!`}
 function ensureProfile(u){return runTransaction(db,async tx=>{const ref=doc(db,"users",u.uid),snap=await tx.get(ref),d=snap.exists()?snap.data():{},today=dayKey(),last=d.lastVisitDate||"";let streak=Math.max(0,num(d.currentStreak??d.streak));let longest=Math.max(streak,num(d.longestStreak));let xp=Math.max(0,num(d.totalXP));let points=Math.max(0,num(d.points));if(last!==today){const prev=last?new Date(last+"T12:00:00+07:00"):null,cur=new Date(today+"T12:00:00+07:00"),gap=prev?Math.round((cur-prev)/DAY):0;streak=last&&gap===1?streak+1:1;longest=Math.max(longest,streak);xp+=20;points+=10;tx.set(ref,{uid:u.uid,email:u.email||d.email||"",displayName:u.displayName||d.displayName||u.email||"Bạn",photoURL:u.photoURL||d.photoURL||"",streak,currentStreak:streak,longestStreak:longest,highestStreak:longest,totalXP:xp,points,level:levelFromXP(xp),lastVisitDate:today,lastVisitAt:serverTimestamp(),lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp(),pet:{type:d.pet?.type||"flamey",skin:d.pet?.skin||"default",position:d.pet?.position||{x:82,y:70}},unlockedItems:Array.isArray(d.unlockedItems)?d.unlockedItems:[],equippedItems:Array.isArray(d.equippedItems)?d.equippedItems:[]},{merge:true});}else tx.set(ref,{email:u.email||d.email||"",displayName:u.displayName||d.displayName||u.email||"Bạn",photoURL:u.photoURL||d.photoURL||"",lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});});}
 async function award(uid,deltaXP=0,deltaPoints=0,reason="reward"){const ref=doc(db,"users",uid);await runTransaction(db,async tx=>{const s=await tx.get(ref),d=s.exists()?s.data():{};const xp=Math.max(0,num(d.totalXP)+deltaXP),points=Math.max(0,num(d.points)+deltaPoints);tx.set(ref,{totalXP:xp,points,level:levelFromXP(xp),lastRewardReason:reason,lastRewardAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});});}
 async function completeHomework(id,checked){
