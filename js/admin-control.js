@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",()=>{const quick=document.getElementById("adminQuickCreate");quick?.addEventListener("click",()=>{const tab=document.querySelector('[data-admin-tab="homework"]');tab?.click();document.getElementById("newHomework")?.click()});});
