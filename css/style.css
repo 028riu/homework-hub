@@ -129,3 +129,6 @@ input,textarea,select{width:100%;border:1px solid #ffffff14;border-radius:12px;p
 @media(max-width:600px){.login-gate-card,.direct-notice-card{padding:30px 18px;border-radius:22px}.login-gate-card h2,.direct-notice-card h2{font-size:24px}.online-list{grid-template-columns:1fr}}
 
 .avatar-img{width:30px!important;height:30px!important;border-radius:50%;object-fit:cover;display:block;flex:none}.user-pill .avatar{width:30px;height:30px;flex:none}
+
+/* Expand long homework without hiding its ending */
+.hw-content{max-height:7.5em;overflow:hidden;overflow-wrap:anywhere;position:relative;line-height:1.5}.hw-content:not(.expanded):after{content:"";position:absolute;bottom:0;left:0;right:0;height:2em;background:linear-gradient(transparent,#111527);pointer-events:none}.hw-content.expanded{max-height:none;overflow:visible}.hw-content.expanded:after{display:none}.hw-expand{margin-top:8px;padding:7px 0;border:0;background:none;color:#a9a1ff;font:inherit;font-size:12px;font-weight:800;cursor:pointer}.hw-expand:hover{text-decoration:underline}.hw-expand:focus-visible{outline:2px solid currentColor;outline-offset:4px}.light .hw-content:not(.expanded):after{background:linear-gradient(transparent,#fff)}
