@@ -7,12 +7,31 @@
 <link rel="stylesheet" href="css/home-v2.css">
 <link rel="stylesheet" href="css/leaderboard.css?v=20260921-1">
 
-<link rel="stylesheet" href="css/ui-elements.css?v=20261016-1"><link rel="stylesheet" href="css/auth-v2.css?v=20261017-1"><link rel="stylesheet" href="css/homework-colors.css?v=3"><link rel="stylesheet" href="css/rich-editor.css?v=1"><link rel="stylesheet" href="css/events-home.css?v=4"></head>
+<link rel="stylesheet" href="css/ui-elements.css?v=20261016-1"><link rel="stylesheet" href="css/auth-v2.css?v=20261017-1"><link rel="stylesheet" href="css/homework-colors.css?v=3"><link rel="stylesheet" href="css/rich-editor.css?v=1"><link rel="stylesheet" href="css/events-home.css?v=4"><link rel="stylesheet" href="css/navigation-2026.css?v=1"></head>
 <body>
 <div class="bg"></div>
-<header class="topbar">
-  <a class="brand" href="./"><span>📚</span><div><b>Homework Hub</b><small>Bài tập · Streak · Pet</small></div></a>
-  <nav class="desktop-nav" aria-label="Điều hướng chính"><button class="main-nav active" data-main-nav="home">🏠 Home</button><button class="main-nav" data-main-nav="homework">📚 Bài</button><button class="main-nav" data-main-nav="schedule">📅 Sự kiện</button><button class="main-nav" data-main-nav="pet">🐾 Pet</button><button class="main-nav" data-main-nav="profile">👤 Profile</button></nav><div class="top-actions"><span id="userArea" class="user-area"><button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button></span><button id="settingsBtn" class="icon-button" aria-label="Cài đặt">⚙️</button><button id="themeBtn" class="icon-button" aria-label="Đổi giao diện">☼</button></div>
+<header class="topbar hh-header" id="siteHeader">
+  <div class="hh-header-inner">
+    <a class="hh-brand" href="./" aria-label="Homework Hub - Trang chủ"><span class="hh-brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span><span class="hh-brand-copy"><strong>homework<span>hub.</span></strong><small>YOUR CLASS COMPANION</small></span></a>
+    <nav class="desktop-nav hh-nav" aria-label="Điều hướng chính">
+      <button class="main-nav active" data-main-nav="home" type="button"><span class="hh-nav-icon" aria-hidden="true">⌂</span> Tổng quan</button>
+      <button class="main-nav" data-main-nav="homework" type="button"><span class="hh-nav-icon" aria-hidden="true">▤</span> Bài tập</button>
+      <button class="main-nav" data-main-nav="schedule" type="button"><span class="hh-nav-icon" aria-hidden="true">▦</span> Sự kiện</button>
+      <button class="main-nav" data-main-nav="pet" type="button"><span class="hh-nav-icon" aria-hidden="true">✧</span> Pet</button>
+      <button class="main-nav" data-main-nav="profile" type="button"><span class="hh-nav-icon" aria-hidden="true">◉</span> Hồ sơ</button>
+    </nav>
+    <div class="top-actions hh-actions">
+      <span id="userArea" class="user-area"><button id="googleLogin" class="google-mini" type="button">Đăng nhập Google</button></span>
+      <span class="hh-actions-separator" aria-hidden="true"></span>
+      <button id="settingsBtn" class="icon-button hh-action" type="button" aria-label="Cài đặt" title="Cài đặt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/><circle cx="12" cy="12" r="4"/></svg></button>
+      <button id="themeBtn" class="icon-button hh-action" type="button" aria-label="Đổi giao diện sáng tối" title="Đổi giao diện"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/></svg></button>
+      <button id="hhMobileMenuBtn" class="hh-menu-toggle" type="button" aria-label="Mở menu điều hướng" aria-controls="hhMobileMenu" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <nav class="hh-mobile-menu" id="hhMobileMenu" aria-label="Menu điều hướng di động" hidden>
+    <button type="button" data-main-nav="home">⌂ <span>Tổng quan</span></button><button type="button" data-main-nav="homework">▤ <span>Bài tập</span></button><button type="button" data-main-nav="schedule">▦ <span>Sự kiện</span></button><button type="button" data-main-nav="pet">✧ <span>Pet</span></button><button type="button" data-main-nav="profile">◉ <span>Hồ sơ</span></button>
+    <div class="hh-mobile-quick"><button type="button" id="hhMobileSettings">Cài đặt</button><button type="button" id="hhMobileTheme">Đổi giao diện</button></div>
+  </nav>
 </header>
 <main class="container">
 <a class="events-feature" href="schedule.html"><span class="events-symbol">✦</span><span><strong>Sự kiện & thông báo lớp</strong><small>Xem ngay những thông tin quan trọng của lớp</small></span><span class="events-arrow">Khám phá ↗</span></a>
