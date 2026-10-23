@@ -132,7 +132,7 @@ globalUnsubs.push(onSnapshot(query(collection(db,'subjects'),orderBy('order','as
  s=>{tabs=s.docs.map(d=>({id:d.id,...d.data()}));renderTabs();render()},e=>console.error(e)));
 globalUnsubs.push(onSnapshot(query(collection(db,'homework'),orderBy('createdAt','desc')),s=>{homework=s.docs.map(d=>({id:d.id,...d.data()}));render();showUpdateNotice()},e=>console.error(e)));
 globalUnsubs.push(onSnapshot(doc(db,'settings','site'),s=>{if(s.exists())siteSettings={...siteSettings,...s.data()};showUpdateNotice()}));
-setInterval(async()=>{try{const hs=await getDocs(query(collection(db,'homework'),orderBy('createdAt','desc')));homework=hs.docs.map(d=>({id:d.id,...d.data()}));render();}catch(e){console.warn("Homework Hub refresh:",e)}},10000);
+/* Homework is already kept current by the onSnapshot listener above. */
 $('today').textContent=new Intl.DateTimeFormat('vi-VN',{dateStyle:'full',timeZone:TZ}).format(new Date());applyPrefs();render();
 
 /* Animate background and choose foreground from actual luminance each frame. */
