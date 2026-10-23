@@ -4,7 +4,7 @@
 
 ## Thông báo nâng cấp 24/10/2026 — phát một lần
 
-Phiên bản này có **một thông báo tổng hợp duy nhất trên toàn bộ bốn trang**, không phát lại mỗi khi chuyển trang hoặc tải lại. Mã thông báo `hh_upgrade_20261024` được lưu trong `localStorage` sau khi người dùng đóng/xác nhận; nếu trình duyệt chặn lưu trữ thì có thể hiện lại. Không ghi trạng thái vào Firebase, không gửi thông báo đẩy, không phát lặp theo ngày. Triển khai: `js/upgrade-announcement.js`, `css/upgrade-announcement.css` dùng chung cho trang học sinh, Admin, bảng tin và View BME.
+Phiên bản này có **một thông báo tổng hợp duy nhất chỉ trên trang học sinh `index.html`**, không hiển thị trên Admin, bảng tin hoặc View BME và không phát lại mỗi khi chuyển trang hoặc tải lại. Mã thông báo `hh_upgrade_20261024` được lưu trong `localStorage` sau khi người dùng đóng/xác nhận; nếu trình duyệt chặn lưu trữ thì có thể hiện lại. Không ghi trạng thái vào Firebase, không gửi thông báo đẩy, không phát lặp theo ngày. Triển khai: `js/upgrade-announcement.js`, `css/upgrade-announcement.css` chỉ được nạp bởi trang học sinh `index.html`; các trang Admin, bảng tin và View BME không nạp thông báo.
 
 **Nội dung nâng cấp:**
 
