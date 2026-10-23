@@ -157,6 +157,7 @@ function openBmeCreate() {
   $("bmeError").textContent = "";
   fillBmeSubject();
   setBmeLinks([]);
+  window.HHRich?.set("bmeContent", "", false);
   open("bmeHomeworkDialog");
 }
 
@@ -167,7 +168,7 @@ function openBmeEdit(id) {
   $("bmeId").value = item.id;
   fillBmeSubject(item.subjectId || "");
   $("bmeTitle").value = item.title || "";
-  window.HHRich.get("bmeContent") = item.content || "";
+  window.HHRich.set("bmeContent", item.content || "", item.contentFormat === "html");
   $("bmeDue").value = item.dueDate || "";
   $("bmeError").textContent = "";
   setBmeLinks(getBmeLinks(item));
@@ -205,11 +206,12 @@ $("bmeHomeworkForm")?.addEventListener("submit", async (event) => {
   const subjectId = $("bmeSubject").value;
   const title = $("bmeTitle").value.trim();
   const content = window.HHRich.get("bmeContent").trim();
+  const contentText = window.HHRich.text("bmeContent").trim();
   const dueDate = $("bmeDue").value || null;
   const links = getBmeLinksFromForm();
 
   if (!title) return void (error.textContent = "Vui lòng nhập tiêu đề.");
-  if (!content) return void (error.textContent = "Vui lòng nhập nội dung.");
+  if (!contentText) return void (error.textContent = "Vui lòng nhập nội dung.");
 
   for (const link of links) {
     try {
@@ -229,6 +231,7 @@ $("bmeHomeworkForm")?.addEventListener("submit", async (event) => {
         subjectId,
         title,
         content,
+        contentFormat: "html",
         dueDate,
         links,
         link: links[0] || "",
