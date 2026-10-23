@@ -1,3 +1,4 @@
+import {sanitizeHomeworkHTML,homeworkPlainText} from "../js/rich-content.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "../js/firebase-config.js";
@@ -39,7 +40,7 @@ function render() {
   const filtered = data
     .filter(h => {
       const s = subjects.find(x => x.id === h.subjectId);
-      return `${h.title||""} ${h.content||""} ${s?.name||""}`.toLowerCase().includes(q);
+      return `${h.title||""} ${homeworkPlainText(h.content,h.contentFormat==="html")} ${s?.name||""}`.toLowerCase().includes(q);
     })
     .sort((a,b) => (toDate(b.createdAt)?.getTime()||0) - (toDate(a.createdAt)?.getTime()||0));
 
@@ -59,7 +60,7 @@ function render() {
     return `<article class="card">
       <div class="top"><span class="subject">${esc(s?.icon || h.subjectIcon || "📚")} ${esc(s?.name || h.subjectName || "Bài tập")}</span><span class="date">${esc(fmt(h.createdAt || h.updatedAt))}</span></div>
       <h2>${esc(h.title || "Bài tập")}</h2>
-      <div class="content">${esc(h.content || "")}</div>
+      <div class="content">${h.contentFormat==="html"?sanitizeHomeworkHTML(h.content):esc(h.content || "")}</div>
       ${h.dueDate ? `<p class="due">⏰ Hạn nộp: ${esc(fmt(h.dueDate))}</p>` : ""}
       ${links.length ? `<div class="links">${previewButtons}</div>` : ""}
     </article>`;
