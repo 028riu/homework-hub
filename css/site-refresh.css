@@ -1,0 +1,88 @@
+/* HOMEWORK HUB / UNIFIED 2026 DESIGN SYSTEM
+   Scope each application independently; no global override of user content. */
+.hh-page{--hh-radius:20px;--hh-shadow:0 20px 60px rgba(3,8,28,.14);-webkit-font-smoothing:antialiased}
+.hh-page *{box-sizing:border-box}
+.hh-page :is(button,a,input,select,textarea):focus-visible{outline:3px solid #a59bff!important;outline-offset:3px}
+.hh-page button{touch-action:manipulation}
+.hh-page :is(.container,.wrap,.admin-wrap){min-width:0}
+.hh-page :is(.panel,.card,.head,.auth-card){min-width:0}
+.hh-page :is(h1,h2,h3,p){overflow-wrap:break-word}
+.hh-page :is(.modal,.panel,.card,.head){box-sizing:border-box}
+.hh-page :is(dialog){max-width:calc(100vw - 20px)}
+.hh-page :is(input,textarea,select){max-width:100%}
+.hh-page :is(.hidden,[hidden]){display:none!important}
+/* Student portal: structured dashboard rather than stacked legacy panels. */
+.hh-home{--hh-primary:#a99bff;--hh-border:rgba(180,191,225,.14);background:#090d1a;color:#f3f5ff}
+.hh-home .container{max-width:1360px!important;margin-inline:auto;padding:30px clamp(14px,3vw,36px) 90px!important}
+.hh-home .hero{position:relative;isolation:isolate;overflow:hidden;border:1px solid var(--hh-border)!important;border-radius:28px!important;background:radial-gradient(ellipse at 92% 0%,rgba(126,103,255,.2),transparent 50%),linear-gradient(130deg,#181d37,#101626)!important;padding:clamp(22px,3.5vw,42px)!important;box-shadow:var(--hh-shadow)}
+.hh-home .hero h1{font-size:clamp(29px,4.2vw,51px)!important;line-height:1.12;letter-spacing:-.055em}
+.hh-home .hero p{line-height:1.7}
+.hh-home :is(.panel,.hh-card,.progress-panel){border:1px solid var(--hh-border)!important;border-radius:21px!important;box-shadow:0 10px 30px #00000013}
+.hh-home :is(.hw-card,.homework-card){transition:transform .18s,border-color .18s,box-shadow .18s}
+.hh-home :is(.hw-card,.homework-card):hover{transform:translateY(-2px);border-color:#a99bff55!important;box-shadow:0 15px 35px #00000025}
+.hh-home .events-feature{border-radius:20px!important;box-shadow:0 15px 35px #00000020}
+.hh-home .mobile-nav{display:none!important} /* replaced by accessible header drawer */
+.hh-home .hh-header .hh-mobile-menu:not([hidden]){display:grid}
+.hh-home .hh-header .hh-brand{white-space:nowrap}
+.hh-home .hh-header .hh-user-pill{overflow:hidden}
+.hh-home #profileDialog,.hh-home #petDialog{width:min(1000px,calc(100vw - 24px))!important;max-width:1000px!important;max-height:calc(100dvh - 28px)!important;overflow:hidden!important}
+.hh-home #profileContent,.hh-home #petContent{max-height:calc(100dvh - 28px)!important;overflow-y:auto!important;overflow-x:hidden;scrollbar-gutter:stable;overscroll-behavior:contain}
+.hh-home #profileContent .achievement-list,.hh-home #petContent .pet-grid{min-width:0}
+.hh-home #profileContent .achievement,.hh-home #petContent .pet-item{overflow-wrap:anywhere}
+.hh-home.light .hero{background:radial-gradient(ellipse at 92% 0%,#dcd5ff,transparent 50%),linear-gradient(135deg,#fff,#f4f5fc)!important;color:#222a45}
+.hh-home.light{background:#f5f6fb;color:#222a45}
+/* Admin: operational workspace with readable controls and sticky navigation. */
+.hh-admin{background:#080d19!important;color:#f0f3ff!important}
+.hh-admin .admin-wrap{max-width:1500px!important;margin:0 auto;padding:clamp(14px,2.5vw,34px)!important}
+.hh-admin .admin-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;padding:24px clamp(18px,2.5vw,30px)!important;margin-bottom:18px;border:1px solid #ffffff17;border-radius:24px;background:linear-gradient(125deg,#1b2440,#101728)!important;box-shadow:0 16px 50px #0003}
+.hh-admin .admin-head h1{font-size:clamp(25px,3vw,37px);letter-spacing:-.05em;margin:5px 0}
+.hh-admin .admin-head .top-actions{display:flex;flex-wrap:wrap;gap:9px}
+.hh-admin .admin-head .top-actions :is(a,button){min-height:40px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:11px}
+.hh-admin .admin-tabs{position:sticky;top:0;z-index:30;display:flex;overflow-x:auto;max-width:100%;gap:7px;padding:10px!important;margin-bottom:18px!important;border:1px solid #ffffff15;border-radius:17px;background:#111a2af2;backdrop-filter:blur(20px);scrollbar-width:thin}
+.hh-admin .admin-tab{min-height:41px;border-radius:11px!important;flex:none}
+.hh-admin .admin-page>.panel,.hh-admin .panel,.hh-admin .auth-card{border:1px solid #ffffff16!important;border-radius:20px!important;background:#111a2c!important;box-shadow:0 12px 35px #0002}
+.hh-admin :is(input,select,textarea){min-height:42px;background:#0d1525!important;color:#f2f4ff!important;border:1px solid #ffffff26!important}
+.hh-admin :is(button,a){overflow-wrap:anywhere}
+.hh-admin :is(.admin-modal,dialog){max-height:calc(100dvh - 26px);overflow:auto;scrollbar-width:thin}
+.hh-admin :is(.admin-modal,dialog) form{max-width:100%}
+.hh-admin .auth-card{margin:8vh auto!important;padding:clamp(22px,4vw,40px)!important}
+/* Class bulletin: light editorial surface and robust cards. */
+.hh-board{background:#f4f5f3!important;color:#202c29!important}
+.hh-board .top{position:sticky;top:0;z-index:40;backdrop-filter:blur(18px);background:#f9faf7ed!important;border-bottom:1px solid #dce3dd!important}
+.hh-board .wrap{max-width:1300px!important;padding:clamp(16px,3vw,36px)!important;margin-inline:auto}
+.hh-board .hero{border:1px solid #dce5de;border-radius:27px!important;background:linear-gradient(120deg,#eaf2e9,#faf9f3)!important;padding:clamp(22px,4vw,52px)!important}
+.hh-board .hero h1{font-size:clamp(30px,4.8vw,58px);letter-spacing:-.06em;line-height:1.14}
+.hh-board .tools{gap:15px;flex-wrap:wrap}
+.hh-board .filters{display:flex;flex-wrap:wrap;gap:9px;min-width:0}
+.hh-board .filters input{min-width:0;flex:1 1 210px}
+.hh-board .filters select{flex:0 1 180px}
+.hh-board .board>*{min-width:0;overflow-wrap:anywhere}
+.hh-board .note-body{overflow-wrap:anywhere}
+.hh-board .note-body img{max-width:100%;height:auto}
+.hh-board .note-body table{max-width:100%;overflow-x:auto}
+/* Parent/BME: independent reading-first layout. */
+.hh-bme{background:#f3f5f9!important;color:#222d40!important}
+.hh-bme .wrap{max-width:1120px!important;padding:clamp(14px,3vw,34px)!important;margin-inline:auto}
+.hh-bme :is(.head,.card,.empty){border:1px solid #e0e5ef!important;border-radius:22px!important;background:#fff!important;box-shadow:0 10px 32px #1d2b4a0a!important;padding:clamp(17px,2.5vw,26px)!important;margin-bottom:15px}
+.hh-bme .head:first-child{background:linear-gradient(125deg,#fff,#f0efff)!important;padding:clamp(22px,3.5vw,36px)!important}
+.hh-bme .head h1{font-size:clamp(29px,4vw,43px);letter-spacing:-.055em;line-height:1.15}
+.hh-bme .search{min-height:47px;background:#fff!important;border:1px solid #cbd3e3!important;color:#1c2840!important}
+.hh-bme .card h2{font-size:clamp(19px,2.5vw,24px)}
+.hh-bme .content{white-space:normal!important;overflow-wrap:anywhere;line-height:1.8}
+.hh-bme .content :is(p,ul,ol){margin:.5em 0}
+.hh-bme .content table{display:block;max-width:100%;overflow-x:auto;border-collapse:collapse}
+.hh-bme .content :is(th,td){padding:8px;border:1px solid #d8deeb}
+.hh-bme .links{gap:9px}
+.hh-bme .link-btn{min-height:40px;border-radius:11px;overflow-wrap:anywhere}
+.hh-bme dialog{max-height:calc(100dvh - 28px);overflow:auto}
+/* All pages: compact screens and accessibility. */
+@media(max-width:760px){
+.hh-home .container{padding-bottom:35px!important}
+.hh-home #profileDialog,.hh-home #petDialog{width:calc(100vw - 12px)!important;border-radius:17px!important}
+.hh-home #profileContent,.hh-home #petContent{scrollbar-gutter:auto}
+.hh-admin .admin-head{align-items:stretch}.hh-admin .admin-head .top-actions{width:100%}
+.hh-admin .admin-tabs{top:0}.hh-admin .admin-wrap{padding:12px!important}
+.hh-board .hero-art{opacity:.4}.hh-board .filters{width:100%}.hh-board .filters :is(input,select){width:100%;flex:1 1 100%}
+.hh-bme .wrap{padding:12px!important}
+}
+@media(prefers-reduced-motion:reduce){.hh-page *, .hh-page *::before,.hh-page *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
