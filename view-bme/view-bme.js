@@ -1,10 +1,11 @@
+import {getOfflineDb} from "../js/offline-db.js";
 import {sanitizeHomeworkHTML,homeworkPlainText} from "../js/rich-content.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "../js/firebase-config.js";
 
 const app = initializeApp(firebaseConfig, { name: "homework-hub-bme" });
-const db = getFirestore(app);
+const db = getOfflineDb(app);
 const $ = id => document.getElementById(id);
 
 let data = [];

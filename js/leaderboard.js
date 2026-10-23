@@ -1,10 +1,11 @@
+import {getOfflineDb} from "./offline-db.js";
 import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const app=getApps().length?getApp():initializeApp(firebaseConfig);
-const auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
+const auth=getAuth(app),db=getOfflineDb(app),$=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'\"':"&quot;","'":"&#39;"}[c]));
 const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 let timer=null;

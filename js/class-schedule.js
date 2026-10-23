@@ -1,9 +1,10 @@
+import {getOfflineDb} from "./offline-db.js";
 import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db = getOfflineDb(app);
 const $ = id => document.getElementById(id);
 
 const slots = [

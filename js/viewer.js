@@ -1,9 +1,10 @@
+import {getOfflineDb} from "./offline-db.js";
 import {sanitizeHomeworkHTML,homeworkPlainText} from "./rich-content.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getFirestore, collection, doc, onSnapshot, query, orderBy, setDoc, serverTimestamp, runTransaction, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
-const app=initializeApp(firebaseConfig),db=getFirestore(app),auth=getAuth(app),$=id=>document.getElementById(id),provider=new GoogleAuthProvider();
+const app=initializeApp(firebaseConfig),db=getOfflineDb(app),auth=getAuth(app),$=id=>document.getElementById(id),provider=new GoogleAuthProvider();
 const DAY=86400000, TZ="Asia/Ho_Chi_Minh";
 let tabs=[],homework=[],progress={},profile=null,user=null,active="all",search="",siteSettings={noHomeworkNoticeEnabled:true,oldHomeworkNoticeEnabled:true,noHomeworkNoticeTitle:"📚 Hôm nay không có bài tập mới",noHomeworkNoticeMessage:"Hôm nay chưa có bài tập mới được cập nhật.",oldHomeworkNoticeTitle:"📢 Bài tập chưa có cập nhật",oldHomeworkNoticeMessage:"Danh sách bài tập hôm nay vẫn giống ngày trước."};
 let unsubs=[]; let globalUnsubs=[]; let directNotice=null, presenceTimer=null, presenceUnsub=null, onlineUnsub=null, gateTimer=null; let signingIn=false; let localPrefs={theme:localStorage.getItem("hh_theme")||"dark",accent:localStorage.getItem("hh_accent")||"purple",background:localStorage.getItem("hh_bg")||"default",petEnabled:localStorage.getItem("hh_pet_enabled")!=="0"};

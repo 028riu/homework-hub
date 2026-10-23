@@ -1,0 +1,1 @@
+.hh-offline-status{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:99999;max-width:calc(100vw - 24px);padding:11px 17px;border-radius:14px;background:#242c42;color:#fff;font:600 12px/1.5 system-ui,sans-serif;box-shadow:0 10px 30px #0005;text-align:center}.hh-offline-status[hidden]{display:none!important}

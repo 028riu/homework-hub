@@ -1,0 +1,3 @@
+import {initializeFirestore,getFirestore,persistentLocalCache,persistentMultipleTabManager} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+// IndexedDB persistence is shared across tabs and survives a browser restart.
+export function getOfflineDb(app){try{return initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(error){if(error.code==="failed-precondition"||error.code==="unimplemented"){console.warn("Offline persistence unavailable:",error);return getFirestore(app)}try{return getFirestore(app)}catch{return initializeFirestore(app,{})}}}
