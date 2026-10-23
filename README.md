@@ -1,6 +1,21 @@
 # Homework Hub — Tài liệu tổng hợp dự án
 
-> Cập nhật theo mã nguồn nhánh `main` ngày 23/10/2026. Đây là tài liệu chính thức duy nhất thay thế README cũ và bốn tệp TXT hướng dẫn/bản cập nhật. Mô tả **tính năng có mã nguồn**; không đồng nghĩa mọi chức năng đã được kiểm thử đầu cuối hoặc Firebase Rules trên Console đã được Publish.
+> Cập nhật theo mã nguồn nhánh `main` ngày 24/10/2026. Đây là tài liệu chính thức duy nhất thay thế README cũ và bốn tệp TXT hướng dẫn/bản cập nhật. Mô tả **tính năng có mã nguồn**; không đồng nghĩa mọi chức năng đã được kiểm thử đầu cuối hoặc Firebase Rules trên Console đã được Publish.
+
+## Thông báo nâng cấp 24/10/2026 — phát một lần
+
+Phiên bản này có **một thông báo tổng hợp duy nhất trên toàn bộ bốn trang**, không phát lại mỗi khi chuyển trang hoặc tải lại. Mã thông báo `hh_upgrade_20261024` được lưu trong `localStorage` sau khi người dùng đóng/xác nhận; nếu trình duyệt chặn lưu trữ thì có thể hiện lại. Không ghi trạng thái vào Firebase, không gửi thông báo đẩy, không phát lặp theo ngày. Triển khai: `js/upgrade-announcement.js`, `css/upgrade-announcement.css` dùng chung cho trang học sinh, Admin, bảng tin và View BME.
+
+**Nội dung nâng cấp:**
+
+- Thiết kế thống nhất cho bốn trang qua `css/site-refresh.css`; thanh điều hướng mới trên trang học sinh qua `css/navigation-2026.css`, có menu điện thoại và đồng bộ tab.
+- Hồ sơ và Flamey: giao diện đáp ứng màn hình nhỏ, hộp thoại có vùng cuộn riêng, thống kê/thành tựu và tủ trang bị hiển thị đầy đủ (`css/profile-pet-2026.css`). Đã sửa lỗi biến `s` khiến Hồ sơ không mở.
+- Bảng tin: hỗ trợ nội dung HTML hợp lệ, tìm kiếm/lọc sự kiện, hiển thị thông báo và link an toàn; View BME có giao diện đọc nội dung rõ hơn.
+- Offline-first: `js/offline-db.js` bật bộ nhớ đệm Firestore IndexedDB đa tab cho các trang đọc dữ liệu; `sw.js` lưu vỏ website và tài nguyên đã tải, `js/offline-shell.js` hiển thị trạng thái mất mạng. Khi có kết nối, trình duyệt yêu cầu dữ liệu/tài nguyên mới và listener Firestore đồng bộ trở lại. Cần truy cập online trước để có dữ liệu lưu; ngoại tuyến không bảo đảm mọi thao tác ghi, xác thực mới, tài nguyên bên ngoài hoặc trang chưa từng tải.
+- Service Worker chuyển từ cache-first cũ sang ưu tiên mạng, fallback cache khi mất kết nối; tăng phiên bản URL của tài nguyên thay đổi.
+- Giữ nguyên Firebase project và dữ liệu; không khôi phục tính năng chat đã bỏ.
+
+**Kiểm tra sau triển khai:** mở mỗi trang khi online để cache tài nguyên và dữ liệu, thử ngắt mạng rồi tải lại và đọc bản đã lưu, nối mạng để kiểm tra đồng bộ; kiểm tra đăng nhập, Hồ sơ/Pet, Admin, BME, bảng tin và quyền Firestore. Các thay đổi đã được đẩy lên Git, không đồng nghĩa đã kiểm thử đầu cuối trên mọi trình duyệt.
 
 ## 1. Truy cập và kiến trúc
 
@@ -9,7 +24,7 @@
 - Admin: https://028riu.github.io/homework-hub/admin/
 - Bảng tin lớp: https://028riu.github.io/homework-hub/schedule.html
 - View BME: https://028riu.github.io/homework-hub/view-bme/
-- Frontend: HTML/CSS/JavaScript ES modules, GitHub Pages; Firebase JS SDK 12.1.0; Google Authentication; Cloud Firestore. `sw.js` cung cấp cache/PWA cơ bản; `manifest.json` và icon nằm ở gốc.
+- Frontend: HTML/CSS/JavaScript ES modules, GitHub Pages; Firebase JS SDK 12.1.0; Google Authentication; Cloud Firestore. `sw.js` cung cấp offline shell và cache tài nguyên; `manifest.json` và icon nằm ở gốc.
 - Firebase project: `homeworkhuba5`. Cấu hình frontend tại `js/firebase-config.js`; còn `firebase-config.js` ở gốc là bản khác cùng dự án. Firebase Web API key không phải mật khẩu; không đưa service-account/private key vào Git.
 - Không cần Netlify cho bản frontend GitHub Pages hiện tại. Tài liệu cũ nhắc Netlify/ZIP chỉ là lịch sử.
 
@@ -95,7 +110,7 @@ Nguồn rules trong Git: `firebase/firestore.rules` và `firebase/storage.rules`
 | `js/rich-content.js`, `js/shared-editor.js` | Làm sạch HTML và trình soạn thảo dùng chung |
 | `js/leaderboard.js`, `js/ui-elements.js` | Xếp hạng và tiện ích UI |
 | `css/style.css`, các tệp `css/*.css` | Giao diện nền và lớp mở rộng |
-| `sw.js` | Service worker/cache |
+| `sw.js`, `js/offline-db.js`, `js/offline-shell.js` | Offline shell, IndexedDB persistence và trạng thái kết nối |
 | `firebase/firestore.rules` | Mẫu rules Firestore cần Publish riêng |
 
 **Lưu ý:** còn `admin.js` ở thư mục gốc là bản lịch sử; trang `admin/index.html` thực tế nạp `../js/admin.js`. Không chỉnh nhầm file. Tương tự, không xóa các file JS/CSS cũ chỉ vì tên gọi cũ: trước hết phải rà soát tham chiếu và phụ thuộc.
