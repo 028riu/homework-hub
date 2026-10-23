@@ -167,7 +167,7 @@ function openBmeEdit(id) {
   $("bmeId").value = item.id;
   fillBmeSubject(item.subjectId || "");
   $("bmeTitle").value = item.title || "";
-  $("bmeContent").value = item.content || "";
+  window.HHRich.get("bmeContent") = item.content || "";
   $("bmeDue").value = item.dueDate || "";
   $("bmeError").textContent = "";
   setBmeLinks(getBmeLinks(item));
@@ -204,7 +204,7 @@ $("bmeHomeworkForm")?.addEventListener("submit", async (event) => {
   const id = $("bmeId").value.trim();
   const subjectId = $("bmeSubject").value;
   const title = $("bmeTitle").value.trim();
-  const content = $("bmeContent").value.trim();
+  const content = window.HHRich.get("bmeContent").trim();
   const dueDate = $("bmeDue").value || null;
   const links = getBmeLinksFromForm();
 
