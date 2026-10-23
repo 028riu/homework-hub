@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="css/home-v2.css">
 <link rel="stylesheet" href="css/leaderboard.css?v=20260921-1">
 
-<link rel="stylesheet" href="css/ui-elements.css?v=20261016-1"><link rel="stylesheet" href="css/auth-v2.css?v=20261017-1"><link rel="stylesheet" href="css/homework-colors.css?v=3"><link rel="stylesheet" href="css/rich-editor.css?v=1"><link rel="stylesheet" href="css/events-home.css?v=3"></head>
+<link rel="stylesheet" href="css/ui-elements.css?v=20261016-1"><link rel="stylesheet" href="css/auth-v2.css?v=20261017-1"><link rel="stylesheet" href="css/homework-colors.css?v=3"><link rel="stylesheet" href="css/rich-editor.css?v=1"><link rel="stylesheet" href="css/events-home.css?v=4"></head>
 <body>
 <div class="bg"></div>
 <header class="topbar">
@@ -15,6 +15,8 @@
   <nav class="desktop-nav" aria-label="Điều hướng chính"><button class="main-nav active" data-main-nav="home">🏠 Home</button><button class="main-nav" data-main-nav="homework">📚 Bài</button><button class="main-nav" data-main-nav="schedule">📅 Sự kiện</button><button class="main-nav" data-main-nav="pet">🐾 Pet</button><button class="main-nav" data-main-nav="profile">👤 Profile</button></nav><div class="top-actions"><span id="userArea" class="user-area"><button id="googleLogin" class="google-mini">G&nbsp; Đăng nhập Google</button></span><button id="settingsBtn" class="icon-button" aria-label="Cài đặt">⚙️</button><button id="themeBtn" class="icon-button" aria-label="Đổi giao diện">☼</button></div>
 </header>
 <main class="container">
+<a class="events-feature" href="schedule.html"><span class="events-symbol">✦</span><span><strong>Sự kiện & thông báo lớp</strong><small>Xem ngay những thông tin quan trọng của lớp</small></span><span class="events-arrow">Khám phá ↗</span></a>
+
 <section class="hero hero-gamified">
   <div class="hero-icon">📚</div><div class="hero-copy"><p class="eyebrow">HOMEWORK CENTER</p><h1>Bài tập về nhà</h1><p class="muted" id="today"></p><p class="muted" id="greeting">Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.</p></div>
   <div class="hero-metrics"><div><b id="heroStreak">—</b><small>🔥 STREAK</small></div><div><b id="heroLevel">—</b><small>⭐ LEVEL</small></div><div><b id="heroPoints">—</b><small>💎 POINTS</small></div></div>
@@ -26,7 +28,7 @@
 <div class="hh-utility"><div><span class="hh-utility-kicker">QUICK ACCESS</span><b>⚡ Tìm bài nhanh hơn</b><small>Nhấn <kbd>Ctrl</kbd> + <kbd>K</kbd> để tìm bài hoặc mở tiện ích.</small></div><button type="button" id="hhCommandOpen" class="ghost small">⌕ Tìm nhanh</button></div><div class="quick-row"><span id="status" class="status">Đang tải bài tập...</span><button id="clearSearch" class="ghost small hidden">Xóa tìm kiếm</button></div>
 <section id="homeworkList" class="grid" aria-label="Danh sách bài tập"></section><div id="empty" class="empty hidden">📭 Chưa có bài tập phù hợp.</div>
 </main>
-<a class="events-feature" href="schedule.html"><span class="events-symbol">✦</span><span><strong>Sự kiện & thông báo lớp</strong><small>Xem ngay những thông tin quan trọng của lớp</small></span><span class="events-arrow">Khám phá ↗</span></a><section id="classScheduleToday" class="class-schedule-today-home"><div class="schedule-home-head"><div><p class="eyebrow">CLASS SCHEDULE</p><h2>📅 Sự kiện lớp</h2></div><a class="schedule-open-link" href="schedule.html">Xem đầy đủ →</a></div><div id="classScheduleTodayList"><div class="schedule-no-data">⏳ Đang tải...</div></div></section>
+<section id="classScheduleToday" class="class-schedule-today-home"><div class="schedule-home-head"><div><p class="eyebrow">CLASS SCHEDULE</p><h2>📅 Sự kiện lớp</h2></div><a class="schedule-open-link" href="schedule.html">Xem đầy đủ →</a></div><div id="classScheduleTodayList"><div class="schedule-no-data">⏳ Đang tải...</div></div></section>
 
 <section id="onlineSection" class="online-section"><div class="online-head"><div><p class="eyebrow">AI ĐANG ONLINE</p><h2>🟢 Ai đang online</h2></div><span id="onlineCount" class="online-count">0</span></div><div id="onlineList" class="online-list" aria-live="polite"><span class="muted">Đang kiểm tra...</span></div></section>
 <section id="streakLeaderboardSection" class="hh-rank-section" aria-label="Top 10 chuỗi đăng nhập"><div class="hh-rank-panel"><div class="hh-rank-head"><div><p class="eyebrow">COMMUNITY STREAK</p><h2>🏆 Top 10 chuỗi</h2><p>Những thành viên có chuỗi đăng nhập liên tiếp cao nhất.</p></div><span id="streakLeaderboardStatus" class="hh-rank-refresh"></span></div><div id="streakLeaderboard" class="hh-rank-list"><div class="hh-rank-empty">⏳ Đang tải bảng xếp hạng...</div></div></div></section>
