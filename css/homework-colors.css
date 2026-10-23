@@ -1,0 +1,13 @@
+/* Whole homework article theme; loaded after all other styles. */
+#homeworkList article.card.hw-colored{background:var(--hw-bg)!important;background-image:none!important;color:var(--hw-fg)!important;border-color:color-mix(in srgb,var(--hw-fg) 35%,transparent)!important}
+#homeworkList article.card.hw-colored :is(h2,.content,.subject,.due,.task-check,.card-footer,.hw-expand,.badge,.xp-chip,.link-actions){color:var(--hw-fg)!important}
+#homeworkList article.card.hw-colored :is(.badge,.xp-chip,.ghost){background:color-mix(in srgb,var(--hw-fg) 13%,transparent)!important;color:var(--hw-fg)!important;border-color:color-mix(in srgb,var(--hw-fg) 35%,transparent)!important}
+#homeworkList article.card.hw-colored .hw-content:not(.expanded):after{background:linear-gradient(transparent,var(--hw-bg))!important}
+#homeworkList article.card.hw-rainbow{background:linear-gradient(110deg,#f0abfc,#67e8f9,#fde68a,#86efac,#f0abfc)!important;background-size:400% 400%!important;animation:hwRainbowWhole 9s linear infinite!important;color:#111827!important;border-color:#11182740!important}
+#homeworkList article.card.hw-rainbow :is(h2,.content,.subject,.due,.task-check,.card-footer,.hw-expand,.badge,.xp-chip,.link-actions){color:#111827!important}
+#homeworkList article.card.hw-rainbow :is(.badge,.xp-chip,.ghost){background:#ffffff88!important;color:#111827!important;border-color:#11182740!important}
+#homeworkList article.card.hw-rainbow .hw-content:not(.expanded):after{display:none!important}
+#homeworkList article.card.hw-rainbow:hover{transform:translateY(-4px)}
+#homeworkList article.card.hw-colored:after,#homeworkList article.card.hw-rainbow:after{display:none}
+@keyframes hwRainbowWhole{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@media(prefers-reduced-motion:reduce){#homeworkList article.card.hw-rainbow{animation:none!important}}
