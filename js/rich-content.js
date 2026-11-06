@@ -33,7 +33,7 @@ export function sanitizeHomeworkHTML(input){
 export function plainHomeworkHTML(input){
   const d=document.createElement('div');
   d.textContent=String(input||'');
-  return d.innerHTML.replace(/\\r\\n?/g,'\\n').replace(/\\n/g,'<br>');
+  return d.innerHTML.replace(/\r\n?/g,'\n').replace(/\n/g,'<br>');
 }
 export function homeworkPlainText(input,isHTML){
   if(!isHTML)return String(input||'');
