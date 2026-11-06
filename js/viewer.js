@@ -1,5 +1,5 @@
 import {getOfflineDb} from "./offline-db.js";
-import {sanitizeHomeworkHTML,homeworkPlainText} from "./rich-content.js";
+import {sanitizeHomeworkHTML,homeworkPlainText} from "./rich-content.js?v=font-size-2";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getFirestore, collection, doc, onSnapshot, query, orderBy, setDoc, serverTimestamp, runTransaction, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";

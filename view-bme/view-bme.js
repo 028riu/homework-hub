@@ -1,5 +1,5 @@
 import {getOfflineDb} from "../js/offline-db.js";
-import {sanitizeHomeworkHTML,homeworkPlainText} from "../js/rich-content.js";
+import {sanitizeHomeworkHTML,homeworkPlainText} from "../js/rich-content.js?v=font-size-2";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "../js/firebase-config.js";
