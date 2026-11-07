@@ -22,8 +22,11 @@ export function makePublicProfile(uid, data = {}, serverTimestamp) {
     ? serverTimestamp()
     : (data.updatedAt || null);
 
+  const rawName = String(data.displayName || data.name || data.username || "Thành viên").trim().slice(0, 80);
+  const displayName = rawName.includes("@") ? "Thành viên" : (rawName || "Thành viên");
+
   return {
-    displayName: String(data.displayName || data.name || data.username || "Thành viên").trim().slice(0, 80) || "Thành viên",
+    displayName,
     photoURL: safePhotoURL(data.photoURL),
     currentStreak,
     longestStreak,
