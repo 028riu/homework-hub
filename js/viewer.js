@@ -63,11 +63,17 @@ function setupPresence(){
 function setupOnlineList(){
  if(onlineUnsub){onlineUnsub();onlineUnsub=null}
  const c=$("onlineList");if(!c)return;
- onlineUnsub=onSnapshot(collection(db,"publicPresence"),snap=>{
+ const renderOnline=snap=>{
   const now=Date.now(),arr=snap.docs.map(d=>d.data()).filter(x=>Number(x.onlineUntil||0)>now).sort((a,b)=>String(a.displayName||"").localeCompare(String(b.displayName||"")));
   $("onlineCount").textContent=String(arr.length);
-  c.innerHTML=arr.length?arr.map(x=>`<div class="online-user"><span class="online-dot"></span><img src="${esc(x.photoURL||"")}" onerror="this.style.display='none'"><div><b>${esc(x.displayName||"Thành viên")}</b></div></div>`).join(""):"<span class='muted'>Chưa có ai đang online.</span>";
- },err=>{console.error("Homework Hub online list:",err);$("onlineCount").textContent="0";c.innerHTML="<span class='muted'>Không thể tải danh sách online.</span>"});
+  c.innerHTML=arr.length?arr.map(x=>'<div class="online-user"><span class="online-dot"></span><img src="'+esc(x.photoURL||"")+'" onerror="this.style.display=\'none\'"><div><b>'+esc(x.displayName||"Thành viên")+'</b></div></div>').join(""):"<span class='muted'>Chưa có ai đang online.</span>";
+ };
+ onlineUnsub=onSnapshot(collection(db,"publicPresence"),renderOnline,err=>{
+  console.warn("Public presence unavailable; using legacy presence temporarily:",err);
+  onlineUnsub=onSnapshot(collection(db,"presence"),renderOnline,err2=>{
+   console.error("Homework Hub online list:",err2);$("onlineCount").textContent="0";c.innerHTML="<span class='muted'>Không thể tải danh sách online.</span>";
+  });
+ });
 }
 function showDirectNotice(d,force=false){const o=$("directNoticeOverlay");if(!o||!d?.message)return;const id=String(d.id||d.sentAt?.seconds||d.updatedAt?.seconds||"");if(!force&&localStorage.getItem("hh_notice_done")===id)return;directNotice={...d,id};$("directNoticeTitle").textContent=d.title||"Thông báo trực tiếp";$("directNoticeMessage").textContent=d.message;o.hidden=false;}
 function setupDirectNotice(){onSnapshot(doc(db,"settings","directNotification"),snap=>{if(!snap.exists())return;const d=snap.data();showDirectNotice(d);});$("directNoticeX")?.addEventListener("click",()=>$("directNoticeOverlay").hidden=true);$("directNoticeNoReplay")?.addEventListener("click",()=>{if(directNotice?.id)localStorage.setItem("hh_notice_done",directNotice.id);$("directNoticeOverlay").hidden=true});$("directNoticeLater")?.addEventListener("click",()=>{const d=directNotice;$("directNoticeOverlay").hidden=true;if(d?.id){localStorage.setItem("hh_notice_done",d.id);setTimeout(()=>{if(!user) return;localStorage.removeItem("hh_notice_done");showDirectNotice(d,true)},10*60*1000)}});}
