@@ -34,8 +34,23 @@ service cloud.firestore {
     }
 
     match /presence/{uid} {
-      allow read: if signed();
+      allow read: if admin() || owner(uid);
       allow create,update: if owner(uid);
+      allow delete: if owner(uid);
+    }
+
+    match /publicPresence/{uid} {
+      allow read: if signed();
+      allow create,update: if owner(uid)
+        && request.resource.data.keys().hasOnly(["uid","displayName","photoURL","onlineUntil","updatedAt"])
+        && request.resource.data.keys().hasAll(["uid","displayName","photoURL","onlineUntil","updatedAt"])
+        && request.resource.data.uid == uid
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.photoURL is string
+        && request.resource.data.photoURL.size() <= 2048
+        && request.resource.data.onlineUntil is number
+        && request.resource.data.updatedAt is timestamp;
       allow delete: if owner(uid);
     }
 
