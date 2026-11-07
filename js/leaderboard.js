@@ -10,7 +10,7 @@ const esc=v=>String(v??"").replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"
 const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 let timer=null;
 function rankBadge(i){return i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`}
-function nameOf(u){return u.displayName||u.name||u.username||u.email||"Thành viên"}
+function nameOf(u){const name=String(u.displayName||u.name||u.username||"Thành viên");return name.includes("@")?"Thành viên":name}
 function render(list){
  const box=$("streakLeaderboard"),status=$("streakLeaderboardStatus");if(!box)return;
  if(!list.length){box.innerHTML=`<div class="hh-rank-empty">🏁 Chưa có thành viên có chuỗi.</div>`;if(status)status.textContent="Chưa có dữ liệu xếp hạng.";return;}
