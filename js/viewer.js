@@ -77,7 +77,7 @@ function ensureProfile(u){
   const today=dayKey(),last=d.lastVisitDate||"";
   let streak=Math.max(0,num(d.currentStreak??d.streak)),longest=Math.max(streak,num(d.longestStreak));
   let xp=Math.max(0,num(d.totalXP)),points=Math.max(0,num(d.points));
-  const displayName=u.displayName||d.displayName||u.email||"Bạn",photoURL=u.photoURL||d.photoURL||"";
+  const displayName=u.displayName||d.displayName||"Thành viên",photoURL=u.photoURL||d.photoURL||"";
   let patch;
   if(last!==today){
    const prev=last?new Date(last+"T12:00:00+07:00"):null,cur=new Date(today+"T12:00:00+07:00"),gap=prev?Math.round((cur-prev)/DAY):0;
