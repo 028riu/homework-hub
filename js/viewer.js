@@ -1,5 +1,6 @@
 import {getOfflineDb} from "./offline-db.js";
 import {sanitizeHomeworkHTML,homeworkPlainText} from "./rich-content.js?v=font-size-2";
+import {makePublicProfile} from "./public-profile.js?v=20261107-1";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getFirestore, collection, doc, onSnapshot, query, orderBy, setDoc, serverTimestamp, runTransaction, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
@@ -55,33 +56,63 @@ function setupOnlineList(){if(onlineUnsub){onlineUnsub();onlineUnsub=null}const 
 function showDirectNotice(d,force=false){const o=$("directNoticeOverlay");if(!o||!d?.message)return;const id=String(d.id||d.sentAt?.seconds||d.updatedAt?.seconds||"");if(!force&&localStorage.getItem("hh_notice_done")===id)return;directNotice={...d,id};$("directNoticeTitle").textContent=d.title||"Thông báo trực tiếp";$("directNoticeMessage").textContent=d.message;o.hidden=false;}
 function setupDirectNotice(){onSnapshot(doc(db,"settings","directNotification"),snap=>{if(!snap.exists())return;const d=snap.data();showDirectNotice(d);});$("directNoticeX")?.addEventListener("click",()=>$("directNoticeOverlay").hidden=true);$("directNoticeNoReplay")?.addEventListener("click",()=>{if(directNotice?.id)localStorage.setItem("hh_notice_done",directNotice.id);$("directNoticeOverlay").hidden=true});$("directNoticeLater")?.addEventListener("click",()=>{const d=directNotice;$("directNoticeOverlay").hidden=true;if(d?.id){localStorage.setItem("hh_notice_done",d.id);setTimeout(()=>{if(!user) return;localStorage.removeItem("hh_notice_done");showDirectNotice(d,true)},10*60*1000)}});}
 function renderAuth(){const area=$("userArea");if(!user){showLoginGate();area.innerHTML='<button id="googleLogin" class="google-mini" type="button">Đăng nhập</button>';$('googleLogin').onclick=loginWithGoogle;$('greeting').textContent="Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.";return}hideLoginGate();setupPresence();const name=user.displayName||user.email||"Bạn";area.innerHTML=`<div class="user-pill hh-user-pill"><img class="avatar-img" src="${esc(user.photoURL||"")}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="avatar" style="display:none">${esc((name[0]||"U").toUpperCase())}</span><div><b>${esc(name)}</b><small>🔥 <span id="userStreak">${num(profile?.streak)}</span> ngày</small></div><button id="logoutGoogle" class="logout-mini" title="Đăng xuất" aria-label="Đăng xuất">↗</button></div>`;const img=area.querySelector('.avatar-img');if(img?.src)img.onload=()=>area.querySelector('.avatar').style.display='none';$('logoutGoogle').onclick=()=>signOut(auth);$('greeting').textContent=`Chào ${name} 👋 Hôm nay mình làm bài nhé!`}
-function ensureProfile(u){return runTransaction(db,async tx=>{const ref=doc(db,"users",u.uid),snap=await tx.get(ref),d=snap.exists()?snap.data():{},today=dayKey(),last=d.lastVisitDate||"";let streak=Math.max(0,num(d.currentStreak??d.streak));let longest=Math.max(streak,num(d.longestStreak));let xp=Math.max(0,num(d.totalXP));let points=Math.max(0,num(d.points));if(last!==today){const prev=last?new Date(last+"T12:00:00+07:00"):null,cur=new Date(today+"T12:00:00+07:00"),gap=prev?Math.round((cur-prev)/DAY):0;streak=last&&gap===1?streak+1:1;longest=Math.max(longest,streak);xp+=20;points+=10;tx.set(ref,{uid:u.uid,email:u.email||d.email||"",displayName:u.displayName||d.displayName||u.email||"Bạn",photoURL:u.photoURL||d.photoURL||"",streak,currentStreak:streak,longestStreak:longest,highestStreak:longest,totalXP:xp,points,level:levelFromXP(xp),lastVisitDate:today,lastVisitAt:serverTimestamp(),lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp(),pet:{type:d.pet?.type||"flamey",skin:d.pet?.skin||"default",position:d.pet?.position||{x:82,y:70}},unlockedItems:Array.isArray(d.unlockedItems)?d.unlockedItems:[],equippedItems:Array.isArray(d.equippedItems)?d.equippedItems:[]},{merge:true});}else tx.set(ref,{email:u.email||d.email||"",displayName:u.displayName||d.displayName||u.email||"Bạn",photoURL:u.photoURL||d.photoURL||"",lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});});}
-async function award(uid,deltaXP=0,deltaPoints=0,reason="reward"){const ref=doc(db,"users",uid);await runTransaction(db,async tx=>{const s=await tx.get(ref),d=s.exists()?s.data():{};const xp=Math.max(0,num(d.totalXP)+deltaXP),points=Math.max(0,num(d.points)+deltaPoints);tx.set(ref,{totalXP:xp,points,level:levelFromXP(xp),lastRewardReason:reason,lastRewardAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});});}
+function ensureProfile(u){
+ return runTransaction(db,async tx=>{
+  const ref=doc(db,"users",u.uid),publicRef=doc(db,"publicProfiles",u.uid),snap=await tx.get(ref),d=snap.exists()?snap.data():{};
+  const today=dayKey(),last=d.lastVisitDate||"";
+  let streak=Math.max(0,num(d.currentStreak??d.streak)),longest=Math.max(streak,num(d.longestStreak));
+  let xp=Math.max(0,num(d.totalXP)),points=Math.max(0,num(d.points));
+  const displayName=u.displayName||d.displayName||u.email||"Bạn",photoURL=u.photoURL||d.photoURL||"";
+  let patch;
+  if(last!==today){
+   const prev=last?new Date(last+"T12:00:00+07:00"):null,cur=new Date(today+"T12:00:00+07:00"),gap=prev?Math.round((cur-prev)/DAY):0;
+   streak=last&&gap===1?streak+1:1;longest=Math.max(longest,streak);xp+=20;points+=10;
+   patch={uid:u.uid,email:u.email||d.email||"",displayName,photoURL,streak,currentStreak:streak,longestStreak:longest,highestStreak:longest,totalXP:xp,points,level:levelFromXP(xp),lastVisitDate:today,lastVisitAt:serverTimestamp(),lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp(),pet:{type:d.pet?.type||"flamey",skin:d.pet?.skin||"default",position:d.pet?.position||{x:82,y:70}},unlockedItems:Array.isArray(d.unlockedItems)?d.unlockedItems:[],equippedItems:Array.isArray(d.equippedItems)?d.equippedItems:[]};
+  }else{
+   patch={email:u.email||d.email||"",displayName,photoURL,lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp()};
+  }
+  tx.set(ref,patch,{merge:true});
+  tx.set(publicRef,makePublicProfile(u.uid,{...d,...patch,currentStreak:streak,longestStreak:longest,totalXP:xp,level:levelFromXP(xp)},serverTimestamp));
+ });
+}
+async function award(uid,deltaXP=0,deltaPoints=0,reason="reward"){
+ const ref=doc(db,"users",uid),publicRef=doc(db,"publicProfiles",uid);
+ await runTransaction(db,async tx=>{
+  const s=await tx.get(ref),d=s.exists()?s.data():{},xp=Math.max(0,num(d.totalXP)+deltaXP),points=Math.max(0,num(d.points)+deltaPoints);
+  const next={totalXP:xp,points,level:levelFromXP(xp),lastRewardReason:reason,lastRewardAt:serverTimestamp(),updatedAt:serverTimestamp()};
+  tx.set(ref,next,{merge:true});
+  tx.set(publicRef,makePublicProfile(uid,{...d,...next},serverTimestamp));
+ });
+}
 async function completeHomework(id,checked){
  if(!user)return loginWithGoogle();
- const progressRef=doc(db,"users",user.uid,"homeworkProgress",id), userRef=doc(db,"users",user.uid);
- const xpPer=Math.max(0,num(siteSettings.xpPerHomework,30)), pointsPer=Math.max(0,num(siteSettings.pointsPerHomework,20));
+ const progressRef=doc(db,"users",user.uid,"homeworkProgress",id),userRef=doc(db,"users",user.uid),publicRef=doc(db,"publicProfiles",user.uid);
+ const xpPer=Math.max(0,num(siteSettings.xpPerHomework,30)),pointsPer=Math.max(0,num(siteSettings.pointsPerHomework,20));
  if(!checked){
-   await runTransaction(db,async tx=>{
-     const ps=await tx.get(progressRef), us=await tx.get(userRef);
-     if(!ps.exists()||!ps.data().completed)return;
-     const d=us.exists()?us.data():{},xp=Math.max(0,num(d.totalXP)-num(ps.data().xp,xpPer)),points=Math.max(0,num(d.points)-num(ps.data().points,pointsPer));
-     tx.set(progressRef,{completed:false,updatedAt:serverTimestamp()},{merge:true});
-     tx.set(userRef,{totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:Math.max(0,num(d.completedHomeworkCount)-1),updatedAt:serverTimestamp()},{merge:true});
-   });
-   return;
+  await runTransaction(db,async tx=>{
+   const ps=await tx.get(progressRef),us=await tx.get(userRef);
+   if(!ps.exists()||!ps.data().completed)return;
+   const d=us.exists()?us.data():{},xp=Math.max(0,num(d.totalXP)-num(ps.data().xp,xpPer)),points=Math.max(0,num(d.points)-num(ps.data().points,pointsPer));
+   const next={totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:Math.max(0,num(d.completedHomeworkCount)-1),updatedAt:serverTimestamp()};
+   tx.set(progressRef,{completed:false,updatedAt:serverTimestamp()},{merge:true});
+   tx.set(userRef,next,{merge:true});
+   tx.set(publicRef,makePublicProfile(user.uid,{...d,...next},serverTimestamp));
+  });
+  return;
  }
  if(progress[id]?.completed)return;
  const today=dayKey(),todays=homework.filter(h=>dayKey(parseDate(h.createdAt))===today),dailyEligible=todays.length>0&&todays.every(h=>progress[h.id]?.completed||h.id===id);
  await runTransaction(db,async tx=>{
-   const ps=await tx.get(progressRef),us=await tx.get(userRef);
-   if(ps.exists()&&ps.data().completed)return;
-   const d=us.exists()?us.data():{},oldDaily=d.dailyRewardDate||"",dailyBonus=dailyEligible&&oldDaily!==today?100:0,dailyPoints=dailyEligible&&oldDaily!==today?50:0;
-   const xp=Math.max(0,num(d.totalXP)+xpPer+dailyBonus),points=Math.max(0,num(d.points)+pointsPer+dailyPoints);
-   tx.set(progressRef,{completed:true,completedAt:serverTimestamp(),xp:xpPer,points:pointsPer},{merge:true});
-   tx.set(userRef,{totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:num(d.completedHomeworkCount)+1,...(dailyBonus?{dailyRewardDate:today}:{ }),updatedAt:serverTimestamp()},{merge:true});
+  const ps=await tx.get(progressRef),us=await tx.get(userRef);
+  if(ps.exists()&&ps.data().completed)return;
+  const d=us.exists()?us.data():{},oldDaily=d.dailyRewardDate||"",dailyBonus=dailyEligible&&oldDaily!==today?100:0,dailyPoints=dailyEligible&&oldDaily!==today?50:0;
+  const xp=Math.max(0,num(d.totalXP)+xpPer+dailyBonus),points=Math.max(0,num(d.points)+pointsPer+dailyPoints);
+  const next={totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:num(d.completedHomeworkCount)+1,...(dailyBonus?{dailyRewardDate:today}:{}),updatedAt:serverTimestamp()};
+  tx.set(progressRef,{completed:true,completedAt:serverTimestamp(),xp:xpPer,points:pointsPer},{merge:true});
+  tx.set(userRef,next,{merge:true});
+  tx.set(publicRef,makePublicProfile(user.uid,{...d,...next},serverTimestamp));
  });
- showToast(dailyEligible?`🎉 Hoàn thành toàn bộ hôm nay! +${xpPer+100} XP · +${pointsPer+50} Points`:`✨ +${xpPer} XP · +${pointsPer} Points`);
+ showToast(dailyEligible?"🎉 Hoàn thành toàn bộ hôm nay! +"+(xpPer+100)+" XP · +"+(pointsPer+50)+" Points":"✨ +"+xpPer+" XP · +"+pointsPer+" Points");
 }
 
 function renderStats(){const streak=Math.max(0,num(profile?.currentStreak??profile?.streak));const xp=Math.max(0,num(profile?.totalXP)),points=Math.max(0,num(profile?.points)),level=Math.max(1,num(profile?.level,levelFromXP(xp))),b=levelBounds(level),pct=Math.min(100,Math.max(0,(xp-b.cur)/(b.next-b.cur)*100));$('heroStreak').textContent=user?streak:"—";$('heroLevel').textContent=user?`Lv.${level}`:"—";$('heroPoints').textContent=user?points.toLocaleString("vi-VN"):"—";$('xpLevelText').textContent=user?`⭐ Level ${level}`:"Đăng nhập để bắt đầu";$('xpText').textContent=user?`${xp.toLocaleString("vi-VN")} / ${b.next.toLocaleString("vi-VN")} XP · còn ${Math.max(0,b.next-xp).toLocaleString("vi-VN")} XP lên level`:"XP và tiến độ sẽ được lưu bằng Firebase";$('xpPercent').textContent=user?`${Math.round(pct)}%`:"0%";$('xpBar').style.width=`${user?pct:0}%`;const today=dayKey(),todays=homework.filter(h=>dayKey(parseDate(h.createdAt))===today),done=todays.filter(h=>progress[h.id]?.completed).length;$('dailyProgress').textContent=`☑ ${done} / ${todays.length} bài hôm nay`;if($('userStreak'))$('userStreak').textContent=String(streak);applyPrefs();}
