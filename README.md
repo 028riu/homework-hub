@@ -1,6 +1,6 @@
 # Homework Hub — Tài liệu tổng hợp dự án
 
-> Cập nhật theo mã nguồn nhánh `main` ngày 24/10/2026. Đây là tài liệu chính thức duy nhất thay thế README cũ và bốn tệp TXT hướng dẫn/bản cập nhật. Mô tả **tính năng có mã nguồn**; không đồng nghĩa mọi chức năng đã được kiểm thử đầu cuối hoặc Firebase Rules trên Console đã được Publish.
+> Tài liệu kiến trúc và chức năng của Homework Hub. Cấu trúc thư mục được chuẩn hóa trên nhánh nâng cấp ngày 08/11/2026; các thay đổi chỉ được đưa lên website sau khi được kiểm tra và merge riêng. Đây là tài liệu chính thức duy nhất thay thế README cũ và bốn tệp TXT hướng dẫn/bản cập nhật. Mô tả **tính năng có mã nguồn**; không đồng nghĩa mọi chức năng đã được kiểm thử đầu cuối hoặc Firebase Rules trên Console đã được Publish.
 
 ## Thông báo nâng cấp 24/10/2026 — phát một lần
 
