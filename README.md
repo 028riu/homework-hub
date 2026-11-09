@@ -1,6 +1,6 @@
 # Homework Hub — Tài liệu tổng hợp dự án
 
-> Cập nhật theo mã nguồn nhánh `main` ngày 24/10/2026. Đây là tài liệu chính thức duy nhất thay thế README cũ và bốn tệp TXT hướng dẫn/bản cập nhật. Mô tả **tính năng có mã nguồn**; không đồng nghĩa mọi chức năng đã được kiểm thử đầu cuối hoặc Firebase Rules trên Console đã được Publish.
+> Tài liệu kiến trúc và chức năng của Homework Hub. Cấu trúc thư mục được chuẩn hóa trên nhánh nâng cấp ngày 08/11/2026; các thay đổi chỉ được đưa lên website sau khi được kiểm tra và merge riêng. Đây là tài liệu chính thức duy nhất thay thế README cũ và bốn tệp TXT hướng dẫn/bản cập nhật. Mô tả **tính năng có mã nguồn**; không đồng nghĩa mọi chức năng đã được kiểm thử đầu cuối hoặc Firebase Rules trên Console đã được Publish.
 
 ## Thông báo nâng cấp 24/10/2026 — phát một lần
 
@@ -22,7 +22,7 @@ Phiên bản này có **một thông báo tổng hợp duy nhất chỉ trên tr
 - Repository: https://github.com/028riu/homework-hub
 - Trang học sinh: https://028riu.github.io/homework-hub/
 - Admin: https://028riu.github.io/homework-hub/admin/
-- Bảng tin lớp: https://028riu.github.io/homework-hub/schedule.html
+- Bảng tin lớp: https://028riu.github.io/homework-hub/schedule/
 - View BME: https://028riu.github.io/homework-hub/view-bme/
 - Frontend: HTML/CSS/JavaScript ES modules, GitHub Pages; Firebase JS SDK 12.1.0; Google Authentication; Cloud Firestore. `sw.js` cung cấp offline shell và cache tài nguyên; `manifest.json` và icon nằm ở gốc.
 - Firebase project: `homeworkhuba5`. Cấu hình frontend tại `js/firebase-config.js`; còn `firebase-config.js` ở gốc là bản khác cùng dự án. Firebase Web API key không phải mật khẩu; không đưa service-account/private key vào Git.
@@ -35,10 +35,10 @@ Phiên bản này có **một thông báo tổng hợp duy nhất chỉ trên tr
 - Google login, hồ sơ theo UID, theo dõi hoàn thành bài tập, XP, level, Points, Streak, thành tích/phần thưởng và Pet; các dữ liệu người dùng cần quyền Firestore tương ứng.
 - Bảng xếp hạng Streak (`js/leaderboard.js`), hiện diện/online (`presence`), giao diện cài đặt cá nhân, dark/light, accent/background, bật/tắt Pet, tìm nhanh/Ctrl+K (`js/ui-elements.js`).
 - Cảnh báo bài tập chưa cập nhật, thông báo trực tiếp do Admin phát và thu hồi; cấu hình ở `settings`.
-- Thanh điều hướng có mục **Sự kiện**. Banner **Sự kiện & thông báo lớp** được đặt ngay đầu nội dung trang chủ, dẫn tới `schedule.html`.
+- Thanh điều hướng có mục **Sự kiện**. Banner **Sự kiện & thông báo lớp** được đặt ngay đầu nội dung trang chủ, dẫn tới `/schedule/`.
 - `js/class-schedule.js` vẫn còn được nạp để hiển thị khối nội dung lớp kiểu thời khóa biểu cũ trên trang chủ; cần phân biệt với bảng tin sự kiện mới.
 
-## 3. Bảng tin sự kiện (`schedule.html`)
+## 3. Bảng tin sự kiện (`schedule/index.html`)
 
 - Giao diện sáng, bố cục thẻ kiểu bảng ghim/Padlet, tương thích màn hình nhỏ; dành cho học sinh đọc, không cho học sinh sửa.
 - Các loại: Thông báo, Sự kiện, Dặn dò; tìm kiếm, lọc, ghim thông báo quan trọng lên đầu.
@@ -104,7 +104,7 @@ Nguồn rules trong Git: `firebase/firestore.rules` và `firebase/storage.rules`
 | `admin/index.html`, `js/admin.js` | Admin chính |
 | `js/admin-advanced.js`, `js/admin-tools.js`, `js/admin-control.js` | Công cụ quản trị |
 | `js/notification-admin.js`, `js/direct-notice-revoke-fix.js` | Phát/thu hồi thông báo |
-| `schedule.html`, `js/class-board.js`, `js/schedule-admin.js` | Bảng tin sự kiện và phần đăng bài |
+| `schedule/index.html`, `js/class-board.js`, `js/schedule-admin.js` | Bảng tin sự kiện và phần đăng bài |
 | `js/class-schedule.js`, `js/schedule-page.js`, `css/class-schedule.css` | Mã thời khóa biểu cũ/tương thích; chưa tự ý xóa |
 | `view-bme/index.html`, `view-bme/view-bme.js` | Trang phụ huynh |
 | `js/rich-content.js`, `js/shared-editor.js` | Làm sạch HTML và trình soạn thảo dùng chung |

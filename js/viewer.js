@@ -1,5 +1,6 @@
 import {getOfflineDb} from "./offline-db.js";
 import {sanitizeHomeworkHTML,homeworkPlainText} from "./rich-content.js?v=font-size-2";
+import {makePublicProfile} from "./public-profile.js?v=20261107-1";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getFirestore, collection, doc, onSnapshot, query, orderBy, setDoc, serverTimestamp, runTransaction, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
@@ -14,6 +15,7 @@ const parseDate=v=>v?.toDate?v.toDate():v?.seconds?new Date(v.seconds*1000):v?ne
 const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const levelFromXP=xp=>Math.max(1,Math.floor(Math.sqrt(Math.max(0,xp)/100))+1);
 const levelBounds=l=>({cur:(l<=1?0:(l-1)**2*100),next:l**2*100});
+async function syncPublicProfile(uid,data){try{await setDoc(doc(db,"publicProfiles",uid),makePublicProfile(uid,data,serverTimestamp));}catch(e){console.warn("Public profile sync pending Firestore Rules:",e)}}
 function applyPrefs(){document.body.classList.toggle("light",localPrefs.theme==="light"||(localPrefs.theme==="system"&&matchMedia("(prefers-color-scheme:light)").matches));document.documentElement.dataset.accent=localPrefs.accent;document.documentElement.dataset.background=localPrefs.background;$('floatingPet')?.classList.toggle('hidden',!user||!localPrefs.petEnabled);}
 
 function setAuthBusy(busy){
@@ -50,38 +52,95 @@ async function handleRedirectResult(){
 
 function hideLoginGate(){const g=$("loginGate");if(g){g.hidden=true;clearInterval(gateTimer)}}
 function showLoginGate(){const g=$("loginGate");if(!g||user)return;g.hidden=false;let left=5;const timer=$("gateTimer"),close=$("gateClose");if(close)close.hidden=true;if(timer)timer.textContent="Có thể đóng sau 5 giây...";clearInterval(gateTimer);gateTimer=setInterval(()=>{left--;if(left<=0){clearInterval(gateTimer);if(close)close.hidden=false;if(timer)timer.textContent=""}else if(timer)timer.textContent=`Có thể đóng sau ${left} giây...`},1000);const login=$("gateLogin");if(login)login.onclick=loginWithGoogle;const closeBtn=$("gateClose");if(closeBtn)closeBtn.onclick=()=>g.hidden=true;}
-function setupPresence(){if(presenceUnsub){presenceUnsub();presenceUnsub=null}if(!user)return;const ref=doc(db,"presence",user.uid);const ping=()=>setDoc(ref,{uid:user.uid,email:user.email||"",displayName:user.displayName||user.email||"Bạn",photoURL:user.photoURL||"",onlineUntil:Date.now()+90000,updatedAt:serverTimestamp()},{merge:true}).catch(e=>console.warn("Presence ping:",e));ping();clearInterval(presenceTimer);presenceTimer=setInterval(ping,30000);window.addEventListener("beforeunload",()=>setDoc(ref,{onlineUntil:0},{merge:true}).catch(()=>{}),{once:true});}
-function setupOnlineList(){if(onlineUnsub){onlineUnsub();onlineUnsub=null}const c=$("onlineList");if(!c)return;onlineUnsub=onSnapshot(collection(db,"presence"),snap=>{const now=Date.now(),arr=snap.docs.map(d=>d.data()).filter(x=>Number(x.onlineUntil||0)>now).sort((a,b)=>String(a.displayName||a.email).localeCompare(String(b.displayName||b.email)));$("onlineCount").textContent=String(arr.length);c.innerHTML=arr.length?arr.map(x=>`<div class="online-user"><span class="online-dot"></span><img src="${esc(x.photoURL||"")}" onerror="this.style.display='none'"><div><b>${esc(x.displayName||x.email||"Bạn")}</b><small>${esc(x.email||"")}</small></div></div>`).join(""):"<span class='muted'>Chưa có ai đang online.</span>"},err=>{console.error("Homework Hub online list:",err);$("onlineCount").textContent="0";c.innerHTML="<span class='muted'>Không thể tải danh sách online.</span>"});}
+function setupPresence(){
+ if(presenceUnsub){presenceUnsub();presenceUnsub=null}
+ if(!user)return;
+ const ref=doc(db,"publicPresence",user.uid);
+ const ping=()=>setDoc(ref,{uid:user.uid,displayName:user.displayName||"Thành viên",photoURL:user.photoURL||"",onlineUntil:Date.now()+90000,updatedAt:serverTimestamp()},{merge:true}).catch(e=>console.warn("Presence ping:",e));
+ ping();clearInterval(presenceTimer);presenceTimer=setInterval(ping,30000);
+ window.addEventListener("beforeunload",()=>setDoc(ref,{onlineUntil:0,updatedAt:serverTimestamp()},{merge:true}).catch(()=>{}),{once:true});
+}
+function setupOnlineList(){
+ if(onlineUnsub){onlineUnsub();onlineUnsub=null}
+ const c=$("onlineList");if(!c)return;
+ const renderOnline=snap=>{
+  const now=Date.now(),arr=snap.docs.map(d=>d.data()).filter(x=>Number(x.onlineUntil||0)>now).sort((a,b)=>String(a.displayName||"").localeCompare(String(b.displayName||"")));
+  $("onlineCount").textContent=String(arr.length);
+  c.innerHTML=arr.length?arr.map(x=>'<div class="online-user"><span class="online-dot"></span><img src="'+esc(x.photoURL||"")+'" onerror="this.style.display=\'none\'"><div><b>'+esc(x.displayName||"Thành viên")+'</b></div></div>').join(""):"<span class='muted'>Chưa có ai đang online.</span>";
+ };
+ onlineUnsub=onSnapshot(collection(db,"publicPresence"),renderOnline,err=>{
+  console.warn("Public presence unavailable; using legacy presence temporarily:",err);
+  onlineUnsub=onSnapshot(collection(db,"presence"),renderOnline,err2=>{
+   console.error("Homework Hub online list:",err2);$("onlineCount").textContent="0";c.innerHTML="<span class='muted'>Không thể tải danh sách online.</span>";
+  });
+ });
+}
 function showDirectNotice(d,force=false){const o=$("directNoticeOverlay");if(!o||!d?.message)return;const id=String(d.id||d.sentAt?.seconds||d.updatedAt?.seconds||"");if(!force&&localStorage.getItem("hh_notice_done")===id)return;directNotice={...d,id};$("directNoticeTitle").textContent=d.title||"Thông báo trực tiếp";$("directNoticeMessage").textContent=d.message;o.hidden=false;}
 function setupDirectNotice(){onSnapshot(doc(db,"settings","directNotification"),snap=>{if(!snap.exists())return;const d=snap.data();showDirectNotice(d);});$("directNoticeX")?.addEventListener("click",()=>$("directNoticeOverlay").hidden=true);$("directNoticeNoReplay")?.addEventListener("click",()=>{if(directNotice?.id)localStorage.setItem("hh_notice_done",directNotice.id);$("directNoticeOverlay").hidden=true});$("directNoticeLater")?.addEventListener("click",()=>{const d=directNotice;$("directNoticeOverlay").hidden=true;if(d?.id){localStorage.setItem("hh_notice_done",d.id);setTimeout(()=>{if(!user) return;localStorage.removeItem("hh_notice_done");showDirectNotice(d,true)},10*60*1000)}});}
 function renderAuth(){const area=$("userArea");if(!user){showLoginGate();area.innerHTML='<button id="googleLogin" class="google-mini" type="button">Đăng nhập</button>';$('googleLogin').onclick=loginWithGoogle;$('greeting').textContent="Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.";return}hideLoginGate();setupPresence();const name=user.displayName||user.email||"Bạn";area.innerHTML=`<div class="user-pill hh-user-pill"><img class="avatar-img" src="${esc(user.photoURL||"")}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="avatar" style="display:none">${esc((name[0]||"U").toUpperCase())}</span><div><b>${esc(name)}</b><small>🔥 <span id="userStreak">${num(profile?.streak)}</span> ngày</small></div><button id="logoutGoogle" class="logout-mini" title="Đăng xuất" aria-label="Đăng xuất">↗</button></div>`;const img=area.querySelector('.avatar-img');if(img?.src)img.onload=()=>area.querySelector('.avatar').style.display='none';$('logoutGoogle').onclick=()=>signOut(auth);$('greeting').textContent=`Chào ${name} 👋 Hôm nay mình làm bài nhé!`}
-function ensureProfile(u){return runTransaction(db,async tx=>{const ref=doc(db,"users",u.uid),snap=await tx.get(ref),d=snap.exists()?snap.data():{},today=dayKey(),last=d.lastVisitDate||"";let streak=Math.max(0,num(d.currentStreak??d.streak));let longest=Math.max(streak,num(d.longestStreak));let xp=Math.max(0,num(d.totalXP));let points=Math.max(0,num(d.points));if(last!==today){const prev=last?new Date(last+"T12:00:00+07:00"):null,cur=new Date(today+"T12:00:00+07:00"),gap=prev?Math.round((cur-prev)/DAY):0;streak=last&&gap===1?streak+1:1;longest=Math.max(longest,streak);xp+=20;points+=10;tx.set(ref,{uid:u.uid,email:u.email||d.email||"",displayName:u.displayName||d.displayName||u.email||"Bạn",photoURL:u.photoURL||d.photoURL||"",streak,currentStreak:streak,longestStreak:longest,highestStreak:longest,totalXP:xp,points,level:levelFromXP(xp),lastVisitDate:today,lastVisitAt:serverTimestamp(),lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp(),pet:{type:d.pet?.type||"flamey",skin:d.pet?.skin||"default",position:d.pet?.position||{x:82,y:70}},unlockedItems:Array.isArray(d.unlockedItems)?d.unlockedItems:[],equippedItems:Array.isArray(d.equippedItems)?d.equippedItems:[]},{merge:true});}else tx.set(ref,{email:u.email||d.email||"",displayName:u.displayName||d.displayName||u.email||"Bạn",photoURL:u.photoURL||d.photoURL||"",lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});});}
-async function award(uid,deltaXP=0,deltaPoints=0,reason="reward"){const ref=doc(db,"users",uid);await runTransaction(db,async tx=>{const s=await tx.get(ref),d=s.exists()?s.data():{};const xp=Math.max(0,num(d.totalXP)+deltaXP),points=Math.max(0,num(d.points)+deltaPoints);tx.set(ref,{totalXP:xp,points,level:levelFromXP(xp),lastRewardReason:reason,lastRewardAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});});}
+function ensureProfile(u){
+ let publicData;
+ return runTransaction(db,async tx=>{
+  const ref=doc(db,"users",u.uid),snap=await tx.get(ref),d=snap.exists()?snap.data():{};
+  const today=dayKey(),last=d.lastVisitDate||"";
+  let streak=Math.max(0,num(d.currentStreak??d.streak)),longest=Math.max(streak,num(d.longestStreak));
+  let xp=Math.max(0,num(d.totalXP)),points=Math.max(0,num(d.points));
+  const displayName=u.displayName||d.displayName||"Thành viên",photoURL=u.photoURL||d.photoURL||"";
+  let patch;
+  if(last!==today){
+   const prev=last?new Date(last+"T12:00:00+07:00"):null,cur=new Date(today+"T12:00:00+07:00"),gap=prev?Math.round((cur-prev)/DAY):0;
+   streak=last&&gap===1?streak+1:1;longest=Math.max(longest,streak);xp+=20;points+=10;
+   patch={uid:u.uid,email:u.email||d.email||"",displayName,photoURL,streak,currentStreak:streak,longestStreak:longest,highestStreak:longest,totalXP:xp,points,level:levelFromXP(xp),lastVisitDate:today,lastVisitAt:serverTimestamp(),lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp(),pet:{type:d.pet?.type||"flamey",skin:d.pet?.skin||"default",position:d.pet?.position||{x:82,y:70}},unlockedItems:Array.isArray(d.unlockedItems)?d.unlockedItems:[],equippedItems:Array.isArray(d.equippedItems)?d.equippedItems:[]};
+  }else{
+   patch={email:u.email||d.email||"",displayName,photoURL,lastLoginAt:serverTimestamp(),updatedAt:serverTimestamp()};
+  }
+  tx.set(ref,patch,{merge:true});
+  publicData={...d,...patch,currentStreak:streak,longestStreak:longest,totalXP:xp,level:levelFromXP(xp)};
+ }).then(()=>syncPublicProfile(u.uid,publicData));
+}
+async function award(uid,deltaXP=0,deltaPoints=0,reason="reward"){
+ const ref=doc(db,"users",uid);let publicData;
+ await runTransaction(db,async tx=>{
+  const s=await tx.get(ref),d=s.exists()?s.data():{},xp=Math.max(0,num(d.totalXP)+deltaXP),points=Math.max(0,num(d.points)+deltaPoints);
+  const next={totalXP:xp,points,level:levelFromXP(xp),lastRewardReason:reason,lastRewardAt:serverTimestamp(),updatedAt:serverTimestamp()};
+  tx.set(ref,next,{merge:true});
+  publicData={...d,...next};
+ });
+ await syncPublicProfile(uid,publicData);
+}
 async function completeHomework(id,checked){
  if(!user)return loginWithGoogle();
- const progressRef=doc(db,"users",user.uid,"homeworkProgress",id), userRef=doc(db,"users",user.uid);
- const xpPer=Math.max(0,num(siteSettings.xpPerHomework,30)), pointsPer=Math.max(0,num(siteSettings.pointsPerHomework,20));
+ const progressRef=doc(db,"users",user.uid,"homeworkProgress",id),userRef=doc(db,"users",user.uid);
+ const xpPer=Math.max(0,num(siteSettings.xpPerHomework,30)),pointsPer=Math.max(0,num(siteSettings.pointsPerHomework,20));
  if(!checked){
-   await runTransaction(db,async tx=>{
-     const ps=await tx.get(progressRef), us=await tx.get(userRef);
-     if(!ps.exists()||!ps.data().completed)return;
-     const d=us.exists()?us.data():{},xp=Math.max(0,num(d.totalXP)-num(ps.data().xp,xpPer)),points=Math.max(0,num(d.points)-num(ps.data().points,pointsPer));
-     tx.set(progressRef,{completed:false,updatedAt:serverTimestamp()},{merge:true});
-     tx.set(userRef,{totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:Math.max(0,num(d.completedHomeworkCount)-1),updatedAt:serverTimestamp()},{merge:true});
-   });
-   return;
+  let publicData=null;
+  await runTransaction(db,async tx=>{
+   const ps=await tx.get(progressRef),us=await tx.get(userRef);
+   if(!ps.exists()||!ps.data().completed)return;
+   const d=us.exists()?us.data():{},xp=Math.max(0,num(d.totalXP)-num(ps.data().xp,xpPer)),points=Math.max(0,num(d.points)-num(ps.data().points,pointsPer));
+   const next={totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:Math.max(0,num(d.completedHomeworkCount)-1),updatedAt:serverTimestamp()};
+   tx.set(progressRef,{completed:false,updatedAt:serverTimestamp()},{merge:true});
+   tx.set(userRef,next,{merge:true});
+   publicData={...d,...next};
+  });
+  if(publicData)await syncPublicProfile(user.uid,publicData);
+  return;
  }
  if(progress[id]?.completed)return;
  const today=dayKey(),todays=homework.filter(h=>dayKey(parseDate(h.createdAt))===today),dailyEligible=todays.length>0&&todays.every(h=>progress[h.id]?.completed||h.id===id);
+ let publicData=null;
  await runTransaction(db,async tx=>{
-   const ps=await tx.get(progressRef),us=await tx.get(userRef);
-   if(ps.exists()&&ps.data().completed)return;
-   const d=us.exists()?us.data():{},oldDaily=d.dailyRewardDate||"",dailyBonus=dailyEligible&&oldDaily!==today?100:0,dailyPoints=dailyEligible&&oldDaily!==today?50:0;
-   const xp=Math.max(0,num(d.totalXP)+xpPer+dailyBonus),points=Math.max(0,num(d.points)+pointsPer+dailyPoints);
-   tx.set(progressRef,{completed:true,completedAt:serverTimestamp(),xp:xpPer,points:pointsPer},{merge:true});
-   tx.set(userRef,{totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:num(d.completedHomeworkCount)+1,...(dailyBonus?{dailyRewardDate:today}:{ }),updatedAt:serverTimestamp()},{merge:true});
+  const ps=await tx.get(progressRef),us=await tx.get(userRef);
+  if(ps.exists()&&ps.data().completed)return;
+  const d=us.exists()?us.data():{},oldDaily=d.dailyRewardDate||"",dailyBonus=dailyEligible&&oldDaily!==today?100:0,dailyPoints=dailyEligible&&oldDaily!==today?50:0;
+  const xp=Math.max(0,num(d.totalXP)+xpPer+dailyBonus),points=Math.max(0,num(d.points)+pointsPer+dailyPoints);
+  const next={totalXP:xp,points,level:levelFromXP(xp),completedHomeworkCount:num(d.completedHomeworkCount)+1,...(dailyBonus?{dailyRewardDate:today}:{}),updatedAt:serverTimestamp()};
+  tx.set(progressRef,{completed:true,completedAt:serverTimestamp(),xp:xpPer,points:pointsPer},{merge:true});
+  tx.set(userRef,next,{merge:true});
+  publicData={...d,...next};
  });
- showToast(dailyEligible?`🎉 Hoàn thành toàn bộ hôm nay! +${xpPer+100} XP · +${pointsPer+50} Points`:`✨ +${xpPer} XP · +${pointsPer} Points`);
+ if(publicData)await syncPublicProfile(user.uid,publicData);
+ showToast(dailyEligible?"🎉 Hoàn thành toàn bộ hôm nay! +"+(xpPer+100)+" XP · +"+(pointsPer+50)+" Points":"✨ +"+xpPer+" XP · +"+pointsPer+" Points");
 }
 
 function renderStats(){const streak=Math.max(0,num(profile?.currentStreak??profile?.streak));const xp=Math.max(0,num(profile?.totalXP)),points=Math.max(0,num(profile?.points)),level=Math.max(1,num(profile?.level,levelFromXP(xp))),b=levelBounds(level),pct=Math.min(100,Math.max(0,(xp-b.cur)/(b.next-b.cur)*100));$('heroStreak').textContent=user?streak:"—";$('heroLevel').textContent=user?`Lv.${level}`:"—";$('heroPoints').textContent=user?points.toLocaleString("vi-VN"):"—";$('xpLevelText').textContent=user?`⭐ Level ${level}`:"Đăng nhập để bắt đầu";$('xpText').textContent=user?`${xp.toLocaleString("vi-VN")} / ${b.next.toLocaleString("vi-VN")} XP · còn ${Math.max(0,b.next-xp).toLocaleString("vi-VN")} XP lên level`:"XP và tiến độ sẽ được lưu bằng Firebase";$('xpPercent').textContent=user?`${Math.round(pct)}%`:"0%";$('xpBar').style.width=`${user?pct:0}%`;const today=dayKey(),todays=homework.filter(h=>dayKey(parseDate(h.createdAt))===today),done=todays.filter(h=>progress[h.id]?.completed).length;$('dailyProgress').textContent=`☑ ${done} / ${todays.length} bài hôm nay`;if($('userStreak'))$('userStreak').textContent=String(streak);applyPrefs();}
@@ -108,7 +167,7 @@ function petMood(streak){if(streak>=30)return ['👑','Flamey đang cực kỳ t
 function openPet(){if(!user)return loginWithGoogle();const p=profile||{},s=num(p.streak),skin=p.pet?.skin||'default',catalog=petCatalog(),m=petMood(s);const unlocked=x=>s>=x.unlock||(Array.isArray(p.unlockedItems)&&p.unlockedItems.includes(x.id));$('petContent').innerHTML=`<div class="panel-title hh-dialog-heading"><div><p class="eyebrow">PET HOME</p><h2>🐾 Góc của Flamey</h2><p class="muted">Không chỉ là tủ đồ — đây là nơi Flamey sống, vui chơi và đồng hành với bạn.</p></div><button class="icon-btn" id="closePet" aria-label="Đóng">×</button></div><div class="pet-dashboard"><div class="pet-showcase pet-home-card"><div class="pet-stage">${petVisual(p.pet)}</div><div class="pet-info"><div class="pet-status"><span>${m[0]} ${m[1]}</span><span class="pet-level">Lv.${num(p.level,1)}</span></div><h2>🔥 Flamey</h2><p class="muted">${m[2]}</p><div class="pet-bars"><div><span>❤️ Thân thiết</span><b>${Math.min(100,20+s)}%</b><i><em style="width:${Math.min(100,20+s)}%"></em></i></div><div><span>⚡ Năng lượng</span><b>${Math.min(100,60+(s%30))}%</b><i><em style="width:${Math.min(100,60+(s%30))}%"></em></i></div></div><div class="pet-actions"><button id="petPlay" class="primary">🎮 Chơi với Flamey</button><button id="petFeed" class="ghost">🍪 Cho ăn</button></div></div></div><div class="pet-wardrobe"><div class="wardrobe-head"><div><h3>Trang bị Flamey</h3><p class="muted">Mở khóa bằng Streak rồi bấm vào món đồ để trang bị.</p></div><span>${catalog.filter(unlocked).length}/${catalog.length} đã mở</span></div><div class="pet-grid">${catalog.map(x=>{const ok=unlocked(x),eq=skin===x.id;return `<button type="button" class="pet-item ${eq?'equipped':''} ${ok?'':'locked'}" data-skin="${x.id}" ${ok?'':'disabled'}><span class="pet-item-icon">${x.emoji}</span>${x.accessory?`<span class="pet-item-acc">${x.accessory}</span>`:''}<b>${x.name}</b><small>${eq?'✓ Đang trang bị':ok?'✓ Đã mở':'🔒 Streak '+x.unlock}</small></button>`}).join('')}</div></div></div>`;if(!$('petDialog').open)$('petDialog').showModal();$('closePet').onclick=()=>$('petDialog').close();document.querySelectorAll('[data-skin]').forEach(b=>b.onclick=async()=>{const next=b.dataset.skin;try{await setDoc(doc(db,'users',user.uid),{pet:{...(profile?.pet||{}),type:'flamey',skin:next},equippedItems:[next],updatedAt:serverTimestamp()},{merge:true});showToast(`🐾 Đã trang bị ${catalog.find(x=>x.id===next)?.name||'món đồ'} cho Flamey!`);openPet();}catch(e){console.error(e);showToast('❌ Không thể lưu trang bị, thử lại nhé.')}});$('petPlay').onclick=()=>{const stage=document.querySelector('.pet-stage');stage?.classList.remove('pet-happy');void stage?.offsetWidth;stage?.classList.add('pet-happy');showToast('🎮 Flamey: Yay! Chơi nữa đi!')};$('petFeed').onclick=()=>{showToast('🍪 Flamey: Ngon quá! ❤️');const stage=document.querySelector('.pet-stage');stage?.classList.add('pet-happy');setTimeout(()=>stage?.classList.remove('pet-happy'),800)};}
 
 function showUpdateNotice(){const dismissed=localStorage.getItem('hh_notice_dismissed'),today=dayKey();if(dismissed===today)return;const latest=homework.reduce((m,h)=>{const d=parseDate(h.createdAt);return d&&(!m||d>m)?d:m},null);let title='',text='';if(!homework.length){if(siteSettings.noHomeworkNoticeEnabled===false)return;title=siteSettings.noHomeworkNoticeTitle;text=siteSettings.noHomeworkNoticeMessage}else{if(!latest)return;const latestKey=dayKey(latest);if(latestKey===today)return;if(siteSettings.oldHomeworkNoticeEnabled===false)return;const diff=Math.max(1,Math.round((new Date(today+'T12:00:00+07:00')-new Date(latestKey+'T12:00:00+07:00'))/DAY));title=siteSettings.oldHomeworkNoticeTitle;text=(siteSettings.oldHomeworkNoticeMessage||'').replaceAll('{days}',String(diff)).replaceAll('{date}',latest.toLocaleDateString('vi-VN'));}$('noticeTitle').textContent=title;$('noticeText').textContent=text;$('updateNotice').classList.remove('hidden')}
-$('noticeClose').onclick=()=>{$('updateNotice').classList.add('hidden');localStorage.setItem('hh_notice_dismissed',dayKey())};$('search').oninput=e=>{search=e.target.value.toLowerCase();$('clearSearch').classList.toggle('hidden',!search);render()};$('clearSearch').onclick=()=>{$('search').value='';search='';$('clearSearch').classList.add('hidden');render()};$('themeBtn').onclick=()=>{localPrefs.theme=document.body.classList.contains('light')?'dark':'light';localStorage.setItem('hh_theme',localPrefs.theme);applyPrefs()};$('settingsBtn').onclick=()=>{$('settingsDialog').showModal();$('petEnabled').checked=localPrefs.petEnabled};$('closeSettings').onclick=()=>$('settingsDialog').close();$('saveSettings').onclick=()=>{localPrefs.petEnabled=$('petEnabled').checked;localStorage.setItem('hh_pet_enabled',localPrefs.petEnabled?'1':'0');$('settingsDialog').close();applyPrefs()};document.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{localPrefs.theme=b.dataset.theme;localStorage.setItem('hh_theme',localPrefs.theme);applyPrefs()});document.querySelectorAll('[data-accent]').forEach(b=>b.onclick=()=>{localPrefs.accent=b.dataset.accent;localStorage.setItem('hh_accent',localPrefs.accent);applyPrefs()});document.querySelectorAll('[data-bg]').forEach(b=>b.onclick=()=>{localPrefs.background=b.dataset.bg;localStorage.setItem('hh_bg',localPrefs.background);applyPrefs()});$('profileNav').onclick=openProfile;$('petNav').onclick=openPet;document.querySelectorAll('[data-main-nav]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-main-nav]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const n=b.dataset.mainNav;document.querySelectorAll('[data-main-nav]').forEach(x=>x.classList.toggle('active',x.dataset.mainNav===n));if(n==='home')window.scrollTo({top:0,behavior:'smooth'});if(n==='homework')$('homeworkSection').scrollIntoView({behavior:'smooth',block:'start'});if(n==='pet')openPet();if(n==='profile')openProfile();if(n==='schedule')window.location.href='schedule.html';});
+$('noticeClose').onclick=()=>{$('updateNotice').classList.add('hidden');localStorage.setItem('hh_notice_dismissed',dayKey())};$('search').oninput=e=>{search=e.target.value.toLowerCase();$('clearSearch').classList.toggle('hidden',!search);render()};$('clearSearch').onclick=()=>{$('search').value='';search='';$('clearSearch').classList.add('hidden');render()};$('themeBtn').onclick=()=>{localPrefs.theme=document.body.classList.contains('light')?'dark':'light';localStorage.setItem('hh_theme',localPrefs.theme);applyPrefs()};$('settingsBtn').onclick=()=>{$('settingsDialog').showModal();$('petEnabled').checked=localPrefs.petEnabled};$('closeSettings').onclick=()=>$('settingsDialog').close();$('saveSettings').onclick=()=>{localPrefs.petEnabled=$('petEnabled').checked;localStorage.setItem('hh_pet_enabled',localPrefs.petEnabled?'1':'0');$('settingsDialog').close();applyPrefs()};document.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{localPrefs.theme=b.dataset.theme;localStorage.setItem('hh_theme',localPrefs.theme);applyPrefs()});document.querySelectorAll('[data-accent]').forEach(b=>b.onclick=()=>{localPrefs.accent=b.dataset.accent;localStorage.setItem('hh_accent',localPrefs.accent);applyPrefs()});document.querySelectorAll('[data-bg]').forEach(b=>b.onclick=()=>{localPrefs.background=b.dataset.bg;localStorage.setItem('hh_bg',localPrefs.background);applyPrefs()});$('profileNav').onclick=openProfile;$('petNav').onclick=openPet;document.querySelectorAll('[data-main-nav]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-main-nav]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const n=b.dataset.mainNav;document.querySelectorAll('[data-main-nav]').forEach(x=>x.classList.toggle('active',x.dataset.mainNav===n));if(n==='home')window.scrollTo({top:0,behavior:'smooth'});if(n==='homework')$('homeworkSection').scrollIntoView({behavior:'smooth',block:'start'});if(n==='pet')openPet();if(n==='profile')openProfile();if(n==='schedule')window.location.href='schedule/';});
 const pet=$('floatingPet');
 let dragging=false,dragMoved=false,ox=0,oy=0;
 function setPetPos(x,y,save=true){

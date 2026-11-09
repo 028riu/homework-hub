@@ -6,7 +6,7 @@ service cloud.firestore {
     function owner(uid){return signed() && request.auth.uid==uid;}
 
     match /users/{uid} {
-      allow read: if signed();
+      allow read: if admin() || owner(uid);
       allow create,update: if admin() || owner(uid);
       allow delete: if admin();
       match /homeworkProgress/{id}{allow read,create,update,delete:if admin()||owner(uid);}
@@ -15,9 +15,42 @@ service cloud.firestore {
       match /settings/{id}{allow read,create,update,delete:if admin()||owner(uid);}
     }
 
-    match /presence/{uid} {
+    match /publicProfiles/{uid} {
+      // Chỉ lưu các trường cần thiết cho bảng xếp hạng; tuyệt đối không lưu email.
       allow read: if signed();
+      allow create,update: if (admin() || owner(uid))
+        && request.resource.data.keys().hasOnly(["displayName","photoURL","currentStreak","longestStreak","totalXP","level","updatedAt"])
+        && request.resource.data.keys().hasAll(["displayName","photoURL","currentStreak","longestStreak","totalXP","level","updatedAt"])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.photoURL is string
+        && request.resource.data.photoURL.size() <= 2048
+        && request.resource.data.currentStreak is number
+        && request.resource.data.longestStreak is number
+        && request.resource.data.totalXP is number
+        && request.resource.data.level is number
+        && request.resource.data.updatedAt is timestamp;
+      allow delete: if admin();
+    }
+
+    match /presence/{uid} {
+      allow read: if admin() || owner(uid);
       allow create,update: if owner(uid);
+      allow delete: if owner(uid);
+    }
+
+    match /publicPresence/{uid} {
+      allow read: if signed();
+      allow create,update: if owner(uid)
+        && request.resource.data.keys().hasOnly(["uid","displayName","photoURL","onlineUntil","updatedAt"])
+        && request.resource.data.keys().hasAll(["uid","displayName","photoURL","onlineUntil","updatedAt"])
+        && request.resource.data.uid == uid
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.photoURL is string
+        && request.resource.data.photoURL.size() <= 2048
+        && request.resource.data.onlineUntil is number
+        && request.resource.data.updatedAt is timestamp;
       allow delete: if owner(uid);
     }
 

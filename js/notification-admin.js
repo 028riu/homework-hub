@@ -6,7 +6,7 @@ import { firebaseConfig } from "./firebase-config.js";
 const app = getApps().length ? getApp() : null;
 if (!app) throw new Error("Homework Hub: Firebase app chưa được khởi tạo.");
 const auth = getAuth(app), db = getFirestore(app);
-const ADMINS = ["028riu@gmail.com","tu0ngtun2gsahur@gmail.com","linh085760@gmail.com","linh085760@stu.vinschool.edu.vn","minh037199@stu.vinschool.edu.vn","tran034866@stu.vinschool.edu.vn","phuong026443@stu.vinschool.edu.vn"].map(x => x.toLowerCase());
+const ADMINS = ["028riu@gmail.com","tu0ngtun2gsahur8@gmail.com","linh085760@gmail.com","linh085760@stu.vinschool.edu.vn","minh037199@stu.vinschool.edu.vn","tran034866@stu.vinschool.edu.vn","phuong026443@stu.vinschool.edu.vn"].map(x => x.toLowerCase());
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? "").replace(/[&<>\"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'\"':"&quot;","'":"&#39;"}[c]));
 

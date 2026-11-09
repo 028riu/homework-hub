@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="css/home-v2.css">
 <link rel="stylesheet" href="css/leaderboard.css?v=20260921-1">
 
-<link rel="stylesheet" href="css/ui-elements.css?v=20261016-1"><link rel="stylesheet" href="css/auth-v2.css?v=20261017-1"><link rel="stylesheet" href="css/homework-colors.css?v=3"><link rel="stylesheet" href="css/rich-editor.css?v=1"><link rel="stylesheet" href="css/events-home.css?v=4"><link rel="stylesheet" href="css/navigation-2026.css?v=1"><link rel="stylesheet" href="css/profile-pet-2026.css?v=1"><link rel="stylesheet" href="css/site-refresh.css?v=20261023-2"><link rel="manifest" href="manifest.json"><script defer src="js/offline-shell.js?v=1"></script><link rel="stylesheet" href="css/offline.css?v=1"></head>
+<link rel="stylesheet" href="css/ui-elements.css?v=20261016-1"><link rel="stylesheet" href="css/auth-v2.css?v=20261017-1"><link rel="stylesheet" href="css/homework-colors.css?v=3"><link rel="stylesheet" href="css/rich-editor.css?v=1"><link rel="stylesheet" href="css/events-home.css?v=4"><link rel="stylesheet" href="css/navigation-2026.css?v=1"><link rel="stylesheet" href="css/profile-pet-2026.css?v=1"><link rel="stylesheet" href="css/site-refresh.css?v=20261023-2"><link rel="manifest" href="manifest.json"><script defer src="js/offline-shell.js?v=2"></script><link rel="stylesheet" href="css/offline.css?v=1"></head>
 <body class="hh-page hh-home">
 <div class="bg"></div>
 <header class="topbar hh-header" id="siteHeader">
@@ -34,7 +34,7 @@
   </nav>
 </header>
 <main class="container">
-<a class="events-feature" href="schedule.html"><span class="events-symbol">✦</span><span><strong>Sự kiện & thông báo lớp</strong><small>Xem ngay những thông tin quan trọng của lớp</small></span><span class="events-arrow">Khám phá ↗</span></a>
+<a class="events-feature" href="schedule/"><span class="events-symbol">✦</span><span><strong>Sự kiện & thông báo lớp</strong><small>Xem ngay những thông tin quan trọng của lớp</small></span><span class="events-arrow">Khám phá ↗</span></a>
 
 <section class="hero hero-gamified">
   <div class="hero-icon">📚</div><div class="hero-copy"><p class="eyebrow">HOMEWORK CENTER</p><h1>Bài tập về nhà</h1><p class="muted" id="today"></p><p class="muted" id="greeting">Đăng nhập để lưu tiến độ, Streak, XP và Pet trên mọi thiết bị.</p></div>
@@ -47,7 +47,7 @@
 <div class="hh-utility"><div><span class="hh-utility-kicker">QUICK ACCESS</span><b>⚡ Tìm bài nhanh hơn</b><small>Nhấn <kbd>Ctrl</kbd> + <kbd>K</kbd> để tìm bài hoặc mở tiện ích.</small></div><button type="button" id="hhCommandOpen" class="ghost small">⌕ Tìm nhanh</button></div><div class="quick-row"><span id="status" class="status">Đang tải bài tập...</span><button id="clearSearch" class="ghost small hidden">Xóa tìm kiếm</button></div>
 <section id="homeworkList" class="grid" aria-label="Danh sách bài tập"></section><div id="empty" class="empty hidden">📭 Chưa có bài tập phù hợp.</div>
 </main>
-<section id="classScheduleToday" class="class-schedule-today-home"><div class="schedule-home-head"><div><p class="eyebrow">CLASS SCHEDULE</p><h2>📅 Sự kiện lớp</h2></div><a class="schedule-open-link" href="schedule.html">Xem đầy đủ →</a></div><div id="classScheduleTodayList"><div class="schedule-no-data">⏳ Đang tải...</div></div></section>
+<section id="classScheduleToday" class="class-schedule-today-home"><div class="schedule-home-head"><div><p class="eyebrow">CLASS SCHEDULE</p><h2>📅 Sự kiện lớp</h2></div><a class="schedule-open-link" href="schedule/">Xem đầy đủ →</a></div><div id="classScheduleTodayList"><div class="schedule-no-data">⏳ Đang tải...</div></div></section>
 
 <section id="onlineSection" class="online-section"><div class="online-head"><div><p class="eyebrow">AI ĐANG ONLINE</p><h2>🟢 Ai đang online</h2></div><span id="onlineCount" class="online-count">0</span></div><div id="onlineList" class="online-list" aria-live="polite"><span class="muted">Đang kiểm tra...</span></div></section>
 <section id="streakLeaderboardSection" class="hh-rank-section" aria-label="Top 10 chuỗi đăng nhập"><div class="hh-rank-panel"><div class="hh-rank-head"><div><p class="eyebrow">COMMUNITY STREAK</p><h2>🏆 Top 10 chuỗi</h2><p>Những thành viên có chuỗi đăng nhập liên tiếp cao nhất.</p></div><span id="streakLeaderboardStatus" class="hh-rank-refresh"></span></div><div id="streakLeaderboard" class="hh-rank-list"><div class="hh-rank-empty">⏳ Đang tải bảng xếp hạng...</div></div></div></section>
@@ -56,7 +56,7 @@
 <div id="floatingPet" class="floating-pet hidden" aria-label="Pet có thể kéo">🔥<span class="pet-face">•ᴗ•</span><i>✦</i></div>
 <dialog id="settingsDialog"><div class="modal modal-wide"><div class="panel-title"><div><p class="eyebrow">PERSONALIZE</p><h2>⚙️ Cài đặt</h2></div><button id="closeSettings" class="icon-btn">×</button></div><div class="settings-grid"><section><h3>🎨 Giao diện</h3><div class="choice-row" id="themeChoices"><button data-theme="dark">🌙 Dark</button><button data-theme="light">☀️ Light</button><button data-theme="system">🖥 System</button></div><h3>🌈 Chủ đề</h3><div class="swatches" id="themeSwatches"><button data-accent="purple">🟣 Purple</button><button data-accent="ocean">🔵 Ocean</button><button data-accent="emerald">🟢 Emerald</button><button data-accent="sunset">🟠 Sunset</button><button data-accent="sakura">🌸 Sakura</button><button data-accent="galaxy">🌌 Galaxy</button></div></section><section><h3>🖼 Background</h3><div class="choice-row" id="bgChoices"><button data-bg="default">Default</button><button data-bg="grid">Grid</button><button data-bg="gradient">Gradient</button><button data-bg="aurora">Aurora</button></div><h3>🐾 Pet</h3><label class="setting-line"><span>Floating Pet</span><input id="petEnabled" type="checkbox" checked></label><p class="muted">Kéo Pet đến vị trí bạn thích. Vị trí được lưu theo tài khoản.</p></section></div><div class="modal-actions"><button id="saveSettings" class="primary">💾 Lưu cài đặt</button></div></div></dialog>
 <dialog id="profileDialog" aria-label="Hồ sơ và thành tựu"><div class="modal modal-wide" id="profileContent"></div></dialog><dialog id="petDialog" aria-label="Góc của Flamey"><div class="modal modal-wide" id="petContent"></div></dialog>
-<script type="module" src="js/viewer.js?v=20261023-offline1"></script><script type="module" src="js/class-schedule.js?v=20261023-offline1"></script><script type="module" src="js/direct-notice-revoke-fix.js?v=20260921-revoke1"></script><script type="module" src="js/leaderboard.js?v=20261023-offline1"></script>
+<script type="module" src="js/viewer.js?v=20261107-public-profile1"></script><script type="module" src="js/class-schedule.js?v=20261023-offline1"></script><script type="module" src="js/direct-notice-revoke-fix.js?v=20260921-revoke1"></script><script type="module" src="js/leaderboard.js?v=20261107-public-profile1"></script>
 <div id="loginGate" class="login-gate" hidden>
   <div class="login-gate-card" role="dialog" aria-modal="true" aria-labelledby="loginGateTitle">
     <button id="gateClose" class="gate-close" type="button" hidden aria-label="Đóng đăng nhập">×</button>
