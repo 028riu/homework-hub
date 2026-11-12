@@ -86,3 +86,25 @@
 .hh-bme .wrap{padding:12px!important}
 }
 @media(prefers-reduced-motion:reduce){.hh-page *, .hh-page *::before,.hh-page *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+
+/* Homework subject labels: make the subject easy to scan at a glance. */
+.hh-home #homeworkList article.card .card-top .subject{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:34px;
+  padding:7px 12px;
+  border-radius:11px;
+  font-size:15px!important;
+  line-height:1.25;
+  font-weight:850!important;
+  letter-spacing:-.015em;
+}
+@media(max-width:760px){
+  .hh-home #homeworkList article.card .card-top .subject{
+    min-height:32px;
+    padding:6px 10px;
+    font-size:14px!important;
+  }
+}
