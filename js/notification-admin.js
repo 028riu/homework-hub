@@ -25,7 +25,7 @@ function inject(){
   panel.style.cssText="margin-top:18px";
   panel.innerHTML=`
     <div class="panel-title">
-      <div><h2>📢 Thông báo trực tiếp</h2><p class="muted">Phát thông báo cho người dùng ở trang chủ. Có thể thu hồi bất cứ lúc nào.</p></div>
+      <div><h2>📢 Thông báo trực tiếp</h2><p class="muted">Phát thông báo toàn server; học sinh sẽ thấy sau mỗi lần đăng nhập. Có thể thu hồi bất cứ lúc nào.</p></div>
       <span id="notificationAdminStatus" class="muted">Đang kiểm tra...</span>
     </div>
     <div style="display:grid;gap:12px">

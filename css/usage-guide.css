@@ -1,0 +1,33 @@
+/* Homework Hub usage guide */
+.hh-utility-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.hh-guide-dialog{width:min(760px,calc(100vw - 28px));max-width:760px;max-height:min(88vh,900px);padding:0;border:1px solid rgba(148,163,184,.22);border-radius:22px;background:#101426;color:#eef2ff;box-shadow:0 28px 90px #0009;overflow:hidden}
+.hh-guide-dialog::backdrop{background:rgba(3,6,18,.76);backdrop-filter:blur(7px)}
+.hh-guide-shell{display:flex;flex-direction:column;max-height:min(88vh,900px)}
+.hh-guide-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:24px 26px 18px;border-bottom:1px solid rgba(148,163,184,.16);background:linear-gradient(135deg,rgba(99,102,241,.16),rgba(14,165,233,.07))}
+.hh-guide-head h2{margin:4px 0 7px;font-size:clamp(20px,3vw,27px);line-height:1.2}
+.hh-guide-head .muted{margin:0;color:#aab4ce;font-size:13px}
+.hh-guide-content{padding:10px 26px 22px;overflow:auto;overscroll-behavior:contain}
+.hh-guide-step{display:grid;grid-template-columns:38px minmax(0,1fr);gap:14px;padding:17px 0;border-bottom:1px solid rgba(148,163,184,.13)}
+.hh-guide-step:last-child{border-bottom:0}
+.hh-guide-step>span{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:rgba(99,102,241,.18);color:#c7d2fe;font-size:12px;font-weight:800}
+.hh-guide-step h3{margin:0 0 6px;font-size:15px;color:#f8fafc}
+.hh-guide-step p{margin:0;color:#c0c9dc;font-size:13px;line-height:1.7}
+.hh-guide-step p+p{margin-top:8px}
+.hh-guide-myon>span{background:rgba(16,185,129,.16);color:#a7f3d0}
+.hh-guide-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 26px;border-top:1px solid rgba(148,163,184,.16);color:#aab4ce;font-size:12px}
+.hh-guide-foot a{color:#c7d2fe;font-weight:800;text-decoration:none;white-space:nowrap}
+.hh-guide-foot a:hover{text-decoration:underline}
+body.light .hh-guide-dialog{background:#fff;color:#172033;border-color:#dbe2f0}
+body.light .hh-guide-head{background:linear-gradient(135deg,#eef2ff,#f0f9ff);border-color:#e2e8f0}
+body.light .hh-guide-head .muted,body.light .hh-guide-step p,body.light .hh-guide-foot{color:#526078}
+body.light .hh-guide-step h3{color:#172033}
+body.light .hh-guide-step{border-color:#e8edf5}
+body.light .hh-guide-foot{border-color:#e2e8f0}
+@media(max-width:600px){
+ .hh-utility-actions{justify-content:flex-start;width:100%}
+ .hh-guide-head{padding:19px 18px 14px}
+ .hh-guide-content{padding:6px 18px 16px}
+ .hh-guide-foot{align-items:flex-start;flex-direction:column;padding:12px 18px}
+ .hh-guide-step{grid-template-columns:32px minmax(0,1fr);gap:11px}
+ .hh-guide-step>span{width:30px;height:30px}
+}
