@@ -69,6 +69,96 @@ service cloud.firestore {
     match /admin_drafts/{id}{allow read,create,update,delete:if admin();}
     match /admin_templates/{id}{allow read,create,update,delete:if admin();}
     match /admin_notices/{id}{allow read,create,update,delete:if admin();}
+
+    // MYON booking: giới hạn ngày/tuần được kiểm tra bằng các counter trong cùng transaction.
+    function myonWeeklyLimit(uid) {
+      return exists(/databases/$(database)/documents/myon_user_settings/$(uid))
+        ? get(/databases/$(database)/documents/myon_user_settings/$(uid)).data.weeklyLimit : 3;
+    }
+    match /myon_bookings/{id} {
+      allow read: if admin() || (signed() && resource.data.uid == request.auth.uid);
+      allow create: if signed()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(["uid","email","studentName","vsCode","type","dateKey","weekKey","amount","minutes","status","paymentStatus","createdAt","updatedAt"])
+        && request.resource.data.keys().hasAll(["uid","studentName","vsCode","type","dateKey","weekKey","amount","minutes","status","paymentStatus","createdAt","updatedAt"])
+        && request.resource.data.studentName is string
+        && request.resource.data.studentName.size() <= 100
+        && request.resource.data.vsCode is string
+        && request.resource.data.vsCode.matches("^VS[0-9]{6}$")
+        && request.resource.data.type in ["paid","free"]
+        && request.resource.data.status == "queued"
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.dateKey is string
+        && request.resource.data.weekKey is string
+        && request.resource.data.amount is number
+        && request.resource.data.minutes is number
+        && (request.resource.data.type == "free" && request.resource.data.amount == 0 && request.resource.data.minutes == 0
+          || request.resource.data.type == "paid" && ((request.resource.data.amount == 10000 && request.resource.data.minutes == 100) || (request.resource.data.amount == 50000 && request.resource.data.minutes == 500)))
+        && getAfter(/databases/$(database)/documents/myon_day_counts/$(request.resource.data.dateKey + "_" + request.resource.data.type)).data.lastBookingId == id
+        && (request.resource.data.type == "paid" || getAfter(/databases/$(database)/documents/myon_week_counts/$(request.auth.uid + "_" + request.resource.data.weekKey)).data.lastBookingId == id);
+      allow update, delete: if admin();
+    }
+    match /myon_day_counts/{id} {
+      allow read: if signed();
+      allow create: if admin() || (signed()
+        && request.resource.data.count == 1
+        && request.resource.data.type in ["paid","free"]
+        && request.resource.data.count <= (request.resource.data.type == "paid" ? 1 : 8)
+        && id == request.resource.data.dateKey + "_" + request.resource.data.type
+        && request.resource.data.lastBookingId is string
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.dateKey == request.resource.data.dateKey
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.type == request.resource.data.type
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.createdAt == request.time);
+      allow update: if admin() || (signed()
+        && request.resource.data.count == resource.data.count + 1
+        && request.resource.data.dateKey == resource.data.dateKey
+        && request.resource.data.type == resource.data.type
+        && request.resource.data.count <= (request.resource.data.type == "paid" ? 1 : 8)
+        && request.resource.data.lastBookingId is string
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.dateKey == request.resource.data.dateKey
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.type == request.resource.data.type
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.createdAt == request.time);
+      allow delete: if admin();
+    }
+    match /myon_week_counts/{id} {
+      allow read: if admin() || (signed() && resource.data.uid == request.auth.uid);
+      allow create: if admin() || (signed()
+        && request.resource.data.uid == request.auth.uid
+        && id == request.auth.uid + "_" + request.resource.data.weekKey
+        && request.resource.data.count == 1
+        && request.resource.data.count <= myonWeeklyLimit(request.auth.uid)
+        && request.resource.data.lastBookingId is string
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.weekKey == request.resource.data.weekKey
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.type == "free"
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.createdAt == request.time);
+      allow update: if admin() || (signed()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.weekKey == resource.data.weekKey
+        && request.resource.data.count == resource.data.count + 1
+        && request.resource.data.count <= myonWeeklyLimit(request.auth.uid)
+        && request.resource.data.lastBookingId is string
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.weekKey == request.resource.data.weekKey
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.type == "free"
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.createdAt == request.time);
+      allow delete: if admin();
+    }
+    match /myon_user_settings/{uid} {
+      allow read: if admin() || owner(uid);
+      allow create, update: if admin()
+        && request.resource.data.weeklyLimit is int
+        && request.resource.data.weeklyLimit >= 0
+        && request.resource.data.weeklyLimit <= 30;
+      allow delete: if admin();
+    }
+    match /myon_notifications/{uid}/items/{id} {
+      allow read: if admin() || owner(uid);
+      allow create, update, delete: if admin();
+    }
     match /{document=**}{allow read,write:if false;}
   }
 }
