@@ -7,3 +7,15 @@
 .myon-vs-digit{width:100%;min-width:0;height:48px!important;padding:0!important;text-align:center;font-size:21px!important;font-weight:800!important;letter-spacing:0!important;border:1px solid #ffffff25!important;border-radius:11px!important;background:#0d1221!important;color:#f4f5ff!important;caret-color:#a99dff}
 .myon-vs-digit:focus{outline:none;border:2px solid #8b7aff!important;box-shadow:0 0 0 3px #8b7aff22}
 .myon-vs-hint{display:block;color:#9da8c3;font-size:11px;margin-top:-6px}
+
+/* MYON usage guide */
+.myon-guide-tag{font-size:10px;font-weight:850;color:#cfc9ff;background:#8b7aff1c;border:1px solid #a99dff35;border-radius:99px;padding:8px 11px;white-space:nowrap}
+.myon-guide-intro{color:#aeb8d0;font-size:13px;margin:0 0 16px}
+.myon-guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.myon-guide-step{display:flex;gap:12px;padding:14px;border:1px solid #ffffff12;border-radius:14px;background:#ffffff05}
+.myon-guide-step>span{display:grid;place-items:center;flex:0 0 32px;height:32px;border-radius:10px;background:#8b7aff20;color:#cfc9ff;font-size:11px;font-weight:900}
+.myon-guide-step h3{font-size:13px;margin:1px 0 6px;color:#f0f1ff}
+.myon-guide-step p{font-size:11px;line-height:1.65;color:#aeb8d0;margin:0}
+.myon-guide-paid{border-color:#d7a84b35}.myon-guide-paid>span{background:#a9781e24;color:#ffd98c}
+.myon-guide-footnote{margin:15px 0 0;padding:12px 14px;border-left:3px solid #a99dff;background:#8b7aff0c;border-radius:0 10px 10px 0;color:#b9c2d9;font-size:11px;line-height:1.6}
+@media(max-width:700px){.myon-guide-grid{grid-template-columns:1fr}.myon-guide-step{padding:12px}.myon-guide-tag{font-size:9px}}
