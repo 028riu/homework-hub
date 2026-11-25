@@ -174,3 +174,73 @@
 @media (prefers-reduced-motion: reduce) {
   .hh-home .myon-floating-shortcut,.hh-header .hh-mobile-menu>.myon-mobile-link { animation:none!important; }
 }
+
+
+/* Mobile direct announcement: keep the full message and actions reachable. */
+@media (max-width: 760px) {
+  body.hh-home .direct-notice-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) !important;
+    overflow: hidden !important;
+  }
+  body.hh-home .direct-notice-card {
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: min(100%, 520px) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    min-height: 0 !important;
+    margin: auto !important;
+    padding: 18px 15px 14px !important;
+    overflow: hidden !important;
+    border-radius: 20px !important;
+  }
+  body.hh-home .direct-notice-x {
+    position: sticky !important;
+    top: 0 !important;
+    align-self: flex-end !important;
+    flex: 0 0 auto !important;
+    z-index: 2 !important;
+    margin: -5px -3px 8px auto !important;
+  }
+  body.hh-home .direct-notice-badge,
+  body.hh-home #directNoticeTitle {
+    flex: 0 0 auto !important;
+    overflow-wrap: anywhere !important;
+  }
+  body.hh-home .direct-notice-message {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    padding: 4px 3px 14px !important;
+    scrollbar-width: thin !important;
+  }
+  body.hh-home .direct-notice-actions {
+    position: sticky !important;
+    bottom: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 9px !important;
+    flex: 0 0 auto !important;
+    padding: 12px 0 max(2px, env(safe-area-inset-bottom)) !important;
+    margin-top: 8px !important;
+    background: inherit !important;
+  }
+  body.hh-home .direct-notice-actions button {
+    width: 100% !important;
+    min-height: 46px !important;
+    white-space: normal !important;
+    line-height: 1.35 !important;
+  }
+}
