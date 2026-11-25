@@ -95,7 +95,7 @@ service cloud.firestore {
         && request.resource.data.minutes is number
         && (request.resource.data.type == "free" && request.resource.data.amount == 0 && request.resource.data.minutes == 0
           || request.resource.data.type == "paid" && request.resource.data.amount >= 1000 && request.resource.data.amount % 1000 == 0 && request.resource.data.minutes == request.resource.data.amount / 1000 * 10)
-        && getAfter(/databases/$(database)/documents/myon_day_counts/$(request.resource.data.dateKey + "_" + request.resource.data.type)).data.lastBookingId == id
+        && getAfter(/databases/$(database)/documents/myon_day_counts/$(request.resource.data.dateKey + "_" + request.resource.data.type)).data.lastBookingId == id\n        && getAfter(/databases/$(database)/documents/myon_user_day_counts/$(request.auth.uid + "_" + request.resource.data.dateKey)).data.lastBookingId == id\n        && (!exists(/databases/$(database)/documents/myon_date_settings/$(request.resource.data.dateKey)) || get(/databases/$(database)/documents/myon_date_settings/$(request.resource.data.dateKey)).data.active != false)
         && (request.resource.data.type == "paid" || getAfter(/databases/$(database)/documents/myon_week_counts/$(request.auth.uid + "_" + request.resource.data.weekKey)).data.lastBookingId == id);
       allow update, delete: if admin();
     }
@@ -146,6 +146,21 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.type == "free"
         && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.createdAt == request.time);
       allow delete: if admin();
+    }
+    match /myon_user_day_counts/{id} {
+      allow read: if admin() || (signed() && resource.data.uid == request.auth.uid);
+      allow create: if signed() && request.resource.data.uid == request.auth.uid
+        && id == request.auth.uid + "_" + request.resource.data.dateKey
+        && request.resource.data.lastBookingId is string
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.dateKey == request.resource.data.dateKey
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.status == "queued";
+      allow update: if false;
+      allow delete: if admin();
+    }
+    match /myon_date_settings/{dateKey} {
+      allow read: if true;
+      allow create, update, delete: if admin();
     }
     match /myon_user_settings/{uid} {
       allow read: if admin() || owner(uid);
