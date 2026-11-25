@@ -1,0 +1,98 @@
+/* MyON Smart — visual system adapted from the supplied index.html */
+:root{color-scheme:dark;--myon-bg:#050505;--myon-panel:rgba(14,14,16,.78);--myon-line:rgba(255,255,255,.14);--myon-muted:#a1a1aa;--myon-white:#f8f8fa;--myon-silver:linear-gradient(120deg,#fff,#dedee1 55%,#a6a6ad)}
+html{scroll-behavior:smooth;scroll-padding-top:100px}
+body.myon-page{position:relative;isolation:isolate;min-height:100vh;padding:0 20px 56px;background:#050505;color:var(--myon-white);font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.65;overflow-x:hidden}
+body.myon-page:before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:46px 46px;mask-image:radial-gradient(ellipse 95% 62% at 50% 0%,#000 25%,transparent 100%)}
+body.myon-page:after{content:"";position:fixed;inset:-20%;z-index:-3;pointer-events:none;background:radial-gradient(ellipse at 15% 12%,rgba(255,255,255,.075),transparent 32%),radial-gradient(ellipse at 85% 36%,rgba(180,180,190,.055),transparent 35%),radial-gradient(ellipse at 48% 95%,rgba(255,255,255,.04),transparent 32%);filter:blur(24px)}
+.myon-shell{max-width:1180px;margin:0 auto}
+.myon-top{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:24px;min-height:78px;margin:0 -20px;padding:12px max(20px,calc((100vw - 1180px)/2));border-bottom:1px solid transparent;background:rgba(5,5,5,.78);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.myon-back{display:inline-flex;align-items:center;gap:10px;color:#c8c8ce;text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap}
+.brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:var(--myon-silver);color:#050505;font-weight:900;font-size:20px;box-shadow:0 8px 24px #fff2}
+.myon-brand{font-size:17px;font-weight:900;letter-spacing:.12em;color:#fff;text-decoration:none;white-space:nowrap}
+.myon-brand small{display:block;margin-top:-3px;color:#92929a;font-size:8px;letter-spacing:.2em}
+.myon-nav-links{display:flex;align-items:center;gap:23px;margin-left:auto}
+.myon-nav-links a{color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;transition:color .2s}
+.myon-nav-links a:hover{color:#fff}
+.myon-help-link{padding:9px 13px;border:1px solid var(--myon-line);border-radius:12px;color:#eee;text-decoration:none;font-size:12px;font-weight:800;white-space:nowrap;background:#ffffff08}
+.myon-top #myonLogin{flex:none;padding:11px 16px;border:0;border-radius:12px;background:var(--myon-silver);color:#050505;font-weight:900;cursor:pointer}
+.myon-hero{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 290px;align-items:center;gap:36px;min-height:340px;margin:32px 0 24px;padding:52px clamp(24px,5vw,62px);overflow:hidden;border:1px solid rgba(255,255,255,.17);border-radius:30px;background:linear-gradient(118deg,rgba(255,255,255,.095),rgba(255,255,255,.025) 52%,rgba(255,255,255,.065)),#0d0d0f;box-shadow:0 28px 80px -48px #000}
+.myon-hero:before{content:"";position:absolute;right:-130px;top:-210px;width:520px;height:520px;border:1px solid #ffffff16;border-radius:50%;box-shadow:0 0 0 34px #ffffff08,0 0 0 68px #ffffff05,0 0 0 102px #ffffff03;pointer-events:none}
+.myon-hero>div:first-child{position:relative;z-index:1}
+.myon-hero .eyebrow,.myon-section-head .eyebrow{font-size:10px;letter-spacing:.25em;color:#d0d0d5;font-weight:900}
+.myon-hero h1{max-width:700px;margin:12px 0 16px;color:#fff;font-size:clamp(36px,5.4vw,64px);line-height:1.07;letter-spacing:-.055em;font-weight:900}
+.myon-hero h1:after{content:"";display:block;width:92px;height:3px;margin-top:19px;border-radius:9px;background:var(--myon-silver)}
+.myon-hero p:not(.eyebrow){max-width:610px;color:#b5b5bd;font-size:14px}
+.myon-hero-side{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:18px}
+.myon-hero-chip{padding:10px 15px;border:1px solid #ffffff30;border-radius:99px;background:#ffffff0c;color:#e5e5e8;font-size:10px;font-weight:900;letter-spacing:.12em;white-space:nowrap}
+.myon-hero-orbit{position:relative;width:145px;height:145px;border:1px solid #ffffff25;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 0 50px #ffffff08,0 0 60px #ffffff0b}
+.myon-hero-orbit:before,.myon-hero-orbit:after{content:"";position:absolute;border:1px solid #ffffff25;border-radius:50%;inset:17px}
+.myon-hero-orbit:after{inset:35px;border-color:#ffffff40}
+.myon-hero-orbit span{width:44px;height:44px;border-radius:14px;background:var(--myon-silver);box-shadow:0 0 36px #fff4;transform:rotate(45deg)}
+.myon-hero-orbit i,.myon-hero-orbit b{position:absolute;width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 0 14px #fff}
+.myon-hero-orbit i{top:13px;right:35px}.myon-hero-orbit b{bottom:24px;left:19px;width:6px;height:6px}
+.myon-hero-cta{color:#eee;text-decoration:none;font-size:12px;font-weight:900;border-bottom:1px solid #ffffff70;padding-bottom:5px}
+.myon-hero-cta span{margin-left:8px;font-size:17px}
+.myon-notice{padding:14px 18px;margin:18px 0;border:1px solid #ffffff25;border-radius:15px;background:#ffffff0b;color:#e5e5e8;font-size:13px}
+.myon-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:22px 0 28px}
+.myon-summary-card{position:relative;overflow:hidden;padding:22px 24px;border:1px solid var(--myon-line);border-radius:18px;background:var(--myon-panel);box-shadow:0 18px 42px -34px #fff3}
+.myon-summary-card:after{content:"";position:absolute;right:-25px;bottom:-45px;width:110px;height:110px;border:1px solid #ffffff16;border-radius:50%;box-shadow:0 0 0 15px #ffffff05}
+.myon-summary-card b{display:block;font-size:clamp(24px,3vw,34px);font-weight:900;letter-spacing:-.04em;color:#fff}
+.myon-summary-card small{color:#a1a1aa;font-size:11px;font-weight:700}
+.myon-panel{padding:clamp(18px,3vw,30px);margin:18px 0;border:1px solid var(--myon-line);border-radius:22px;background:var(--myon-panel);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 22px 60px -45px #fff3}
+.myon-section-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
+.myon-section-head h2,.myon-panel h2{margin:5px 0 0;color:#fff;font-size:clamp(19px,2.4vw,25px);font-weight:900;letter-spacing:-.035em}
+.myon-week-nav button{width:38px;height:38px;border:1px solid #ffffff28;border-radius:12px;background:#ffffff0b;color:#fff;font-size:23px;cursor:pointer;transition:.2s}
+.myon-week-nav button:hover{background:#fff;color:#050505}
+.myon-week-nav b{color:#bdbdc5;font-size:12px}
+.myon-calendar{gap:9px}
+.myon-day{min-height:108px;padding:12px;border:1px solid #ffffff19;border-radius:15px;background:#ffffff06;color:#eee;text-align:left;transition:transform .2s,border-color .2s,background .2s}
+.myon-day:not(:disabled):hover{transform:translateY(-3px);border-color:#ffffff70;background:#ffffff0d}
+.myon-day.selected{border-color:#fff;background:#ffffff16;box-shadow:inset 0 0 0 1px #ffffff30,0 8px 28px #fff1}
+.myon-day:disabled{opacity:.28}
+.myon-day strong{font-size:13px;color:#fff}.myon-day small{color:#a1a1aa}.myon-day span{color:#dedee2}
+.myon-hint,.myon-form-note,.myon-guide-intro,.myon-guide-footnote{color:#9999a2;font-size:12px}
+.myon-booking-section{margin:34px 0 20px}
+.myon-booking-heading{padding:0 4px 5px}
+.myon-booking-subtitle{color:#888891;font-size:11px;font-weight:700}
+.myon-booking-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.myon-booking-grid .myon-panel{margin:0;min-width:0}
+.myon-paid{border-top:2px solid #fff!important}
+.myon-free{border-top:2px solid #9b9ba2!important}
+.myon-plan-label{display:inline-flex;align-items:center;padding:8px 12px;border:1px solid #ffffff22;border-radius:999px;background:#ffffff0b;color:#ddd;font-size:9px;letter-spacing:.14em}
+.myon-paid h2,.myon-free h2{margin-top:14px}
+.myon-paid>p,.myon-free>p{color:#a1a1aa;font-size:12px}
+.myon-vs-label{display:block;margin:22px 0 10px;color:#eee;font-size:13px;font-weight:800}
+.myon-vs-pin{display:flex;align-items:center;gap:8px;max-width:100%}
+.myon-vs-prefix{display:grid;place-items:center;width:62px;min-width:48px;height:64px;border:1px solid #ffffff40;border-radius:14px;background:#fff;color:#050505;font-size:23px;font-weight:900}
+.myon-vs-digits{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;flex:1;min-width:0}
+.myon-vs-digit{width:100%;min-width:0;height:64px;padding:0;border:1px solid #ffffff24;border-radius:14px;background:#080809;color:#fff;text-align:center;font-size:24px;font-weight:900;outline:none}
+.myon-vs-digit:focus{border-color:#fff;box-shadow:0 0 0 3px #ffffff18}
+.myon-vs-hint{display:block;margin-top:10px;color:#9999a2;font-size:11px}
+.myon-payment-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0 8px}
+.myon-payment-fields label{display:grid;gap:7px;color:#c8c8ce;font-size:11px;font-weight:800}
+.myon-payment-fields input{width:100%;min-width:0;padding:13px 14px;border:1px solid #ffffff24;border-radius:12px;background:#080809;color:#fff;font:inherit;font-weight:700}
+.myon-payment-hint{display:block;margin:8px 0 15px;color:#a1a1aa;font-size:11px}
+.myon-page form button.primary{width:100%;min-height:52px;margin-top:18px;border:0;border-radius:14px;background:var(--myon-silver);color:#050505;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 12px 28px -18px #fff8;transition:transform .2s,box-shadow .2s}
+.myon-page form button.primary:hover{transform:translateY(-2px);box-shadow:0 18px 34px -15px #fff5}
+.myon-error{margin-top:10px;color:#ff9c9c;font-size:12px}
+.myon-vs-memory{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;margin:18px 0 28px;border:1px solid #ffffff1c;border-radius:17px;background:#ffffff07;color:#bdbdc5;font-size:12px}
+.myon-clear-vs{padding:10px 14px;border:1px solid #ffffff25;border-radius:11px;background:#ffffff08;color:#eee;font-size:11px;font-weight:800;cursor:pointer}
+.myon-clear-vs:hover{background:#fff;color:#050505}
+.myon-guide{scroll-margin-top:100px}
+.myon-guide-tag{padding:8px 12px;border:1px solid #ffffff24;border-radius:99px;color:#d1d1d6;font-size:10px;font-weight:800;white-space:nowrap}
+.myon-guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:20px}
+.myon-guide-step{display:flex;gap:14px;padding:17px;border:1px solid #ffffff16;border-radius:15px;background:#ffffff05}
+.myon-guide-step>span{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:11px;background:var(--myon-silver);color:#050505;font-size:12px;font-weight:900}
+.myon-guide-step h3{margin:2px 0 6px;color:#fff;font-size:13px;font-weight:900}
+.myon-guide-step p{margin:0;color:#a1a1aa;font-size:11px;line-height:1.7}
+.myon-guide-paid{border-color:#ffffff38;background:#ffffff08}
+.myon-guide-footnote{margin-top:18px;padding:14px 16px;border-left:2px solid #fff;background:#ffffff06}
+.myon-count{display:grid;place-items:center;min-width:34px;height:34px;border:1px solid #ffffff30;border-radius:11px;color:#fff;font-size:12px;font-weight:900}
+.myon-booking-list,.myon-notifications{display:grid;gap:10px}
+.myon-footer{padding:28px 0;color:#777780;text-align:center;font-size:11px}
+.myon-footer a{color:#ddd;text-decoration:none;font-weight:800}
+.myon-page [hidden]{display:none!important}
+@media(max-width:900px){.myon-nav-links{display:none}.myon-hero{grid-template-columns:1fr 190px;gap:18px}.myon-hero-orbit{width:120px;height:120px}}
+@media(max-width:680px){body.myon-page{padding:0 12px 36px}.myon-top{margin:0 -12px;padding:10px 12px;min-height:66px;gap:10px}.myon-back span:not(.brand-mark){display:none}.myon-brand{font-size:14px;margin-right:auto}.myon-help-link{display:none}.myon-top #myonLogin{padding:10px 12px;font-size:11px}.myon-hero{grid-template-columns:1fr;min-height:0;margin:18px 0 16px;padding:30px 22px;border-radius:22px}.myon-hero h1{font-size:clamp(34px,10vw,48px)}.myon-hero p:not(.eyebrow){font-size:12px}.myon-hero-side{flex-direction:row;justify-content:space-between;gap:12px;margin-top:12px}.myon-hero-orbit{width:74px;height:74px;flex:none}.myon-hero-orbit:before{inset:10px}.myon-hero-orbit:after{inset:21px}.myon-hero-orbit span{width:22px;height:22px;border-radius:7px}.myon-hero-chip{font-size:8px;padding:8px 10px;white-space:normal}.myon-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:14px 0 20px}.myon-summary-card{padding:13px 10px;border-radius:14px}.myon-summary-card b{font-size:21px}.myon-summary-card small{font-size:9px;line-height:1.35;display:block}.myon-panel{padding:17px 14px;margin:13px 0;border-radius:18px}.myon-section-head{align-items:flex-start;flex-wrap:wrap}.myon-section-head h2,.myon-panel h2{font-size:19px}.myon-calendar{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.myon-day{min-height:82px;padding:10px}.myon-week-nav{margin-left:auto}.myon-booking-section{margin:26px 0 16px}.myon-booking-grid{grid-template-columns:1fr;gap:13px}.myon-vs-pin{gap:5px}.myon-vs-prefix{width:48px;height:54px;font-size:19px}.myon-vs-digits{gap:4px}.myon-vs-digit{height:54px;border-radius:10px;font-size:21px}.myon-payment-fields{grid-template-columns:1fr 1fr;gap:8px}.myon-payment-fields input{padding:11px 9px;font-size:12px}.myon-vs-memory{align-items:stretch;flex-direction:column;padding:15px}.myon-clear-vs{width:100%}.myon-guide-grid{grid-template-columns:1fr}.myon-guide-tag{font-size:9px}.myon-booking-subtitle{display:none}}
+@media(max-width:360px){.myon-summary-card{padding:11px 7px}.myon-summary-card b{font-size:18px}.myon-vs-prefix{width:40px;min-width:40px}.myon-vs-digit{height:48px;font-size:18px}.myon-hero-side{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
