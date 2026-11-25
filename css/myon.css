@@ -35,3 +35,5 @@
 .myon-clear-vs{border:1px solid #ffffff20;border-radius:10px;background:#ffffff08;color:#e5e9f7;padding:9px 12px;font:inherit;font-weight:750;cursor:pointer;white-space:nowrap}
 .myon-clear-vs:hover{background:#ffffff14}
 @media(max-width:760px){.myon-help-link{order:3;flex:1 0 100%;min-height:38px}.myon-top{flex-wrap:wrap}.myon-vs-memory{align-items:flex-start;flex-direction:column}.myon-clear-vs{width:100%}}
+
+.myon-day.closed{opacity:.48;filter:grayscale(1);cursor:not-allowed}.myon-day em{display:block;color:#ffaaaa;font-size:10px;font-style:normal;font-weight:700}
