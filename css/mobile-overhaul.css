@@ -244,3 +244,22 @@
     line-height: 1.35 !important;
   }
 }
+
+
+/* Ensure direct-notice controls remain tappable above the scroll region. */
+@media (max-width: 760px) {
+  #directNoticeOverlay .direct-notice-card { pointer-events: auto !important; }
+  #directNoticeOverlay .direct-notice-x,
+  #directNoticeOverlay .direct-notice-actions,
+  #directNoticeOverlay .direct-notice-actions button {
+    position: relative !important;
+    z-index: 10 !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+  #directNoticeOverlay #directNoticeMessage {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+  }
+}
