@@ -160,6 +160,19 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if admin();
     }
+    match /myon_vs_day_counts/{id} {
+      allow read: if admin() || (signed() && resource.data.uid == request.auth.uid);
+      allow create: if signed()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.vsCode is string
+        && request.resource.data.vsCode.matches("^VS[0-9]{6}$")
+        && id == request.resource.data.vsCode + "_" + request.resource.data.dateKey
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.vsCode == request.resource.data.vsCode
+        && getAfter(/databases/$(database)/documents/myon_bookings/$(request.resource.data.lastBookingId)).data.dateKey == request.resource.data.dateKey;
+      allow update: if false;
+      allow delete: if admin();
+    }
     match /myon_date_settings/{dateKey} {
       allow read: if true;
       allow create, update, delete: if admin();
