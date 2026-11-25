@@ -47,3 +47,45 @@ body.light .hh-header.topbar{background:rgba(255,255,255,.95)!important;border-b
 @keyframes myonRainbowFlow{0%{background-position:0% 50%}100%{background-position:220% 50%}}
 @keyframes myonNavPulse{0%,86%,100%{filter:hue-rotate(var(--myon-random-hue,0deg)) brightness(1);box-shadow:0 0 0 1px #ffffff16,0 5px 22px #d946ef35,0 0 18px #38bdf855}90%,95%{filter:hue-rotate(var(--myon-random-hue,0deg)) brightness(1.42);box-shadow:0 0 0 3px #ffffff55,0 0 30px #ffffffb0,0 0 42px #38bdf8}}
 @media(prefers-reduced-motion:reduce){.hh-header .hh-nav .myon-nav-link,.hh-mobile-menu>.myon-mobile-link{animation:none!important}}
+
+
+/* MYON shortcut: dedicated mobile menu treatment + always-available floating entry */
+.hh-mobile-menu>.myon-mobile-link{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin:10px 0 4px;padding:13px 16px;border:1px solid #ffffffa8;
+  border-radius:15px;color:#fff!important;font-weight:950;
+  text-decoration:none!important;letter-spacing:.2px;
+  background:linear-gradient(105deg,#ff477e,#ff9b45,#f4d34e,#35c99a,#36a8f5,#9670ff,#ff477e);
+  background-size:260% 260%;box-shadow:0 7px 24px #b34cf366,0 0 0 1px #ffffff25;
+  animation:myonMobileGradient 5s linear infinite,myonMobileGlow 2.8s ease-in-out infinite;
+}
+.hh-mobile-menu>.myon-mobile-link span{font-size:14px;color:#fff}
+.myon-floating-shortcut{
+  position:fixed;right:22px;bottom:24px;z-index:90;
+  display:flex;align-items:center;gap:10px;min-height:58px;padding:8px 17px 8px 9px;
+  border:1px solid #ffffffb8;border-radius:999px;color:#fff!important;
+  background:linear-gradient(110deg,#ff477e,#ff9b45,#f4d34e,#35c99a,#36a8f5,#9670ff,#ff477e);
+  background-size:260% 260%;text-decoration:none!important;font-weight:950;
+  box-shadow:0 10px 30px #0008,0 0 0 1px #ffffff30,0 0 24px #a855f799;
+  animation:myonMobileGradient 6s linear infinite,myonMobileGlow 3s ease-in-out infinite;
+  transition:transform .2s ease,filter .2s ease;
+}
+.myon-floating-shortcut:hover{transform:translateY(-4px) scale(1.035);filter:brightness(1.12)}
+.myon-floating-icon{
+  display:grid;place-items:center;width:40px;height:40px;flex:none;border-radius:50%;
+  background:#17152c;color:#fff;font-size:22px;border:1px solid #ffffff80;
+  box-shadow:inset 0 0 12px #ffffff20,0 2px 10px #17152c88;
+}
+.myon-floating-label{font-size:12px;letter-spacing:.15px;text-shadow:0 1px 3px #21152c}
+.myon-floating-spark{font-size:13px;color:#fff7a8;text-shadow:0 0 10px #fff}
+@keyframes myonMobileGradient{0%{background-position:0% 50%}100%{background-position:260% 50%}}
+@keyframes myonMobileGlow{0%,100%{box-shadow:0 10px 30px #0008,0 0 0 1px #ffffff30,0 0 18px #a855f766}50%{box-shadow:0 12px 34px #0009,0 0 0 3px #ffffff55,0 0 32px #38bdf8bb}}
+@media(max-width:760px){
+  .myon-floating-shortcut{right:14px;bottom:88px;min-height:58px;padding:7px 14px 7px 8px;gap:8px}
+  .myon-floating-icon{width:42px;height:42px;font-size:23px}
+  .myon-floating-label{font-size:11px}
+  .hh-mobile-menu>.myon-mobile-link{min-height:50px}
+}
+@media(prefers-reduced-motion:reduce){
+  .myon-floating-shortcut,.hh-mobile-menu>.myon-mobile-link{animation:none!important}
+}
