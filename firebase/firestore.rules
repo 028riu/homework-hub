@@ -94,7 +94,7 @@ service cloud.firestore {
         && request.resource.data.amount is number
         && request.resource.data.minutes is number
         && (request.resource.data.type == "free" && request.resource.data.amount == 0 && request.resource.data.minutes == 0
-          || request.resource.data.type == "paid" && ((request.resource.data.amount == 10000 && request.resource.data.minutes == 100) || (request.resource.data.amount == 50000 && request.resource.data.minutes == 500)))
+          || request.resource.data.type == "paid" && request.resource.data.amount >= 1000 && request.resource.data.amount % 1000 == 0 && request.resource.data.minutes == request.resource.data.amount / 1000 * 10)
         && getAfter(/databases/$(database)/documents/myon_day_counts/$(request.resource.data.dateKey + "_" + request.resource.data.type)).data.lastBookingId == id
         && (request.resource.data.type == "paid" || getAfter(/databases/$(database)/documents/myon_week_counts/$(request.auth.uid + "_" + request.resource.data.weekKey)).data.lastBookingId == id);
       allow update, delete: if admin();
@@ -124,7 +124,7 @@ service cloud.firestore {
       allow delete: if admin();
     }
     match /myon_week_counts/{id} {
-      allow read: if admin() || (signed() && resource.data.uid == request.auth.uid);
+      allow read: if admin() || (signed() && (id.matches("^" + request.auth.uid + "_.*$") || resource.data.uid == request.auth.uid));
       allow create: if admin() || (signed()
         && request.resource.data.uid == request.auth.uid
         && id == request.auth.uid + "_" + request.resource.data.weekKey
