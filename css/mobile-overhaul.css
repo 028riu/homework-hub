@@ -263,3 +263,9 @@
     overflow-y: auto !important;
   }
 }
+
+
+/* Honor the HTML hidden state despite the mobile flex layout. */
+@media (max-width: 760px) {
+  body.hh-home #directNoticeOverlay[hidden] { display:none !important; visibility:hidden !important; pointer-events:none !important; }
+}
