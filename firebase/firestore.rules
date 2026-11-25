@@ -150,7 +150,7 @@ service cloud.firestore {
       allow delete: if admin();
     }
     match /myon_user_day_counts/{id} {
-      allow read: if admin() || (signed() && resource.data.uid == request.auth.uid);
+      allow read: if admin() || (signed() && (id.matches("^" + request.auth.uid + "_.*$") || resource.data.uid == request.auth.uid));
       allow create: if signed() && request.resource.data.uid == request.auth.uid
         && id == request.auth.uid + "_" + request.resource.data.dateKey
         && request.resource.data.lastBookingId is string
