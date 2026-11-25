@@ -27,3 +27,11 @@
 .myon-payment-fields input[readonly]{color:#a9f0d3;border-color:#55cda455;background:#10251f;font-weight:850}
 .myon-payment-hint{display:block;color:#aeb8d0;font-size:11px;line-height:1.5;margin-top:-7px}
 @media(max-width:420px){.myon-payment-fields{grid-template-columns:1fr}}
+
+/* Remembered VS code controls and MYON help shortcut */
+.myon-help-link{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border:1px solid #a99dff55;border-radius:12px;background:#8b7aff18;color:#e6e1ff;text-decoration:none;font-size:12px;font-weight:800;white-space:nowrap;transition:.2s}
+.myon-help-link:hover{background:#8b7aff30;border-color:#bcb2ff;transform:translateY(-1px)}
+.myon-vs-memory{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 18px;padding:13px 16px;border:1px solid #ffffff18;border-radius:14px;background:#ffffff08;color:#aeb9d2;font-size:12px}
+.myon-clear-vs{border:1px solid #ffffff20;border-radius:10px;background:#ffffff08;color:#e5e9f7;padding:9px 12px;font:inherit;font-weight:750;cursor:pointer;white-space:nowrap}
+.myon-clear-vs:hover{background:#ffffff14}
+@media(max-width:760px){.myon-help-link{order:3;flex:1 0 100%;min-height:38px}.myon-top{flex-wrap:wrap}.myon-vs-memory{align-items:flex-start;flex-direction:column}.myon-clear-vs{width:100%}}
