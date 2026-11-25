@@ -19,3 +19,11 @@
 .myon-guide-paid{border-color:#d7a84b35}.myon-guide-paid>span{background:#a9781e24;color:#ffd98c}
 .myon-guide-footnote{margin:15px 0 0;padding:12px 14px;border-left:3px solid #a99dff;background:#8b7aff0c;border-radius:0 10px 10px 0;color:#b9c2d9;font-size:11px;line-height:1.6}
 @media(max-width:700px){.myon-guide-grid{grid-template-columns:1fr}.myon-guide-step{padding:12px}.myon-guide-tag{font-size:9px}}
+
+
+/* Editable paid amount + automatically calculated reading time */
+.myon-payment-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+.myon-payment-fields label{min-width:0}
+.myon-payment-fields input[readonly]{color:#a9f0d3;border-color:#55cda455;background:#10251f;font-weight:850}
+.myon-payment-hint{display:block;color:#aeb8d0;font-size:11px;line-height:1.5;margin-top:-7px}
+@media(max-width:420px){.myon-payment-fields{grid-template-columns:1fr}}
